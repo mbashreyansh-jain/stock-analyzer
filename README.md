@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Stock AI
 
 AI-assisted stock research for NSE (India). Product blueprint: https://claude.ai/artifact/AN8uJpPLf5BVU3hQCpHnb8
@@ -69,3 +70,7 @@ STOCKAI_TEST_DATABASE_URL=postgresql://stockai:stockai@localhost:5433/stockai_te
 - `price_adjustments`: one combined split/bonus/demerger factor per stock and ex-date
 - `index_daily`: NIFTY and sector index OHLC with P/E, P/B, dividend yield
 - `ingest_runs`, `data_quality_issues`: what was loaded each day and what looked wrong
+=======
+# stock-analyzer
+Ai based Stock Analysis
+>>>>>>> bc718783804e0e7799b01fe0de62ac5713279cd3
