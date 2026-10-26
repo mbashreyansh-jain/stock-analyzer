@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Join · Stock AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/auth.css">
+</head>
+<body>
+<main class="auth">
+  <section class="auth-art" aria-label="About Stock AI">
+    <span class="brand"><i aria-hidden="true"></i>Stock AI</span>
+    <div>
+      <h1 id="art-h">You're invited.</h1>
+      <p id="art-p">Set a password to open your own Stock AI account. Your portfolio, paper trades and watchlist are private to you.</p>
+    </div>
+    <ul>
+      <li>Plain-English stock research</li>
+      <li>Daily picks and a time machine for trades</li>
+      <li>Advice only: it never places trades</li>
+    </ul>
+  </section>
+  <section class="auth-form">
+    <div class="card" id="checking"><h2>Checking your link…</h2></div>
+    <div class="card" id="bad" hidden>
+      <h2>This link doesn't work</h2>
+      <p class="sub" id="bad-p">It may have expired or already been used. Ask the admin for a new one.</p>
+      <a class="btn wide" href="/login">Go to sign in</a>
+    </div>
+    <form class="card" id="form" hidden novalidate>
+      <h2 id="form-h">Create your account</h2>
+      <p class="sub" id="form-sub"></p>
+      <label class="fld" id="name-f">Your name<input id="name" autocomplete="name" maxlength="60" required></label>
+      <label class="fld">Password<input id="password" type="password" autocomplete="new-password" minlength="10" required><small>At least 10 characters. A short sentence works well.</small></label>
+      <label class="fld">Password again<input id="again" type="password" autocomplete="new-password" required></label>
+      <p class="msg err" id="err" role="alert" hidden></p>
+      <button class="btn primary wide" id="go">Create account</button>
+    </form>
+  </section>
+</main>
+<script>
+(function () {
+  var token = location.pathname.split("/").pop(), kind = "invite";
+  function $(id) { return document.getElementById(id); }
+  fetch("/api/invites/" + encodeURIComponent(token), { credentials: "same-origin" }).then(function (r) {
+    return r.json().then(function (j) { return { ok: r.ok, j: j }; });
+  }).then(function (res) {
+    $("checking").hidden = true;
+    if (!res.ok) { $("bad").hidden = false; if (typeof res.j.detail === "string") $("bad-p").textContent = res.j.detail; return; }
+    kind = res.j.kind;
+    if (kind === "reset") {
+      $("art-h").textContent = "Set a new password.";
+      $("art-p").textContent = "The admin made you a password-reset link. Choose a new password to sign back in.";
+      $("form-h").textContent = "New password";
+      $("form-sub").textContent = "For " + res.j.email + ". Other browsers signed in to this account will be signed out.";
+      $("name-f").hidden = true;
+      $("go").textContent = "Save password and sign in";
+    } else {
+      $("form-sub").textContent = "Invite for " + res.j.email + (res.j.role === "admin" ? " (admin)." : ".");
+    }
+    $("form").hidden = false;
+    (kind === "reset" ? $("password") : $("name")).focus();
+  }, function () { $("checking").hidden = true; $("bad").hidden = false; $("bad-p").textContent = "Can't reach the Stock AI server."; });
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var err = $("err"), go = $("go");
+    err.hidden = true;
+    if ($("password").value !== $("again").value) { err.textContent = "The passwords don't match."; err.hidden = false; return; }
+    go.disabled = true;
+    fetch("/api/invites/" + encodeURIComponent(token) + "/accept", {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: $("name").value, password: $("password").value })
+    }).then(function (r) {
+      if (r.ok) { location.href = "/"; return; }
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        err.textContent = typeof j.detail === "string" ? j.detail : "That didn't work. Try again."; err.hidden = false; go.disabled = false;
+      });
+    }, function () { err.textContent = "Can't reach the Stock AI server."; err.hidden = false; go.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  // Press F5 (or Run and Debug → "Stock AI server") to start the website at http://localhost:8000.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Stock AI server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "stockai.cli",
+      "args": ["serve"],
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    },
+    {
+      "name": "Stock AI server (other devices on my Wi-Fi)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "stockai.cli",
+      "args": ["serve", "--lan"],
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true
+    }
+  ]
+}

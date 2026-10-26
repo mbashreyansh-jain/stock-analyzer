@@ -1,0 +1,1383 @@
+<title>Fundamentals Tab Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: style C "Friendly & bold". Sticky top bar with the app-wide Simple/Pro switch, a section index on the left
+   (chips on phones), and rounded cards per question. Single light look by design. */
+:root {
+  --bg: #F6F5FC; --surface: #FFFFFF; --surface-2: #EFEDF9; --ink: #1C1838; --ink-2: #5E5A7A; --line: #E4E1F2;
+  --accent: #5636D3; --accent-soft: #ECE8FD; --good: #12875A; --good-soft: #DDF4EA; --warn: #B86E06; --warn-soft: #FCEEDA;
+  --bad: #D2433A; --bad-soft: #FBE4E2; --chart-1: #5636D3; --chart-2: #F2A541; --chart-3: #12875A; --chart-4: #C9C3E6;
+  --zebra: #FAF9FE; --now-bg: #F1EDFD; --deep-good: #0B6A45; --deep-bad: #A3241B;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-num: "DM Mono", ui-monospace, Menlo, monospace;
+  --radius: 20px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--f-body); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { margin: 0; font-family: var(--f-display); text-wrap: balance; line-height: 1.2; }
+p { margin: 0; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+/* mode visibility */
+:root[data-mode="simple"] .p-only { display: none !important; }
+:root[data-mode="pro"] .s-only { display: none !important; }
+
+/* prototype strip */
+.proto { background: var(--ink); color: #E9E6FA; padding-inline: 16px; padding-block: 7px; font-size: 12.5px; display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center; }
+.proto b { background: var(--chart-2); color: var(--ink); padding: 1px 7px; border-radius: 4px; font-size: 11px; letter-spacing: 0.04em; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.topbar-in { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 10px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { font: 800 1.1rem var(--f-display); display: flex; align-items: center; gap: 8px; }
+.brand i { width: 24px; height: 24px; border-radius: 8px; background: var(--accent); display: inline-block; }
+.search { flex: 1 1 200px; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); font-size: 0.9em; }
+.search kbd { margin-left: auto; font: 500 11px var(--f-num); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+.mode { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; }
+.mode-lbl { font-size: 0.8em; color: var(--ink-2); }
+.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 999px; }
+.seg button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-size: 0.86em; color: var(--ink-2); font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; font-weight: 700; }
+
+/* page */
+.page { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 70px; display: grid; gap: 16px; }
+.stock { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.stock h1 { font-size: 1.9em; font-weight: 800; letter-spacing: -0.01em; }
+.stock .meta { color: var(--ink-2); font-size: 0.9em; }
+.stock .px { font: 500 1.5em var(--f-num); }
+.stock .chg { font: 500 0.95em var(--f-num); color: var(--good); }
+.stock .actions { margin-left: auto; display: flex; gap: 8px; position: relative; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 16px; font-weight: 600; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px; }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 18px 40px -18px rgba(28, 24, 56, 0.35); padding: 6px; width: 290px; z-index: 40; display: grid; gap: 2px; }
+.menu button { border: 0; background: transparent; text-align: left; padding: 10px 12px; border-radius: 10px; display: grid; gap: 1px; }
+.menu button:hover, .menu button:focus-visible { background: var(--surface-2); }
+.menu b { font-size: 0.92em; }
+.menu small { color: var(--ink-2); font-size: 0.78em; }
+.menu .unavail { font-size: 0.78em; color: var(--warn); padding: 6px 12px; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 0.9em; z-index: 60; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.4); }
+.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.tabs span { flex: none; padding: 7px 16px; border-radius: 999px; color: var(--ink-2); font-weight: 500; font-size: 0.94em; }
+.tabs span.on { background: var(--ink); color: #fff; font-weight: 700; }
+.asof { font-size: 0.8em; color: var(--ink-2); }
+
+.layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 22px; align-items: start; }
+.index { position: sticky; top: 76px; display: grid; gap: 2px; font-size: 0.88em; }
+.index a { color: var(--ink-2); text-decoration: none; padding: 6px 12px; border-radius: 10px; display: flex; justify-content: space-between; gap: 8px; }
+.index a:hover { background: var(--surface); color: var(--ink); }
+.index a i { width: 8px; height: 8px; border-radius: 50%; align-self: center; flex: none; }
+.index a i.g { background: var(--good); } .index a i.w { background: var(--warn); } .index a i.n { background: var(--chart-4); }
+.main { display: grid; gap: 18px; min-width: 0; }
+
+.card { background: var(--surface); border-radius: var(--radius); padding: 22px; display: grid; gap: 16px; align-content: start; min-width: 0; scroll-margin-top: 80px;
+  box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); }
+/* Grid children default to min-width:auto, which lets a wide table stretch the card past the screen. */
+.card > *, .metrics, .two > *, .biz > * { min-width: 0; }
+.sh { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sh h2 { font-size: 1.35em; font-weight: 800; }
+:root[data-mode="pro"] .sh h2 { font-size: 1.15em; }
+.sh .sub { color: var(--ink-2); font-size: 0.85em; }
+.verdict { font: 600 0.78em var(--f-num); padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
+.verdict.g, .chip.g { background: var(--good-soft); color: var(--good); }
+.verdict.w, .chip.w { background: var(--warn-soft); color: var(--warn); }
+.verdict.r, .chip.r { background: var(--bad-soft); color: var(--bad); }
+.verdict.n, .chip.n { background: var(--surface-2); color: var(--ink-2); }
+.chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.means { color: var(--ink); background: var(--accent-soft); border-radius: 14px; padding: 12px 16px; display: flex; gap: 10px; font-size: 0.93em; }
+.means::before { content: "i"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 12px/20px var(--f-num); text-align: center; }
+:root[data-mode="pro"] .means { background: transparent; padding: 0; color: var(--ink-2); font-size: 0.88em; }
+:root[data-mode="pro"] .means::before { content: "Takeaway"; width: auto; height: auto; border-radius: 4px; padding: 1px 6px; font: 600 10px/16px var(--f-num); text-transform: uppercase; letter-spacing: 0.05em; background: var(--surface-2); color: var(--ink-2); align-self: flex-start; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.two > * { min-width: 0; }
+.note { font-size: 0.8em; color: var(--ink-2); }
+
+/* Simple mode: written for anyone, any age, no stock knowledge needed */
+:root[data-mode="simple"] body { font-size: 16px; }
+:root[data-mode="simple"] .card .means:not(.keep) { display: none; }
+:root[data-mode="simple"] #valuation .two { grid-template-columns: 1fr; }
+.ans { display: grid; gap: 14px; }
+.ans-top { display: flex; gap: 14px; align-items: center; }
+.light { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font: 800 20px/1 var(--f-body); color: #fff; }
+.light.g { background: var(--good); } .light.w { background: var(--warn); } .light.r { background: var(--bad); } .light.n { background: var(--ink-2); }
+.ans-a { font: 800 1.4em/1.25 var(--f-display); }
+.facts-s { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; font-size: 1.02em; line-height: 1.45; }
+.facts-s li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; }
+.facts-s li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 9px; }
+.cmpbars { display: grid; gap: 10px; background: var(--surface-2); border-radius: 16px; padding: 14px 16px; }
+.cmp-title { font-size: 0.92em; color: var(--ink-2); font-weight: 500; }
+.cb { display: grid; grid-template-columns: minmax(0, 170px) minmax(0, 1fr) 74px; gap: 12px; align-items: center; font-size: 0.95em; }
+.cb .bar { height: 16px; border-radius: 8px; background: var(--surface); overflow: hidden; }
+.cb .bar i { display: block; height: 100%; border-radius: 8px; background: var(--chart-4); }
+.cb.me .bar i { background: var(--accent); }
+.cb.me span:first-child { font-weight: 700; }
+.cb b { font: 600 1em var(--f-num); text-align: right; }
+.legend-s { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.88em; align-items: center; }
+.legend-s span { display: inline-flex; align-items: center; gap: 6px; }
+.legend-s .light { width: 22px; height: 22px; font-size: 12px; }
+.report { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 8px; }
+.rc { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); text-decoration: none; color: var(--ink); }
+.rc:hover { background: var(--accent-soft); }
+.rc .light { width: 34px; height: 34px; font-size: 16px; }
+.rc b { display: block; font-size: 0.98em; }
+.rc .a { font-size: 0.9em; color: var(--ink-2); }
+.rank { display: grid; gap: 12px; }
+.rk { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: 12px; align-items: center; }
+.rk .lab b { display: block; } .rk .lab span { font-size: 0.86em; color: var(--ink-2); }
+.dots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.dots span { height: 32px; border-radius: 9px; background: var(--surface-2); display: grid; place-items: center; font: 600 0.78em var(--f-num); color: var(--ink-2); }
+.dots span.me { background: var(--accent); color: #fff; font-family: var(--f-body); font-weight: 800; }
+.dots-cap { display: flex; justify-content: space-between; font-size: 0.74em; color: var(--ink-2); grid-column: 2; margin-top: -6px; }
+.ownbar { display: flex; height: 34px; border-radius: 12px; overflow: hidden; }
+.ownbar span { display: grid; place-items: center; color: #fff; font: 700 0.85em var(--f-num); }
+.ownlist { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px 14px; font-size: 0.92em; }
+.ownlist div { display: flex; align-items: center; gap: 8px; }
+.ownlist i { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+@media (max-width: 560px) {
+  .cb { grid-template-columns: minmax(0, 1fr) 70px; gap: 4px 10px; }
+  .cb .bar { grid-column: 1 / -1; grid-row: 2; }
+  .rk { grid-template-columns: 1fr; gap: 6px; }
+  .dots-cap { grid-column: 1; }
+  .ans-a { font-size: 1.25em; }
+}
+
+/* summary */
+.summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+.ring { position: relative; width: 128px; height: 128px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.05; }
+.ring .lbl b { font: 600 2.2em var(--f-num); display: block; }
+.ring .lbl small { font-size: 0.72em; color: var(--ink-2); }
+.sum-body { display: grid; gap: 12px; min-width: 0; }
+.sum-body h2 { font-size: 1.85em; font-weight: 800; letter-spacing: -0.01em; }
+.grades { display: flex; flex-wrap: wrap; gap: 8px; }
+.grade { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; font-size: 0.86em; font-weight: 500; text-decoration: none; color: var(--ink); }
+.grade b { font: 600 0.9em var(--f-num); min-width: 32px; text-align: center; padding: 2px 4px; border-radius: 999px; background: var(--surface); }
+.grade.g { background: var(--good-soft); } .grade.g b { color: var(--good); }
+.grade.w { background: var(--warn-soft); } .grade.w b { color: var(--warn); }
+.pc { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pc ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.92em; }
+.pc li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
+.pc .pros li::before { content: "▲"; color: var(--good); font-size: 0.7em; padding-top: 4px; }
+.pc .cons li::before { content: "▼"; color: var(--bad); font-size: 0.7em; padding-top: 4px; }
+.pc h3 { font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); margin-bottom: 6px; font-family: var(--f-body); }
+.breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.breakdown div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.82em; }
+.breakdown b { font: 600 1.25em var(--f-num); }
+
+/* metric tiles (simple) */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tile { border-radius: 16px; background: var(--surface-2); padding: 14px; display: grid; gap: 4px; align-content: start; }
+.tile.g { background: var(--good-soft); } .tile.w { background: var(--warn-soft); } .tile.r { background: var(--bad-soft); }
+.t-top { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.t-name { font-size: 0.86em; font-weight: 500; }
+.t-val { font: 500 1.5em var(--f-num); font-variant-numeric: tabular-nums; }
+.t-pro { font-size: 0.74em; color: var(--ink-2); }
+.t-cmp { font-size: 0.78em; color: var(--ink-2); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tile .chip { background: var(--surface); }
+.more { justify-self: start; border: 0; background: transparent; color: var(--accent); font-weight: 600; font-size: 0.88em; padding: 4px 0; }
+.info { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--ink-2); background: transparent; color: var(--ink-2); font: 700 11px/1 var(--f-num); padding: 0; display: inline-grid; place-items: center; }
+.info:hover { border-color: var(--accent); color: var(--accent); }
+
+/* tables: units live in the row label so cells hold clean numbers; zebra rows; the current column is tinted */
+.tw { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 0.9em; }
+th, td { padding: 11px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+th:first-child, td:first-child { text-align: left; }
+thead th { background: var(--surface-2); color: var(--ink-2); font: 600 0.74em/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.05em; padding-block: 10px; }
+thead th.old { color: color-mix(in srgb, var(--ink-2) 70%, transparent); }
+tbody tr:nth-child(even) > * { background: var(--zebra); }
+tbody tr:hover > * { background: var(--accent-soft); }
+tbody tr:last-child > * { border-bottom: 0; }
+tbody th { font-weight: 600; }
+td { font-family: var(--f-num); font-variant-numeric: tabular-nums; color: var(--ink); }
+td.dim { color: var(--ink-2); }
+tbody th.now, tbody td.now, thead th.now { background: var(--now-bg); }
+tbody tr:hover > .now { background: var(--accent-soft); }
+td.now { font-weight: 700; }
+thead th.now { color: var(--accent); }
+/* Metric names stay visible while numbers scroll sideways on small screens */
+.tw th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: 1px 0 0 var(--line); }
+.tw thead th:first-child { background: var(--surface-2); }
+.tw tbody tr:nth-child(even) > th:first-child { background: var(--zebra); }
+.tw tbody tr:hover > th:first-child { background: var(--accent-soft); }
+.mname { display: grid; gap: 2px; min-width: 190px; max-width: 250px; white-space: normal; }
+.mname .cell { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mname small { font-weight: 400; color: var(--ink-2); font-size: 0.82em; line-height: 1.3; }
+.unit { font: 500 0.78em var(--f-num); color: var(--ink-2); background: var(--surface-2); border-radius: 4px; padding: 0 5px; }
+tr.me > *, .tw tr.me > th:first-child { background: var(--accent-soft); font-weight: 700; }
+tr.med > *, .tw tr.med > th:first-child { color: var(--ink-2); font-style: italic; }
+tr.sum > * { font-weight: 700; }
+tr.sum > *:not(.now) { background: var(--zebra); }
+td .up { color: var(--good); } td .dn { color: var(--bad); }
+.status { display: inline-flex; align-items: center; gap: 6px; font: 600 0.82em var(--f-body); }
+.status i { width: 8px; height: 8px; border-radius: 50%; }
+.status.g { color: var(--good); } .status.g i { background: var(--good); }
+.status.w { color: var(--warn); } .status.w i { background: var(--warn); }
+.status.r { color: var(--bad); } .status.r i { background: var(--bad); }
+.status.n { color: var(--ink-2); } .status.n i { background: var(--chart-4); }
+.spark { display: inline-block; vertical-align: middle; }
+
+/* charts */
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-2); font: 400 11px var(--f-num); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82em; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* business */
+.biz { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.facts div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 0.8em; color: var(--ink-2); display: grid; gap: 2px; }
+.facts b { color: var(--ink); font: 600 1.1em var(--f-num); }
+.donut-wrap { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; align-items: center; }
+.seglist { display: grid; gap: 8px; font-size: 0.86em; }
+.seglist div { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; }
+.seglist i { width: 12px; height: 12px; border-radius: 4px; }
+.geo { height: 14px; border-radius: 7px; overflow: hidden; display: flex; }
+
+/* valuation */
+.band { display: grid; gap: 8px; }
+.band-track { position: relative; height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--good-soft), var(--surface-2) 50%, var(--bad-soft)); border: 1px solid var(--line); }
+.band-mark { position: absolute; top: -6px; width: 4px; height: 24px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); }
+.band-mid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink-2); opacity: 0.6; }
+.band-scale { display: flex; justify-content: space-between; font: 400 0.78em var(--f-num); color: var(--ink-2); }
+.dcf { display: grid; gap: 10px; background: var(--surface-2); border-radius: 16px; padding: 16px; }
+.sl { display: grid; grid-template-columns: minmax(0, 1fr) 62px; gap: 2px 10px; align-items: center; font-size: 0.86em; }
+.sl label { color: var(--ink-2); }
+.sl output { font: 500 0.95em var(--f-num); text-align: right; }
+.sl input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.fv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fv div { display: grid; gap: 2px; }
+.fv small { font-size: 0.76em; color: var(--ink-2); }
+.fv b { font: 600 1.25em var(--f-num); }
+.fv b.good { color: var(--good); } .fv b.bad { color: var(--bad); }
+
+/* dupont */
+.dupont { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dupont div { background: var(--surface-2); border-radius: 12px; padding: 10px 14px; display: grid; gap: 1px; font-size: 0.8em; color: var(--ink-2); }
+.dupont div b { font: 600 1.25em var(--f-num); color: var(--ink); }
+.dupont div.res { background: var(--good-soft); }
+.dupont span { font: 600 1.2em var(--f-num); color: var(--ink-2); }
+
+/* results */
+.qcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.qcards div { background: var(--surface-2); border-radius: 16px; padding: 14px; display: grid; gap: 2px; }
+.qcards small { color: var(--ink-2); font-size: 0.8em; }
+.qcards b { font: 500 1.4em var(--f-num); }
+.qcards em { font-style: normal; font: 500 0.85em var(--f-num); color: var(--good); }
+.ai-box { display: grid; gap: 8px; border: 1.5px dashed var(--accent); border-radius: 16px; padding: 14px 16px; }
+.ai-box ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 0.92em; }
+.ai-box .src { font-size: 0.78em; color: var(--ink-2); }
+.ai-chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+
+/* red flags */
+.flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; }
+.flag { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.flag .ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--f-num); background: var(--good-soft); color: var(--good); }
+.flag.w .ic { background: var(--warn-soft); color: var(--warn); }
+.flag.w { background: var(--warn-soft); }
+.flag b { display: block; }
+.flag span { color: var(--ink-2); font-size: 0.92em; }
+.qs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.q { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto 44px auto auto 1fr; gap: 8px; align-content: start; }
+.q-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92em; }
+.q-val { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.q-val .big { font: 600 1.9em/1 var(--f-num); }
+.q-val .big small { font-size: 0.5em; color: var(--ink-2); }
+.zbar { position: relative; height: 10px; }
+.zbar .segs { display: flex; height: 100%; border-radius: 5px; overflow: hidden; }
+.zbar .segs span { height: 100%; }
+.zbar i { position: absolute; top: -5px; width: 4px; height: 20px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface-2); }
+.zlbl { display: flex; font-size: 0.72em; color: var(--ink-2); }
+.zlbl span { text-align: center; }
+.q .why { color: var(--ink-2); font-size: 0.84em; }
+.flags { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; }
+
+.signal { gap: 16px; border: 2px solid var(--good-soft); }
+.signal { gap: 12px; padding: 18px 20px; }
+.sig-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.hzc { border: 1.5px solid transparent; background: var(--surface-2); border-radius: 14px; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; min-width: 0; }
+.hzc:hover { border-color: var(--line); }
+.hzc[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.hzc .t { display: grid; line-height: 1.2; min-width: 0; }
+.hzc .t b { font-size: 0.86em; }
+.hzc .t small { font-size: 0.72em; color: var(--ink-2); }
+.hzc .sp { font: 800 0.74em/1 var(--f-body); letter-spacing: 0.04em; padding: 6px 10px; border-radius: 999px; color: #fff; white-space: nowrap; flex: none; }
+.sp.buy { background: var(--good); } .sp.sbuy { background: var(--deep-good); } .sp.neutral { background: var(--ink-2); } .sp.sell { background: var(--bad); } .sp.ssell { background: var(--deep-bad); }
+.hz-detail { background: var(--surface-2); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; font-size: 0.92em; }
+.hz-detail .drivers { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); column-gap: 24px; }
+.sig-line { font-size: 0.95em; font-weight: 600; }
+.sig-hint { font-size: 0.76em; color: var(--ink-2); }
+@media (max-width: 560px) {
+  .hzc { flex-direction: column; align-items: flex-start; padding: 8px 10px; }
+  .hzc .sp { font-size: 0.68em; padding: 5px 8px; }
+  .hzc .wt { display: none; }
+}
+.hz-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.hz { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto auto auto auto 1fr; gap: 10px; align-content: start; border-top: 4px solid var(--ink-2); }
+.hz.buy { border-top-color: var(--good); } .hz.sbuy { border-top-color: var(--deep-good); } .hz.neutral { border-top-color: var(--chart-4); }
+.hz.sell { border-top-color: var(--bad); } .hz.ssell { border-top-color: var(--deep-bad); }
+.hz-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+.hz-head b { display: block; font-size: 0.98em; }
+.hz-head small { color: var(--ink-2); font-size: 0.8em; }
+.hz-pill { justify-self: start; font: 800 1.25em/1 var(--f-display); padding: 8px 18px; border-radius: 999px; color: #fff; letter-spacing: 0.03em; }
+.hz.buy .hz-pill { background: var(--good); } .hz.sbuy .hz-pill { background: var(--deep-good); } .hz.neutral .hz-pill { background: var(--ink-2); }
+.hz.sell .hz-pill { background: var(--bad); } .hz.ssell .hz-pill { background: var(--deep-bad); }
+.mini { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+.mini span { height: 8px; border-radius: 4px; background: var(--surface); }
+.mini span.on { height: 12px; margin-top: -2px; }
+.mini span.on.c0 { background: var(--deep-bad); } .mini span.on.c1 { background: var(--bad); } .mini span.on.c2 { background: var(--ink-2); }
+.mini span.on.c3 { background: var(--good); } .mini span.on.c4 { background: var(--deep-good); }
+.mini-lbl { display: flex; justify-content: space-between; font-size: 0.7em; color: var(--ink-2); margin-top: -4px; }
+.hz p { font-size: 0.88em; }
+.drivers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.82em; }
+.drivers li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 5px; }
+.drivers li span { color: var(--ink-2); }
+.drivers li b { font-family: var(--f-num); font-weight: 500; text-align: right; }
+.drivers li.rule { border: 0; color: var(--ink); font-style: italic; }
+.sig-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.sig-head h2 { font-size: 1.35em; font-weight: 800; }
+@media (max-width: 760px) { .hz-grid { grid-template-columns: 1fr; } }
+.sig-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.sig-lbl { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.sig-pill { font: 800 1.7em/1 var(--f-display); padding: 10px 26px; border-radius: 999px; color: #fff; background: var(--good); letter-spacing: 0.03em; }
+.sig-h { font-size: 0.86em; color: var(--ink-2); }
+.sig-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.ss { text-align: center; font: 600 0.78em/1.2 var(--f-body); padding: 9px 4px; background: var(--surface-2); color: var(--ink-2); border-radius: 6px; }
+.ss:first-child { border-radius: 999px 6px 6px 999px; } .ss:last-child { border-radius: 6px 999px 999px 6px; }
+.ss.sb, .ss.s { color: var(--bad); } .ss.b, .ss.stb { color: var(--good); }
+.ss.on { color: #fff; font-weight: 800; box-shadow: 0 6px 16px -8px rgba(28, 24, 56, 0.5); }
+.ss.on.sb { background: var(--deep-bad); } .ss.on.s { background: var(--bad); } .ss.on.n { background: var(--ink-2); }
+.ss.on.b { background: var(--good); } .ss.on.stb { background: var(--deep-good); }
+.sig-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.sig-stats div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.8em; color: var(--ink-2); }
+.sig-stats b { font: 600 1.3em var(--f-num); color: var(--ink); }
+.sig-stats em { font-style: normal; font-weight: 600; }
+.matrix td { text-align: center; font-family: var(--f-body); }
+.matrix th:first-child { min-width: 150px; }
+.matrix td.hit { outline: 2.5px solid var(--accent); outline-offset: -3px; border-radius: 10px; font-weight: 800; }
+
+.docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+.doc { display: grid; grid-template-columns: 38px 1fr; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.doc .ft { width: 38px; height: 44px; border-radius: 8px; background: var(--surface); display: grid; place-items: center; font: 600 10px var(--f-num); color: var(--bad); border: 1px solid var(--line); }
+.doc small { color: var(--ink-2); display: block; }
+
+.ca { display: grid; gap: 6px; font-size: 0.88em; }
+.ca div { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding: 8px 12px; background: var(--surface-2); border-radius: 10px; }
+.ca span { font-family: var(--f-num); color: var(--ink-2); }
+
+/* popover */
+.pop { position: fixed; z-index: 70; width: min(360px, calc(100vw - 32px)); background: var(--surface); border-radius: 18px; padding: 18px; box-shadow: 0 24px 60px -20px rgba(28, 24, 56, 0.45); border: 1px solid var(--line); display: grid; gap: 10px; font-size: 0.9em; }
+.pop h3 { font-size: 1.15em; font-weight: 800; padding-right: 26px; }
+.pop .pro-name { font: 500 0.8em var(--f-num); color: var(--ink-2); }
+.pop dl { margin: 0; display: grid; gap: 8px; }
+.pop dt { font-size: 0.74em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+.pop dd { margin: 0; }
+.pop .x { position: absolute; top: 12px; right: 12px; border: 0; background: var(--surface-2); width: 28px; height: 28px; border-radius: 50%; font-weight: 700; }
+.pop .reading { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; }
+
+.foot { font-size: 0.8em; color: var(--ink-2); text-align: center; padding-top: 6px; }
+
+@media (max-width: 1200px) {
+  .layout { grid-template-columns: 1fr; }
+  .index { position: sticky; top: 64px; z-index: 20; display: flex; overflow-x: auto; gap: 6px; padding-block: 6px; background: var(--bg); scrollbar-width: none; }
+  .index a { flex: none; background: var(--surface); border-radius: 999px; padding: 6px 12px; }
+  .biz, .two { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .topbar-in, .page { padding-inline: 16px; }
+  .mode { margin-left: 0; width: 100%; justify-content: space-between; }
+  .summary { grid-template-columns: 1fr; justify-items: start; }
+  .pc { grid-template-columns: 1fr; }
+  .stock .actions { margin-left: 0; }
+  .fv { grid-template-columns: 1fr 1fr; }
+  .donut-wrap { grid-template-columns: 100px minmax(0, 1fr); }
+  .pop { left: 16px !important; right: 16px; top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: auto; }
+  .card { padding: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .q .bar i { transition: width 0.5s ease; }
+}
+</style>
+
+<div class="proto"><b>PROTOTYPE</b><span>ACME Industries is a made-up company. Every number is a sample, so the layout can be judged with realistic data.</span></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="brand"><i aria-hidden="true"></i>Stock AI</span>
+    <div class="search" aria-hidden="true">Search any NSE stock <kbd>⌘K</kbd></div>
+    <div class="mode">
+      <span class="mode-lbl" id="mode-hint">Explained simply</span>
+      <div class="seg" role="group" aria-label="Detail level for every tab">
+        <button id="mode-simple" data-mode="simple" aria-pressed="true">Simple</button>
+        <button id="mode-pro" data-mode="pro" aria-pressed="false">Pro</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="stock">
+    <h1>ACME Industries Ltd</h1>
+    <span class="meta">NSE: ACME · Capital Goods · Mid cap</span>
+    <span class="px">₹1,248.60</span>
+    <span class="chg">▲ 22.10 (1.80%)</span>
+    <div class="actions">
+      <button class="btn primary" id="dl-btn" aria-haspopup="true" aria-expanded="false">Download ▾</button>
+      <div class="menu" id="dl-menu" role="menu" hidden>
+        <button role="menuitem" id="dl-pdf" data-dl="pdf"><b>Full report (PDF)</b><small>Everything on this tab, ready to read or print</small></button>
+        <button role="menuitem" id="dl-xlsx" data-dl="xlsx"><b>Financial data (Excel)</b><small>Ratios, results and statements on separate sheets</small></button>
+        <button role="menuitem" id="dl-csv" data-dl="csv"><b>Key ratios (CSV)</b><small>One table of every ratio with 5-year history</small></button>
+        <p class="unavail" id="dl-unavail" hidden>Downloads work when this page is opened on claude.ai.</p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabs" aria-label="Stock sections">
+    <span>Overview</span><span class="on">Fundamentals</span><span>Technicals</span><span>AI Verdict</span><span>Sector</span><span>News</span>
+  </nav>
+  <p class="legend-s s-only"><span><span class="light g">✓</span>Good</span><span><span class="light w">!</span>Be careful</span><span><span class="light r">✗</span>Bad</span><span style="color:var(--ink-2)">Tap any <b style="color:var(--ink)">i</b> to learn what a word means</span></p>
+  <p class="asof"><span class="s-only">Latest results: April to June 2026 · Price on 16 October 2026</span><span class="p-only">Latest results: Q1 FY27 (quarter ended 30 Jun 2026) · Price as of 16 Oct 2026 close · ₹ figures in crore unless stated</span></p>
+
+  <div class="layout">
+    <nav class="index" aria-label="Fundamentals sections" id="index"></nav>
+
+    <main class="main">
+
+      <!-- SIGNAL -->
+      <section class="card signal" id="signal" data-title-s="Buy or sell?" data-title-p="Fundamental signals" data-v="g">
+        <div class="sig-head">
+          <span class="sig-lbl">Fundamental signals <button class="info" data-id="signal" aria-label="How are the fundamental signals worked out?">i</button></span>
+          <span class="sig-hint">Tap a time frame for the reason</span>
+        </div>
+        <div class="sig-row" role="group" aria-label="Signals by time frame">
+          <button class="hzc" id="hz-short" data-hz="short" aria-expanded="false" aria-controls="hzd-short"><span class="t"><b>Short<span class="wt"> term</span></b><small>2 to 6 weeks</small></span><span class="sp neutral"><span class="s-only">WAIT</span><span class="p-only">NEUTRAL</span></span></button>
+          <button class="hzc" id="hz-med" data-hz="med" aria-expanded="false" aria-controls="hzd-med"><span class="t"><b>Medium<span class="wt"> term</span></b><small>1 to 6 months</small></span><span class="sp buy">BUY</span></button>
+          <button class="hzc" id="hz-long" data-hz="long" aria-expanded="false" aria-controls="hzd-long"><span class="t"><b>Long<span class="wt"> term</span></b><small>1 to 3 years</small></span><span class="sp buy">BUY</span></button>
+        </div>
+        <p class="sig-line"><span class="s-only">A good company to buy and keep for a few months or longer. For a quick trade, wait until its results on 28 October.</span><span class="p-only">Buy for the medium and long term. Wait for results before a short-term trade.</span></p>
+        <div class="hz-detail" id="hzd-short" hidden>
+          <strong><span class="s-only">Next few weeks: Wait</span><span class="p-only">Short term: Neutral</span> <button class="info" data-id="sig_short" aria-label="How is the short-term signal worked out?">i</button></strong>
+          <p class="s-only">The company shares its latest results on 28 October. Results can make the price jump or fall. It is safer to wait and see them first.</p>
+          <ul class="drivers p-only">
+              <li><span>Next results</span><b>28 Oct (10 days)</b></li>
+              <li><span>Last quarter profit vs estimate</span><b>+3.1%</b></li>
+              <li><span>Forecast changes, 30 days</span><b>+1.2%</b></li>
+              <li><span>News tone, 30 days</span><b>Mildly positive</b></li>
+              <li><span>Catalyst score</span><b>61 / 100</b></li>
+              <li class="rule">Results within 15 days cap the short-term signal at Neutral.</li>
+            </ul>
+        </div>
+        <div class="hz-detail" id="hzd-med" hidden>
+          <strong><span class="s-only">Next few months: Buy</span><span class="p-only">Medium term: Buy</span> <button class="info" data-id="sig_med" aria-label="How is the medium-term signal worked out?">i</button></strong>
+          <p class="s-only">Its profit keeps growing, it already has lots of orders lined up, and big investors keep buying its shares. The next few months look good.</p>
+          <ul class="drivers p-only">
+              <li><span>Expected profit growth, next 4 qtrs</span><b>+21%</b></li>
+              <li><span>Forecast changes, 90 days</span><b>+3.4%</b></li>
+              <li><span>Order book / sales</span><b>1.6×</b></li>
+              <li><span>FII + MF stake change, 4 qtrs</span><b>+2.6 pts</b></li>
+              <li><span>Momentum score</span><b>74 / 100</b></li>
+              <li class="rule">Momentum 70 to 84 = Buy, 85+ = Strong buy.</li>
+            </ul>
+        </div>
+        <div class="hz-detail" id="hzd-long" hidden>
+          <strong><span class="s-only">Next few years: Buy</span><span class="p-only">Long term: Buy</span> <button class="info" data-id="signal_long" aria-label="How is the long-term signal worked out?">i</button></strong>
+          <p class="s-only">It is a strong company, and today's price is a little below what we think it is worth. If the price drops below ₹1,145, it becomes an even better deal.</p>
+          <ul class="drivers p-only">
+              <li><span>Quality score</span><b>78 / 100 (High)</b></li>
+              <li><span>Fair value (DCF + peers)</span><b>₹1,347</b></li>
+              <li><span>Price vs fair value</span><b>−7% (Fair)</b></li>
+              <li><span>Strong buy below</span><b>₹1,145</b></li>
+              <li class="rule">High quality at a fair price = Buy (grid below).</li>
+            </ul>
+          <div class="tw p-only">
+          <table class="matrix">
+            <thead><tr><th>Long term: quality \ price</th><th>Cheap (15%+ below)</th><th class="now">Fair (within 15%)</th><th>Expensive (15%+ above)</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">High (70 to 100)</th><td><span class="status g"><i></i>Strong buy</span></td><td class="now hit"><span class="status g"><i></i>Buy · ACME</span></td><td><span class="status n"><i></i>Neutral</span></td></tr>
+              <tr><th scope="row">Medium (50 to 69)</th><td><span class="status g"><i></i>Buy</span></td><td class="now"><span class="status n"><i></i>Neutral</span></td><td><span class="status r"><i></i>Sell</span></td></tr>
+              <tr><th scope="row">Low (below 50)</th><td><span class="status n"><i></i>Neutral</span></td><td class="now"><span class="status r"><i></i>Sell</span></td><td><span class="status r"><i></i>Strong sell</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        </div>
+        <p class="note">Fundamentals only. The Overview tab adds price trends for timing. Not investment advice.</p>
+      </section>
+
+      <!-- SUMMARY -->
+      <section class="card" id="summary" data-title-s="Summary" data-title-p="Summary" data-v="g">
+        <div class="summary">
+          <div class="ring" aria-label="Fundamental score 78 out of 100">
+            <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--surface-2)" stroke-width="9"/><circle cx="50" cy="50" r="42" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="205.9 263.9"/></svg>
+            <div class="lbl"><div><b>78</b><small>of 100</small></div></div>
+          </div>
+          <div class="sum-body">
+            <h2><span class="s-only">A good, growing company. A little pricey right now.</span><span class="p-only">A strong, growing business, priced above its peers</span></h2>
+            <div class="grades p-only">
+              <a class="grade g" href="#growth"><b>A</b>Growth</a>
+              <a class="grade g" href="#profitability"><b>A−</b>Profitability</a>
+              <a class="grade g" href="#health"><b>B+</b>Debt &amp; safety</a>
+              <a class="grade g" href="#cashflow"><b>B+</b>Cash flow</a>
+              <a class="grade w" href="#efficiency"><b>B</b>Efficiency</a>
+              <a class="grade w" href="#valuation"><b>C</b>Valuation</a>
+            </div>
+          </div>
+        </div>
+        <div class="pc p-only">
+          <div class="pros"><h3>Strengths</h3><ul>
+            <li>Sales up 18% and profit up 26% a year over 3 years</li>
+            <li>Debt cut from 0.90 to 0.40 times net worth since FY22</li>
+            <li>Profits arrive as real cash: operating cash flow beat profit in each of the last 5 years</li>
+            <li>Foreign investors raised their stake 7 quarters in a row</li>
+          </ul></div>
+          <div class="cons"><h3>Weaknesses</h3><ul>
+            <li>P/E of 34 is above the sector's 27 and near the top of its 5-year range</li>
+            <li>Customers are taking longer to pay: working capital up from 62 to 71 days</li>
+            <li>38% of sales come from government orders, which can be delayed</li>
+          </ul></div>
+        </div>
+        <div class="report s-only">
+          <a class="rc" href="#growth"><span class="light g">✓</span><span><b>Is it growing?</b><span class="a">Yes. Sales go up about 18% every year.</span></span></a>
+          <a class="rc" href="#profitability"><span class="light g">✓</span><span><b>Does it make money?</b><span class="a">Yes. It keeps ₹10 from every ₹100 it sells.</span></span></a>
+          <a class="rc" href="#health"><span class="light g">✓</span><span><b>Does it owe too much?</b><span class="a">No. Its loans are small and shrinking.</span></span></a>
+          <a class="rc" href="#cashflow"><span class="light g">✓</span><span><b>Is the profit real money?</b><span class="a">Yes. The cash really reaches its bank.</span></span></a>
+          <a class="rc" href="#efficiency"><span class="light w">!</span><span><b>Do customers pay on time?</b><span class="a">Mostly, but a little slower lately.</span></span></a>
+          <a class="rc" href="#valuation"><span class="light w">!</span><span><b>Is the price fair?</b><span class="a">A bit expensive next to similar companies.</span></span></a>
+        </div>
+        <div class="breakdown p-only" aria-label="Score breakdown">
+          <div>Growth (25%)<b>88</b></div><div>Profitability (25%)<b>84</b></div><div>Balance sheet (20%)<b>80</b></div>
+          <div>Cash flow (15%)<b>79</b></div><div>Valuation (15%)<b>46</b></div>
+        </div>
+        <p class="means s-only">The score adds up how the company does on growth, profit, debt, cash and price, compared with similar companies. Above 70 is strong. Tap any grade to jump to the details.</p>
+      </section>
+
+      <!-- BUSINESS -->
+      <section class="card" id="business" data-title-s="What does it do?" data-title-p="Business overview" data-v="n">
+        <div class="sh"><h2><span class="s-only">What does the company do?</span><span class="p-only">Business overview</span></h2></div>
+        <div class="biz">
+          <div style="display:grid;gap:12px;align-content:start">
+            <p>ACME makes switchgear, transformers and factory automation systems. Its customers are power companies, railways and manufacturers. It also earns steady income from servicing the equipment it has installed.</p>
+            <div class="facts">
+              <div>Founded<b>1987</b></div><div>Head office<b>Pune</b></div><div>Plants<b>4</b></div><div>Employees<b>6,200</b></div>
+              <div class="p-only">Order book<b>₹9,800 Cr</b></div><div class="p-only">Order book / sales<b>1.6×</b></div><div class="s-only">Orders waiting<b>₹9,800 crore</b></div><div class="s-only">Work already lined up<b>19 months</b></div>
+            </div>
+          </div>
+          <div style="display:grid;gap:14px;align-content:start">
+            <div class="donut-wrap">
+              <div class="chart" id="seg-chart"></div>
+              <div class="seglist">
+                <div><i style="background:var(--chart-1)"></i>Power equipment<span class="num">46%</span></div>
+                <div><i style="background:var(--chart-2)"></i>Industrial automation<span class="num">31%</span></div>
+                <div><i style="background:var(--chart-3)"></i>Services &amp; spares<span class="num">23%</span></div>
+              </div>
+            </div>
+            <div style="display:grid;gap:6px">
+              <span class="note">Where sales come from</span>
+              <div class="geo"><span style="width:72%;background:var(--chart-1)"></span><span style="width:28%;background:var(--chart-2)"></span></div>
+              <div class="legend"><span><i style="background:var(--chart-1)"></i>India 72%</span><span><i style="background:var(--chart-2)"></i>Exports 28% (Middle East, Africa, South-East Asia)</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="means keep"><span><span class="s-only">Customers have already ordered enough to keep ACME busy for about a year and a half. It also earns steady money every year by servicing machines it sold earlier.</span><span class="p-only">An order book of 1.6 years of sales means much of next year's revenue is already booked. Services (23% of sales) earn higher margins and repeat every year.</span></span></p>
+      </section>
+
+      <!-- VALUATION -->
+      <section class="card" id="valuation" data-title-s="Is the price fair?" data-title-p="Valuation" data-v="w">
+        <div class="sh"><h2><span class="s-only">Is the price fair?</span><span class="p-only">Valuation</span></h2><span class="verdict w">Expensive</span></div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light w" aria-hidden="true">!</span><p class="ans-a">A little expensive next to similar companies, but still below what we think it is worth.</p></div>
+          <ul class="facts-s"><li><span>We think one share is really worth about <b>₹1,350</b>. Today it costs <b>₹1,249</b>.</span></li><li><span>That is like paying <b>₹93</b> for something worth <b>₹100</b>.</span></li><li><span>But for every ₹1 of profit the company makes in a year, you pay <b>₹34</b>. For similar companies you pay <b>₹27</b>.</span></li></ul>
+        </div>
+        <p class="means">You pay more for each rupee of ACME's profit than for its peers. Part of that is earned by faster growth (see the growth-adjusted price below). At today's price there is little room for error.</p>
+        <div class="two">
+          <div style="display:grid;gap:14px;align-content:start">
+            <div class="band">
+              <span class="note"><span class="s-only">Price meter: where today's price sits compared with the last 5 years</span><span class="p-only">P/E band, 5 years</span></span>
+              <div class="band-track"><span class="band-mid" style="left:34.8%"></span><span class="band-mark" style="left:69.6%" title="Now: 34.0"></span></div>
+              <div class="band-scale p-only"><span>Low 18</span><span>Median 26</span><span>Now 34</span><span>High 41</span></div><div class="band-scale s-only"><span>Cheap</span><span>Normal</span><span>Today</span><span>Expensive</span></div>
+            </div>
+            <p class="note s-only">The black line is today. It sits towards the expensive side, but not at the very top.</p>
+            <span class="note p-only">Fair value used for the signal (default inputs)</span>
+            <div class="dupont p-only">
+              <div><span class="s-only">From future cash</span><span class="p-only">DCF value</span><b>₹1,504</b></div><span>+</span>
+              <div><span class="s-only">From rivals' prices</span><span class="p-only">Peer P/E value</span><b>₹1,191</b></div><span>÷ 2 =</span>
+              <div class="res">Fair value<b>₹1,347</b></div>
+            </div>
+            <p class="note p-only">Peer P/E value = sector P/E 27.0 × FY27E EPS ₹44.1.</p>
+          </div>
+          <div class="dcf p-only">
+            <strong style="font-size:0.95em"><span class="s-only">What could it be worth? Try your own guesses</span><span class="p-only">DCF, 2-stage free cash flow</span></strong>
+            <div class="sl"><label for="dcf-g">Cash-flow growth, next 10 years</label><output id="o-g" for="dcf-g">17.5%</output><input type="range" id="dcf-g" min="8" max="25" step="0.5" value="17.5"></div>
+            <div class="sl"><label for="dcf-r">Return you expect each year</label><output id="o-r" for="dcf-r">11.0%</output><input type="range" id="dcf-r" min="9" max="15" step="0.25" value="11"></div>
+            <div class="sl"><label for="dcf-t">Growth after year 10</label><output id="o-t" for="dcf-t">6.0%</output><input type="range" id="dcf-t" min="3" max="7" step="0.25" value="6"></div>
+            <div class="sl"><label for="dcf-m">Safety margin</label><output id="o-m" for="dcf-m">15%</output><input type="range" id="dcf-m" min="0" max="30" step="5" value="15"></div>
+            <div class="fv">
+              <div><small>Fair value</small><b id="fv-val">₹0</b></div>
+              <div><small>Buy below</small><b id="fv-buy">₹0</b></div>
+              <div><small>Price vs fair value</small><b id="fv-gap">0%</b></div>
+            </div>
+            <span class="note p-only">Base FCF ₹520 Cr (FY26), net debt ₹960 Cr, 17.1 Cr shares, Gordon terminal value.</span>
+          </div>
+        </div>
+        <div class="metrics" data-group="valuation"></div>
+      </section>
+
+      <!-- GROWTH -->
+      <section class="card" id="growth" data-title-s="Is it growing?" data-title-p="Growth" data-v="g">
+        <div class="sh"><h2><span class="s-only">Is it growing?</span><span class="p-only">Growth</span></h2>
+          <div style="display:flex;gap:8px;align-items:center"><span class="verdict g">Strong</span>
+          <div class="seg" role="group" aria-label="Period"><button id="per-y" data-per="y" aria-pressed="true">10 years</button><button id="per-q" data-per="q" aria-pressed="false">8 quarters</button></div></div>
+        </div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light g" aria-hidden="true">✓</span><p class="ans-a">Yes, it is growing fast.</p></div>
+          <ul class="facts-s"><li><span>Its sales go up about <b>18%</b> every year. Similar companies grow about <b>12%</b>.</span></li><li><span>Its profit grows even faster: about <b>26%</b> every year.</span></li><li><span>In 10 years, yearly sales went from <b>₹2,140 crore</b> to <b>₹5,960 crore</b>. That is almost 3 times bigger.</span></li></ul>
+        </div>
+        <p class="means">Sales and profit have grown every year since the FY21 COVID dip. Profit grows faster than sales because margins keep widening.</p>
+        <div class="chart" id="trend-chart"></div>
+        <div class="legend"><span><i style="background:var(--chart-4)"></i><span class="s-only">Sales each year (₹ crore)</span><span class="p-only">Sales (₹ Cr)</span></span><span><i style="background:var(--chart-1)"></i><span class="s-only">Profit each year (₹ crore)</span><span class="p-only">Net profit (₹ Cr)</span></span><span class="p-only"><i style="background:var(--chart-3);height:3px"></i>Operating margin %</span><span class="s-only">Taller bars mean more money.</span></div>
+        <div class="metrics" data-group="growth"></div>
+        <p class="note p-only">CAGR. 5-year figures start from the FY21 COVID low, which flatters them. Sector column is 3-year.</p>
+      </section>
+
+      <!-- PROFITABILITY -->
+      <section class="card" id="profitability" data-title-s="Does it make good money?" data-title-p="Profitability & returns" data-v="g">
+        <div class="sh"><h2><span class="s-only">Does it make good money?</span><span class="p-only">Profitability &amp; returns</span></h2><span class="verdict g">Strong</span></div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light g" aria-hidden="true">✓</span><p class="ans-a">Yes, it makes good money.</p></div>
+          <ul class="facts-s"><li><span>From every <b>₹100</b> of things it sells, it keeps about <b>₹10</b> as profit.</span></li><li><span>That share has gone up every year for 5 years.</span></li></ul>
+          <div class="cmpbars"><span class="cmp-title">If you put ₹100 into the business, this is what it earns for you each year:</span><div class="cb me"><span>ACME</span><span class="bar"><i style="width:100.0%"></i></span><b>₹19</b></div><div class="cb"><span>Similar companies</span><span class="bar"><i style="width:81.3%"></i></span><b>₹15</b></div><div class="cb"><span>Bank fixed deposit</span><span class="bar"><i style="width:37.4%"></i></span><b>₹7</b></div></div>
+        </div>
+        <p class="means">For every ₹100 shareholders have put in, ACME now earns ₹18.70 a year, up from ₹12 four years ago, and better than most rivals.</p>
+        <div class="two p-only">
+          <div class="chart" id="returns-chart"></div>
+          <div style="display:grid;gap:10px;align-content:center">
+            <span class="note"><span class="s-only">Where the 18.7% return comes from</span><span class="p-only">DuPont breakdown of ROE (FY26)</span></span>
+            <div class="dupont">
+              <div>Profit margin<b>10.1%</b></div><span>×</span>
+              <div>Asset turnover<b>1.01×</b></div><span>×</span>
+              <div>Leverage<b>1.83×</b></div><span>=</span>
+              <div class="res">ROE<b>18.7%</b></div>
+            </div>
+            <p class="note">Returns come from better margins and busier factories, not from heavy borrowing.</p>
+          </div>
+        </div>
+        <div class="legend p-only"><span><i style="background:var(--chart-1);height:3px"></i>ROE %</span><span><i style="background:var(--chart-2);height:3px"></i>ROCE %</span><span><i style="background:var(--chart-4);height:3px"></i>Sector ROE 15.2%</span></div>
+        <div class="metrics" data-group="profitability"></div>
+      </section>
+
+      <!-- HEALTH -->
+      <section class="card" id="health" data-title-s="Does it owe too much?" data-title-p="Balance sheet & liquidity" data-v="g">
+        <div class="sh"><h2><span class="s-only">Does it owe too much?</span><span class="p-only">Balance sheet &amp; liquidity</span></h2><span class="verdict g">Safe</span></div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light g" aria-hidden="true">✓</span><p class="ans-a">No. Its loans are small and getting smaller.</p></div>
+          <ul class="facts-s"><li><span>It earns <b>24 times</b> more than the interest it has to pay on its loans.</span></li><li><span>Banks and lenders give it a high safety grade (<b>AA−</b>).</span></li></ul>
+          <div class="cmpbars"><span class="cmp-title">Money borrowed for every ₹100 the company owns:</span><div class="cb"><span>ACME 4 years ago</span><span class="bar"><i style="width:100.0%"></i></span><b>₹90</b></div><div class="cb me"><span>ACME today</span><span class="bar"><i style="width:44.4%"></i></span><b>₹40</b></div><div class="cb"><span>Similar companies</span><span class="bar"><i style="width:61.1%"></i></span><b>₹55</b></div></div>
+        </div>
+        <p class="means">Debt has fallen every year and operating profit covers the interest bill 24 times over. Short-term bills are well covered. Lenders rate it AA−, a high-safety grade.</p>
+        <div class="metrics" data-group="health"></div>
+      </section>
+
+      <!-- EFFICIENCY -->
+      <section class="card" id="efficiency" data-title-s="Do customers pay on time?" data-title-p="Working capital & efficiency" data-v="w">
+        <div class="sh"><h2><span class="s-only">Do customers pay on time?</span><span class="p-only">Working capital &amp; efficiency</span></h2><span class="verdict w">Watch</span></div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light w" aria-hidden="true">!</span><p class="ans-a">Mostly, but customers are paying a little slower.</p></div>
+          <ul class="facts-s"><li><span>After ACME delivers, customers take about <b>66 days</b> (around 2 months) to pay.</span></li><li><span>Similar companies wait <b>82 days</b>, so ACME still gets paid quicker.</span></li><li><span>But it was 64 days last year, and lately it is 71. Keep an eye on this.</span></li></ul>
+        </div>
+        <p class="means">ACME turns sales into cash faster than most rivals. But customers have started paying more slowly over the last year, so more cash is stuck in the business. Worth watching in the next results.</p>
+        <div class="metrics" data-group="efficiency"></div>
+      </section>
+
+      <!-- CASH FLOW -->
+      <section class="card" id="cashflow" data-title-s="Are the profits real cash?" data-title-p="Cash flow quality" data-v="g">
+        <div class="sh"><h2><span class="s-only">Are the profits real cash?</span><span class="p-only">Cash flow quality</span></h2><span class="verdict g">Strong</span></div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light g" aria-hidden="true">✓</span><p class="ans-a">Yes, the profit is real money.</p></div>
+          <ul class="facts-s"><li><span>For every <b>₹100</b> of profit in its accounts, <b>₹127</b> actually came into its bank last year.</span></li><li><span>After paying for new machines and buildings, it still had <b>₹520 crore</b> left over.</span></li></ul>
+        </div>
+        <p class="means">Yes. Cash coming in from operations has been higher than reported profit for 5 years, and the company has cash left over every year after paying for new equipment.</p>
+        <div class="chart" id="cash-chart"></div>
+        <div class="legend"><span><i style="background:var(--chart-1)"></i><span class="s-only">Cash that came in</span><span class="p-only">Cash from operations</span></span><span><i style="background:var(--chart-4)"></i><span class="s-only">Profit on paper</span><span class="p-only">Net profit</span></span><span><i style="background:var(--chart-3)"></i><span class="s-only">Money left over</span><span class="p-only">Free cash flow</span></span></div>
+        <div class="metrics" data-group="cashflow"></div>
+      </section>
+
+      <!-- DIVIDENDS -->
+      <section class="card" id="dividends" data-title-s="Does it share its profit?" data-title-p="Dividends & capital allocation" data-v="n">
+        <div class="sh"><h2><span class="s-only">Does it share its profit with you?</span><span class="p-only">Dividends &amp; capital allocation</span></h2><span class="verdict n">Modest</span></div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light n" aria-hidden="true">i</span><p class="ans-a">Yes, a little, and a bit more every year.</p></div>
+          <ul class="facts-s"><li><span>Last year it paid <b>₹7.50</b> for every share. If you own 100 shares, you would get <b>₹750</b>.</span></li><li><span>It keeps most of its profit (about 80%) to grow the business.</span></li><li><span>It has never made new shares, so your slice of the company stays the same size.</span></li></ul>
+        </div>
+        <p class="means">The dividend has grown every year, but ACME keeps about 80% of its profit to fund growth. It has never issued new shares that would shrink your slice.</p>
+        <div class="metrics" data-group="dividends"></div>
+        <div class="ca">
+          <span class="note">Corporate actions</span>
+          <div><span>Aug 2026</span>Final dividend ₹7.50 per share</div>
+          <div><span>Aug 2025</span>Final dividend ₹6.00 per share</div>
+          <div><span>Sep 2021</span>Stock split from ₹10 to ₹2 face value (1 share became 5)</div>
+        </div>
+      </section>
+
+      <!-- OWNERSHIP -->
+      <section class="card" id="ownership" data-title-s="Who owns it?" data-title-p="Shareholding pattern" data-v="g">
+        <div class="sh"><h2><span class="s-only">Who owns it?</span><span class="p-only">Shareholding pattern</span></h2><span class="verdict g">Positive</span></div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light g" aria-hidden="true">✓</span><p class="ans-a">Mostly the founders. Big investors are buying more.</p></div>
+          <ul class="facts-s"><li><span>Big investors bought more shares in each of the last 7 quarters (a quarter is 3 months). That usually shows confidence.</span></li></ul>
+          <div class="ownbar" role="img" aria-label="Founders 58%, foreign investors 15%, Indian funds 13%, public 14%"><span style="width:58.2%;background:var(--chart-1)">58%</span><span style="width:14.6%;background:var(--chart-2)">15%</span><span style="width:12.9%;background:var(--chart-3)">13%</span><span style="width:14.3%;background:var(--chart-4);color:var(--ink)">14%</span></div>
+          <div class="ownlist"><div><i style="background:var(--chart-1)"></i>Founders' family</div><div><i style="background:var(--chart-2)"></i>Foreign big investors</div><div><i style="background:var(--chart-3)"></i>Indian funds</div><div><i style="background:var(--chart-4)"></i>People like you</div></div>
+        </div>
+        <p class="means">Big investors have been buying steadily: foreign funds went from 11.8% to 14.6% and mutual funds from 7.8% to 9.4%. The founders hold a steady 58% and have not pledged any shares as loan security.</p>
+        <div class="chart p-only" id="hold-chart"></div>
+        <div class="legend p-only"><span><i style="background:var(--chart-1)"></i>Promoters</span><span><i style="background:var(--chart-2)"></i>Foreign (FII)</span><span><i style="background:var(--chart-3)"></i>Domestic funds (DII)</span><span><i style="background:var(--chart-4)"></i>Public</span></div>
+        <div class="tw p-only"><table id="hold-table"></table></div>
+      </section>
+
+      <!-- RESULTS -->
+      <section class="card" id="results" data-title-s="Latest quarter" data-title-p="Quarterly results" data-v="g">
+        <div class="sh"><h2><span class="s-only">How was the latest quarter?</span><span class="p-only">Quarterly results</span></h2><span class="verdict g">Good</span></div>
+        <div class="qcards s-only">
+          <div><small>Sales, April to June 2026</small><b>₹1,560 crore</b><em>▲ 17% more than a year ago</em></div>
+          <div><small>Profit, April to June 2026</small><b>₹158 crore</b><em>▲ 20% more than a year ago</em></div>
+          <div><small>Profit from every ₹100 of sales</small><b>₹10.10</b><em>▲ up from ₹9.90 a year ago</em></div>
+        </div>
+        <div class="tw p-only"><table id="q-table"></table></div>
+        <div class="ai-box">
+          <div class="sh"><strong>What the company said</strong><span class="ai-chip">AI summary</span></div>
+          <ul class="s-only">
+            <li>It has ₹9,800 crore of orders waiting to be delivered</li>
+            <li>Its managers expect sales to grow 15 to 18% this year</li>
+            <li>A new factory in Gujarat should open early next year</li>
+            <li>To watch: customers are paying a little slower</li>
+          </ul>
+          <ul class="p-only">
+            <li>Order book ₹9,800 Cr, about 1.6 years of sales</li>
+            <li>Management expects 15 to 18% sales growth this year</li>
+            <li>New transformer plant in Gujarat to start in Q4 FY27</li>
+            <li>To watch: customers paying more slowly, working capital up from 62 to 71 days</li>
+          </ul>
+          <span class="src">Written by AI from the results filing and earnings call · every number checked against the filing</span>
+        </div>
+      </section>
+
+      <!-- PEERS -->
+      <section class="card" id="peers" data-title-s="Vs rivals" data-title-p="Peer comparison" data-v="g">
+        <div class="sh"><h2><span class="s-only">How does it compare with rivals?</span><span class="p-only">Peer comparison</span></h2><span class="verdict g">2nd of 5 on quality</span></div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light g" aria-hidden="true">✓</span><p class="ans-a">One of the best in its group, but not the cheapest.</p></div>
+          <ul class="facts-s"><li><span>We compared ACME with 4 similar companies that make power and factory equipment.</span></li></ul>
+          <div class="rank">
+          <div class="rk"><div class="lab"><b>Business quality</b><span>2nd best of 5</span></div><div class="dots"><span>1</span><span class="me">ACME</span><span>3</span><span>4</span><span>5</span></div><div class="dots-cap"><span>Best</span><span>Weakest</span></div></div>
+          <div class="rk"><div class="lab"><b>Growing</b><span>2nd fastest of 5</span></div><div class="dots"><span>1</span><span class="me">ACME</span><span>3</span><span>4</span><span>5</span></div><div class="dots-cap"><span>Fastest</span><span>Slowest</span></div></div>
+          <div class="rk"><div class="lab"><b>Loans</b><span>3rd smallest of 5</span></div><div class="dots"><span>1</span><span>2</span><span class="me">ACME</span><span>4</span><span>5</span></div><div class="dots-cap"><span>Smallest</span><span>Biggest</span></div></div>
+          <div class="rk"><div class="lab"><b>Price</b><span>2nd most expensive of 5</span></div><div class="dots"><span>1</span><span class="me">ACME</span><span>3</span><span>4</span><span>5</span></div><div class="dots-cap"><span>Most expensive</span><span>Cheapest</span></div></div>
+          </div>
+        </div>
+        <p class="means">Only Orbit Engineering is a better business, and Orbit costs even more. The cheaper rivals are cheaper for a reason: slower growth and weaker returns.</p>
+        <div class="tw p-only"><table id="peer-table"></table></div>
+      </section>
+
+      <!-- RED FLAGS -->
+      <section class="card" id="redflags" data-title-s="Warning signs?" data-title-p="Governance & red flags" data-v="w">
+        <div class="sh"><h2><span class="s-only">Any warning signs?</span><span class="p-only">Governance &amp; red-flag check</span></h2><span class="verdict w">1 to watch</span></div>
+                <div class="ans s-only">
+          <div class="ans-top"><span class="light g" aria-hidden="true">✓</span><p class="ans-a">Only one small worry.</p></div>
+          <ul class="facts-s"><li><span>We check for 8 common warning signs. 7 are fine.</span></li><li><span>The company also passes 3 standard health tests used by experts.</span></li></ul>
+        </div>
+        <div class="flags" id="flags"></div>
+        <div class="qs p-only">
+          <div class="q">
+            <div class="q-head"><span><span class="s-only">Financial strength</span><span class="p-only">Piotroski F-score</span></span><button class="info" data-id="piotroski" aria-label="What is the Piotroski F-score?">i</button></div>
+            <div class="q-val"><span class="big">9<small> / 9</small></span><span class="chip g">Strong</span></div>
+            <div class="zbar"><div class="segs"><span style="width:44.4%;background:var(--bad-soft)"></span><span style="width:33.3%;background:var(--warn-soft)"></span><span style="width:22.3%;background:var(--good-soft)"></span></div><i style="left:calc(100% - 2px)"></i></div>
+            <div class="zlbl"><span style="width:44.4%">Weak 0 to 3</span><span style="width:33.3%">Average</span><span style="width:22.3%">Strong 7+</span></div>
+            <p class="why">Passed all 9 yes/no tests of profit, debt and efficiency.</p>
+          </div>
+          <div class="q">
+            <div class="q-head"><span><span class="s-only">Bankruptcy risk</span><span class="p-only">Altman Z-score</span></span><button class="info" data-id="altman" aria-label="What is the Altman Z-score?">i</button></div>
+            <div class="q-val"><span class="big">4.6</span><span class="chip g">Safe</span></div>
+            <div class="zbar"><div class="segs"><span style="width:30%;background:var(--bad-soft)"></span><span style="width:20%;background:var(--warn-soft)"></span><span style="width:50%;background:var(--good-soft)"></span></div><i style="left:76.7%"></i></div>
+            <div class="zlbl"><span style="width:30%">Distress</span><span style="width:20%">Grey</span><span style="width:50%">Safe above 3</span></div>
+            <p class="why">Far from any sign of financial stress.</p>
+          </div>
+          <div class="q">
+            <div class="q-head"><span><span class="s-only">Accounts manipulation check</span><span class="p-only">Beneish M-score</span></span><button class="info" data-id="beneish" aria-label="What is the Beneish M-score?">i</button></div>
+            <div class="q-val"><span class="big">−2.71</span><span class="chip g">Clean</span></div>
+            <div class="zbar"><div class="segs"><span style="width:55.5%;background:var(--good-soft)"></span><span style="width:44.5%;background:var(--bad-soft)"></span></div><i style="left:32.3%"></i></div>
+            <div class="zlbl"><span style="width:55.5%">Unlikely below −1.78</span><span style="width:44.5%">Possible</span></div>
+            <p class="why">Nothing suggests the profits are being dressed up.</p>
+          </div>
+        </div>
+        <div class="tw p-only"><table id="pio-table"></table></div>
+      </section>
+
+      <!-- STATEMENTS -->
+      <section class="card p-only" id="statements" data-title-s="Full accounts" data-title-p="Financial statements" data-v="n">
+        <div class="sh"><h2><span class="s-only">The full accounts</span><span class="p-only">Financial statements</span></h2>
+          <div class="seg" role="group" aria-label="Statement"><button id="st-pl" data-st="pl" aria-pressed="true">Profit &amp; loss</button><button id="st-bs" data-st="bs" aria-pressed="false">Balance sheet</button><button id="st-cf" data-st="cf" aria-pressed="false">Cash flow</button></div>
+        </div>
+        <p class="means s-only">Simple mode shows the key lines. Switch to Pro for every line item.</p>
+        <div class="tw"><table id="st-table"></table></div>
+        <span class="note">₹ Crore, consolidated, financial years ending 31 March. Brackets mean money going out.</span>
+      </section>
+
+      <!-- DOCUMENTS -->
+      <section class="card" id="documents" data-title-s="Read more" data-title-p="Filings & documents" data-v="n">
+        <div class="sh"><h2><span class="s-only">Read more</span><span class="p-only">Filings &amp; documents</span></h2></div>
+        <div class="docs">
+          <div class="doc"><span class="ft">PDF</span><div>Annual report FY26<small>Aug 2026 · 214 pages</small></div></div>
+          <div class="doc"><span class="ft">PDF</span><div>Q1 FY27 results<small>8 Aug 2026</small></div></div>
+          <div class="doc"><span class="ft">PDF</span><div>Q1 FY27 earnings call transcript<small>11 Aug 2026</small></div></div>
+          <div class="doc"><span class="ft">PDF</span><div>Investor presentation<small>Aug 2026</small></div></div>
+          <div class="doc"><span class="ft">PDF</span><div>Credit rating report<small>Mar 2026 · AA− (Stable)</small></div></div>
+          <div class="doc"><span class="ft">PDF</span><div>Annual report FY25<small>Aug 2025</small></div></div>
+        </div>
+        <p class="note">In the real app these open the original filing on the exchange website.</p>
+      </section>
+
+      <p class="foot">ACME Industries and every number on this page are made up to show the layout. Nothing here is investment advice.</p>
+    </main>
+  </div>
+</div>
+
+<div class="pop" id="pop" role="dialog" aria-modal="false" aria-labelledby="pop-title" hidden>
+  <button class="x" id="pop-x" aria-label="Close">×</button>
+  <h3 id="pop-title"></h3>
+  <span class="pro-name" id="pop-pro"></span>
+  <dl>
+    <div><dt>What it means</dt><dd id="pop-d"></dd></div>
+    <div id="pop-f-wrap"><dt>How it's worked out</dt><dd id="pop-f"></dd></div>
+    <div id="pop-g-wrap"><dt>What's good</dt><dd id="pop-g"></dd></div>
+  </dl>
+  <div class="reading" id="pop-r"></div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var YRS = ["FY22", "FY23", "FY24", "FY25", "FY26"];
+  var PERIODS = ["1 yr", "3 yr", "5 yr", "Since FY17"];
+
+  // ---------- metric definitions ----------
+  // s: simple label, p: pro label, u: unit, dp: decimals, v: now, sec: sector median, h: FY22..FY26, st: g|w|r|n,
+  // core: shown in Simple before "show more", d/f/g: meaning, formula, what's good, note: extra reading.
+  var G = {
+    valuation: [
+      { id: "mcap", s: "Company size (market value)", p: "Market cap", u: "cr", v: 21350, st: "n", core: 1, d: "What the whole company is worth on the stock market today.", f: "Share price × number of shares", g: "Neither good nor bad. Large companies are usually steadier, smaller ones move more." },
+      { id: "pe", s: "Price for ₹1 of yearly profit", p: "P/E (TTM)", u: "num", dp: 1, v: 34.0, sec: 27.0, h: [24.1, 22.8, 29.5, 31.2, 33.0], st: "w", core: 1, d: "How many rupees you pay for each rupee the company earns in a year.", f: "Share price ÷ earnings per share over the last 12 months", g: "Lower is cheaper. Compare with the sector and with the stock's own past." },
+      { id: "peg", s: "Price adjusted for growth", p: "PEG ratio", u: "num", dp: 2, v: 1.31, sec: 1.9, st: "g", core: 1, d: "P/E divided by profit growth. Shows whether a high P/E is backed by fast growth.", f: "P/E ÷ 3-year profit growth %", g: "Below 1 is cheap for its growth, 1 to 2 is fair, above 2 is expensive.", note: "Expensive on P/E alone, but reasonable once its faster growth is counted." },
+      { id: "ev", s: "Business value vs operating profit", p: "EV / EBITDA", u: "num", dp: 1, v: 24.5, sec: 19.8, h: [15.2, 14.6, 19.8, 21.9, 23.6], st: "w", core: 1, d: "Value of the whole business, including its debt, compared with its operating profit.", f: "(Market cap + debt − cash) ÷ EBITDA", g: "Lower is cheaper. Fairer than P/E when companies carry different amounts of debt." },
+      { id: "fpe", s: "Price vs this year's expected profit", p: "Forward P/E (FY27E)", u: "num", dp: 1, v: 28.3, sec: 23.5, st: "w", d: "Like P/E, but using the profit expected for this financial year.", f: "Share price ÷ estimated EPS for FY27", g: "Lower is cheaper. Estimates can be wrong." },
+      { id: "pb", s: "Price vs what the company owns", p: "P/B", u: "num", dp: 1, v: 6.2, sec: 4.8, h: [2.8, 3.0, 4.4, 5.1, 5.8], st: "w", d: "Price compared with the company's net worth (what it owns minus what it owes) per share.", f: "Share price ÷ book value per share", g: "Lower is cheaper. Companies with high returns usually trade above 3." },
+      { id: "ps", s: "Price vs yearly sales", p: "P/S", u: "num", dp: 2, v: 3.45, sec: 2.9, h: [1.8, 1.9, 2.7, 3.0, 3.3], st: "w", d: "Company value compared with one year of sales.", f: "Market cap ÷ sales over the last 12 months", g: "Lower is cheaper. Useful when profits swing a lot." },
+      { id: "pfcf", s: "Price vs spare cash it makes", p: "P / FCF", u: "num", dp: 1, v: 41.1, sec: 35.0, st: "w", d: "Company value compared with the cash left after running and investing in the business.", f: "Market cap ÷ free cash flow", g: "Lower is cheaper." },
+      { id: "ey", s: "Profit return on today's price", p: "Earnings yield", u: "pct", dp: 1, v: 2.9, sec: 3.7, st: "w", d: "P/E turned upside down: the yearly profit behind every ₹100 of shares you buy.", f: "EPS ÷ share price", g: "Higher is better. Compare with a fixed deposit rate of about 7%." },
+      { id: "bvps", s: "Net worth per share", p: "Book value / share", u: "inr", dp: 1, v: 201.8, h: [115.8, 132.2, 152.6, 175.4, 201.8], st: "g", d: "The company's net worth divided by its number of shares.", f: "Shareholders' equity ÷ shares outstanding", g: "Steady growth is a good sign." },
+      { id: "graham", s: "Very cautious value", p: "Graham number", u: "inr", dp: 0, v: 408, st: "n", d: "A cautious value from investor Benjamin Graham, meant for steady, slow-growing companies.", f: "√(22.5 × EPS × book value per share)", g: "Fast growers usually trade far above it. Treat it as a floor, not a target." }
+    ],
+    growth: [
+      { id: "g_sales", s: "Sales growth per year", p: "Revenue CAGR", u: "pct", dp: 1, per: [18.0, 18.2, 20.9, 12.1], v: 18.2, sec: 12.4, st: "g", core: 1, d: "How fast yearly sales have grown, as an average per year.", f: "(Latest sales ÷ earlier sales)^(1 ÷ years) − 1", g: "Above 15% a year is strong for a company this size." },
+      { id: "g_profit", s: "Profit growth per year", p: "Net profit CAGR", u: "pct", dp: 1, per: [23.9, 26.0, 38.5, 18.8], v: 26.0, sec: 14.1, st: "g", core: 1, d: "How fast yearly profit after tax has grown, as an average per year.", f: "(Latest profit ÷ earlier profit)^(1 ÷ years) − 1", g: "Faster than sales growth means margins are improving." },
+      { id: "g_eps", s: "Profit per share growth", p: "EPS CAGR", u: "pct", dp: 1, per: [23.9, 26.0, 38.5, 18.8], v: 26.0, sec: 13.6, st: "g", d: "Growth in profit for each share. Equal to profit growth here because no new shares were issued.", f: "CAGR of earnings per share", g: "Should keep pace with profit growth. A gap means new shares diluted owners." },
+      { id: "g_ebitda", s: "Operating profit growth", p: "EBITDA CAGR", u: "pct", dp: 1, per: [22.1, 23.5, 30.6, 16.0], v: 23.5, sec: 13.5, st: "g", d: "Growth in profit from operations, before interest, depreciation and tax.", f: "CAGR of EBITDA", g: "Higher than sales growth means the core business is getting more efficient." },
+      { id: "g_bv", s: "Net worth growth", p: "Book value CAGR", u: "pct", dp: 1, per: [15.0, 15.1, 14.1, 13.3], v: 15.1, sec: 11.0, st: "g", d: "How fast shareholders' net worth in the company has grown.", f: "CAGR of shareholders' equity", g: "Steady double-digit growth compounds well over time." }
+    ],
+    profitability: [
+      { id: "roe", s: "Return on shareholders' money", p: "ROE", u: "pct", dp: 1, v: 18.7, sec: 15.2, h: [12.0, 14.2, 16.0, 17.3, 18.7], st: "g", core: 1, d: "Profit earned for every ₹100 of shareholders' money in the business.", f: "Net profit ÷ average shareholders' equity", g: "Above 15% is good. Check it isn't boosted by heavy debt." },
+      { id: "roce", s: "Return on all money used", p: "ROCE", u: "pct", dp: 1, v: 18.1, sec: 15.8, h: [13.2, 14.9, 16.3, 17.2, 18.1], st: "g", core: 1, d: "Operating profit for every ₹100 used in the business, from shareholders and lenders together.", f: "EBIT ÷ (equity + debt)", g: "Above 15% is good. It should beat the interest rate the company pays." },
+      { id: "opm", s: "Operating margin", p: "EBITDA margin", u: "pct", dp: 1, v: 15.3, sec: 13.0, h: [12.6, 13.4, 14.1, 14.8, 15.3], st: "g", core: 1, d: "Out of every ₹100 of sales, what's left after running costs, before interest, depreciation and tax.", f: "EBITDA ÷ sales", g: "Higher is better. Rising margins suggest pricing power or better efficiency." },
+      { id: "npm", s: "Final profit margin", p: "Net profit margin", u: "pct", dp: 1, v: 10.1, sec: 8.2, h: [7.5, 8.3, 9.1, 9.6, 10.1], st: "g", core: 1, d: "Out of every ₹100 of sales, how much ends up as final profit.", f: "Net profit ÷ sales", g: "Higher is better. Compare within the same industry." },
+      { id: "gm", s: "Margin after raw materials", p: "Gross margin", u: "pct", dp: 1, v: 38.2, sec: 33.0, h: [34.9, 35.8, 36.6, 37.5, 38.2], st: "g", d: "Sales minus the cost of materials, as a share of sales.", f: "(Sales − material costs) ÷ sales", g: "Higher and stable is better. Falling can mean rising input costs." },
+      { id: "roa", s: "Return on everything it owns", p: "ROA", u: "pct", dp: 1, v: 10.2, sec: 7.1, h: [5.1, 6.4, 7.7, 9.0, 10.2], st: "g", d: "Profit compared with everything the company owns.", f: "Net profit ÷ average total assets", g: "Above 8% is good for a manufacturer." }
+    ],
+    health: [
+      { id: "de", s: "Debt compared with net worth", p: "Debt / Equity", u: "num", dp: 2, v: 0.40, sec: 0.55, h: [0.90, 0.75, 0.60, 0.49, 0.40], st: "g", core: 1, d: "Borrowed money for every ₹1 of shareholders' money.", f: "Total borrowings ÷ shareholders' equity", g: "Below 0.5 is comfortable. Above 1 deserves caution for non-financial companies." },
+      { id: "icr", s: "How easily it pays interest", p: "Interest coverage", u: "x", dp: 1, v: 24.5, sec: 8.0, h: [6.6, 9.0, 12.4, 17.2, 24.5], st: "g", core: 1, d: "How many times operating profit covers the yearly interest bill.", f: "EBIT ÷ interest expense", g: "Above 5 is safe. Below 2 is risky." },
+      { id: "cr", s: "Short-term bills covered", p: "Current ratio", u: "num", dp: 2, v: 1.62, sec: 1.4, h: [1.38, 1.44, 1.51, 1.57, 1.62], st: "g", core: 1, d: "What turns into cash within a year, compared with bills due within a year.", f: "Current assets ÷ current liabilities", g: "Above 1.2 is healthy." },
+      { id: "rating", s: "Lenders' safety grade", p: "Credit rating", u: "txt", v: "AA−", h: ["A+", "A+", "A+", "AA−", "AA−"], st: "g", core: 1, d: "A grade from a credit rating agency on how safely the company can repay its debt.", f: "Set by the rating agency", g: "AAA is the highest. AA means high safety.", note: "Stable outlook. Upgraded from A+ in 2025." },
+      { id: "netdebt", s: "Debt minus cash", p: "Net debt", u: "cr", v: 960, h: [1570, 1430, 1250, 1110, 960], st: "g", d: "Borrowings minus the cash the company holds.", f: "Borrowings − cash and liquid investments", g: "Falling is good. Below zero means more cash than debt." },
+      { id: "debitda", s: "Years of profit to clear debt", p: "Debt / EBITDA", u: "num", dp: 2, v: 1.51, sec: 2.1, h: [4.67, 3.49, 2.59, 1.97, 1.51], st: "g", d: "Roughly how many years of operating profit it would take to repay all debt.", f: "Borrowings ÷ EBITDA", g: "Below 2 is comfortable. Above 4 is stretched." },
+      { id: "qr", s: "Short-term cover without stock", p: "Quick ratio", u: "num", dp: 2, v: 1.18, sec: 1.0, h: [0.96, 1.01, 1.07, 1.13, 1.18], st: "g", d: "Like the current ratio, but leaves out inventory, which can be slow to sell.", f: "(Current assets − inventory) ÷ current liabilities", g: "Above 1 is healthy." },
+      { id: "cl", s: "Possible future claims", p: "Contingent liab. / equity", u: "pct", dp: 1, v: 11.9, sec: 18.0, h: [15.2, 14.1, 13.0, 12.5, 11.9], st: "g", d: "Claims that may become payable, such as legal disputes and guarantees, compared with net worth.", f: "Contingent liabilities ÷ shareholders' equity", g: "Below 20% is comfortable." }
+    ],
+    efficiency: [
+      { id: "wcd", s: "Days cash is stuck in operations", p: "Working capital days", u: "days", v: 66, sec: 85, h: [70, 67, 64, 62, 66], st: "w", core: 1, d: "How many days of sales are tied up in stock and unpaid customer bills, after what the company owes suppliers.", f: "(Receivables + inventory − payables) ÷ sales × 365", g: "Lower is better. A rise means cash is getting stuck.", note: "Rose further to 71 days in Q1 FY27." },
+      { id: "dd", s: "Days customers take to pay", p: "Debtor days", u: "days", v: 66, sec: 82, h: [74, 71, 68, 64, 66], st: "w", core: 1, d: "Average number of days customers take to pay their bills.", f: "Receivables ÷ sales × 365", g: "Lower is better. A rise for two periods in a row is worth watching." },
+      { id: "at", s: "Sales for every ₹1 it owns", p: "Asset turnover", u: "x", dp: 2, v: 1.01, sec: 0.90, h: [0.68, 0.76, 0.85, 0.93, 1.01], st: "g", core: 1, d: "How much sales the company generates from everything it owns.", f: "Sales ÷ average total assets", g: "Higher means assets are being used well." },
+      { id: "invd", s: "Days stock sits before selling", p: "Inventory days", u: "days", v: 56, sec: 70, h: [62, 60, 58, 55, 56], st: "g", d: "Average days goods sit in the warehouse before being sold.", f: "Inventory ÷ cost of goods sold × 365", g: "Lower is better, as long as it doesn't cause shortages." },
+      { id: "payd", s: "Days it takes to pay suppliers", p: "Payable days", u: "days", v: 54, sec: 60, h: [58, 57, 56, 55, 54], st: "n", d: "Average days the company takes to pay its own suppliers.", f: "Payables ÷ cost of goods sold × 365", g: "Neither good nor bad alone. Very high can mean the company is short of cash." },
+      { id: "ccc", s: "Days from paying suppliers to getting paid", p: "Cash conversion cycle", u: "days", v: 68, sec: 92, h: [78, 74, 70, 64, 68], st: "g", d: "Days between paying for materials and collecting cash from customers.", f: "Debtor days + inventory days − payable days", g: "Shorter is better." },
+      { id: "fat", s: "Sales for every ₹1 of factories", p: "Fixed asset turnover", u: "x", dp: 2, v: 2.51, sec: 2.2, h: [1.49, 1.72, 1.95, 2.21, 2.51], st: "g", d: "Sales generated from plants and machinery.", f: "Sales ÷ average fixed assets", g: "Rising means factories are running busier." }
+    ],
+    cashflow: [
+      { id: "cfonp", s: "Profit that arrives as cash", p: "CFO / Net profit", u: "x", dp: 2, v: 1.27, sec: 1.0, h: [1.46, 1.40, 1.39, 1.34, 1.27], st: "g", core: 1, d: "Cash from operations compared with reported profit. It shows whether profits are real cash.", f: "Cash from operations ÷ net profit", g: "Around 1 or above is healthy. Below 0.7 for years is a warning." },
+      { id: "fcf", s: "Spare cash each year", p: "Free cash flow", u: "cr", v: 520, h: [140, 215, 320, 412, 520], st: "g", core: 1, d: "Cash left after running the business and paying for new plants and equipment.", f: "Cash from operations − capital spending", g: "Positive and rising is ideal." },
+      { id: "fcfm", s: "Spare cash per ₹100 of sales", p: "FCF margin", u: "pct", dp: 1, v: 8.7, sec: 6.5, h: [4.6, 6.0, 7.5, 8.2, 8.7], st: "g", d: "Free cash flow as a share of sales.", f: "Free cash flow ÷ sales", g: "Higher is better." },
+      { id: "capex", s: "Spending on new capacity", p: "Capex / Sales", u: "pct", dp: 1, v: 4.1, sec: 5.0, h: [6.3, 5.7, 5.1, 4.7, 4.1], st: "n", d: "Share of sales spent on new plants and equipment.", f: "Capital spending ÷ sales", g: "Neither good nor bad alone. Very low for years can limit future growth." }
+    ],
+    dividends: [
+      { id: "dps", s: "Dividend per share", p: "DPS", u: "inr", dp: 2, v: 7.5, h: [3.0, 4.0, 5.0, 6.0, 7.5], st: "g", core: 1, d: "Cash paid to shareholders for each share during the year.", f: "Total dividend ÷ shares", g: "Steady increases are a good sign." },
+      { id: "payout", s: "Share of profit paid out", p: "Dividend payout", u: "pct", dp: 1, v: 21.3, sec: 28.0, h: [22.7, 22.7, 22.0, 21.1, 21.3], st: "n", core: 1, d: "Part of yearly profit paid out as dividend. The rest is reinvested in the business.", f: "Dividend ÷ net profit", g: "Growing companies often pay 15 to 30% and reinvest the rest." },
+      { id: "dy", s: "Yearly dividend vs price", p: "Dividend yield", u: "pct", dp: 1, v: 0.6, sec: 0.8, st: "n", core: 1, d: "Yearly dividend as a share of today's price.", f: "Dividend per share ÷ share price", g: "Higher means more income. Fast growers usually pay less." },
+      { id: "shares", s: "Number of shares", p: "Shares outstanding", u: "sh", dp: 1, v: 17.1, h: [17.1, 17.1, 17.1, 17.1, 17.1], st: "g", d: "Total shares issued. If this grows, each share owns a smaller slice of the company.", f: "From the shareholding filing", g: "Flat or falling is good for existing shareholders." }
+    ]
+  };
+  var BY_ID = {};
+  Object.keys(G).forEach(function (k) { G[k].forEach(function (m) { m.group = k; BY_ID[m.id] = m; }); });
+  [
+    { id: "signal", s: "Fundamental signals", p: "Short, medium and long-term signals", u: "txt", v: "Neutral / Buy / Buy", st: "g", d: "Buy or sell readings from the company's numbers alone, one for each time frame. Each time frame looks at different things, because what moves a share over weeks differs from what moves it over years.", f: "Short term: near-term triggers. Medium term: profit momentum. Long term: business quality against price.", g: "Use the signal that matches how long you plan to hold. The Overview tab adds price-chart timing." },
+    { id: "sig_short", s: "Short-term signal", p: "Catalyst score (2 to 6 weeks)", u: "txt", v: "Neutral", st: "n", d: "Looks at what could move the share in the next few weeks: upcoming results, how the last results compared with forecasts, recent changes in analysts' forecasts, and news.", f: "Catalyst score 0 to 100 from results surprise, 30-day forecast changes and news tone. Results due within 15 days cap the signal at Neutral.", g: "Buy at 70+, Strong buy at 85+. Neutral 40 to 69." },
+    { id: "sig_med", s: "Medium-term signal", p: "Earnings momentum (1 to 6 months)", u: "txt", v: "Buy", st: "g", d: "Looks at whether profits should keep growing over the next few quarters: expected growth, the direction of forecasts, the order book and buying by big investors.", f: "Momentum score 0 to 100 from next-4-quarter growth, 90-day forecast changes, order book cover and institutional buying.", g: "Buy at 70 to 84, Strong buy at 85+, Neutral 40 to 69, Sell below 40." },
+    { id: "signal_long", s: "Long-term signal", p: "Quality × valuation grid (1 to 3 years)", u: "txt", v: "Buy", st: "g", d: "Asks two questions: how good is the business, and is today's price below or above what it is worth?", f: "Quality score (High 70+, Medium 50 to 69, Low below 50) against price vs fair value (Cheap 15%+ below, Fair within 15%, Expensive 15%+ above). Fair value averages the DCF value and the peer P/E value.", g: "Strong buy and Buy suit long-term investors.", note: "High quality at a fair price." },
+    { id: "piotroski", s: "Financial strength score", p: "Piotroski F-score", u: "txt", v: "9 / 9", st: "g", d: "9 yes/no tests on profit, debt and efficiency, comparing this year with last year.", f: "One point for each test passed, from 0 to 9", g: "7 to 9 is strong, 4 to 6 average, 0 to 3 weak." },
+    { id: "altman", s: "Bankruptcy risk score", p: "Altman Z-score", u: "txt", v: "4.6", st: "g", d: "Combines 5 ratios to estimate the risk of serious financial trouble within about 2 years.", f: "1.2 × working capital/assets + 1.4 × retained earnings/assets + 3.3 × EBIT/assets + 0.6 × market value/liabilities + 1.0 × sales/assets", g: "Above 3 is safe, 1.8 to 3 is a grey zone, below 1.8 signals distress." },
+    { id: "beneish", s: "Accounts manipulation check", p: "Beneish M-score", u: "txt", v: "−2.71", st: "g", d: "Looks at 8 accounting patterns that often appear when profits are being inflated.", f: "Weighted sum of 8 ratios, such as receivables growth, accruals and margin changes", g: "Below −1.78 means manipulation is unlikely." }
+  ].forEach(function (m) { BY_ID[m.id] = m; });
+
+  var Y = { labels: ["FY17","FY18","FY19","FY20","FY21","FY22","FY23","FY24","FY25","FY26"],
+    sales: [2140,2390,2705,2560,2310,3020,3610,4280,5050,5960], profit: [128,152,181,149,118,226,301,389,486,602],
+    margin: [11.2,11.8,12.1,10.9,10.4,12.6,13.4,14.1,14.8,15.3] };
+  var Q = { labels: ["Q2 FY25","Q3 FY25","Q4 FY25","Q1 FY26","Q2 FY26","Q3 FY26","Q4 FY26","Q1 FY27"],
+    sales: [1190,1270,1420,1330,1410,1520,1700,1560], ebitda: [169,189,222,197,212,234,272,245],
+    margin: [14.2,14.9,15.6,14.8,15.0,15.4,16.0,15.7], profit: [112,128,146,132,141,154,175,158],
+    eps: [6.5,7.5,8.5,7.7,8.2,9.0,10.2,9.2], salesYoY: [16.4,17.0,18.9,13.7,18.5,19.7,19.7,17.3], profitYoY: [21.7,24.3,25.9,17.9,25.9,20.3,19.9,19.7] };
+  var HOLD = { labels: Q.labels, promoter: [58.2,58.2,58.2,58.2,58.2,58.2,58.2,58.2], fii: [11.8,12.1,12.3,12.6,13.2,13.7,14.1,14.6],
+    dii: [11.2,11.4,11.6,11.9,12.1,12.4,12.7,12.9], mf: [7.8,8.0,8.2,8.5,8.7,8.9,9.2,9.4], holders: [2.14,2.19,2.22,2.26,2.29,2.31,2.35,2.38] };
+  HOLD.pub = HOLD.labels.map(function (_, i) { return +(100 - HOLD.promoter[i] - HOLD.fii[i] - HOLD.dii[i]).toFixed(1); });
+  var CASH = { cfo: [330,420,540,650,765], np: [226,301,389,486,602], fcf: [140,215,320,412,520] };
+  var PEERS = { head: [["Company","Company"],["Size (₹ Cr)","Mcap ₹ Cr"],["Price for ₹1 profit","P/E"],["","PEG"],["Return on money","ROE %"],["","ROCE %"],["Debt vs net worth","Debt/Eq"],["Sales growth","Sales CAGR 3y %"],["","OPM %"],["","Div. yield %"]],
+    pro: [0,0,0,1,0,1,0,0,1,1],
+    rows: [["ACME Industries",21350,34.0,1.31,18.7,18.1,0.40,18.2,15.3,0.6,"me"],["Orbit Engineering",34800,41.2,1.87,21.5,22.6,0.12,20.4,17.8,0.4],["Nova Machines",18900,27.0,1.82,16.4,17.2,0.32,14.8,13.9,1.1],
+      ["Kestrel Power",12600,19.8,2.48,13.1,13.4,0.85,9.6,11.2,1.6],["Vertex Systems",9750,23.5,2.61,12.2,12.9,0.61,11.3,10.6,1.2],["Sector median",15750,27.0,1.9,15.2,15.8,0.55,12.4,13.0,0.8,"med"]] };
+  var ST = {
+    pl: [["Sales",[3020,3610,4280,5050,5960],1],["Raw materials",[-1966,-2318,-2714,-3156,-3683]],["Employee costs",[-302,-354,-411,-475,-542]],["Other expenses",[-371,-454,-552,-672,-823]],
+      ["Operating profit (EBITDA)",[381,484,603,747,912],1,1],["Operating margin %",[12.6,13.4,14.1,14.8,15.3]],["Other income",[14,18,22,28,32]],["Depreciation",[-62,-70,-81,-92,-104]],
+      ["Interest",[-48,-46,-42,-38,-33]],["Profit before tax",[285,386,502,645,807],0,1],["Tax",[-59,-85,-113,-159,-205]],["Net profit",[226,301,389,486,602],1,1],["EPS (₹)",[13.2,17.6,22.7,28.4,35.2],1],["Dividend per share (₹)",[3.0,4.0,5.0,6.0,7.5]]],
+    bs: [["Share capital",[34,34,34,34,34]],["Reserves",[1946,2226,2576,2966,3416]],["Shareholders' equity",[1980,2260,2610,3000,3450],1,1],["Borrowings",[1780,1690,1560,1470,1380],1],
+      ["Other liabilities",[820,910,1040,1180,1320]],["Total liabilities",[4580,4860,5210,5650,6150],1,1],["Fixed assets",[2050,2140,2230,2330,2420],1],["Capital work in progress",[120,140,160,150,170]],
+      ["Investments",[180,200,230,260,300]],["Cash & bank",[210,260,310,360,420],1],["Receivables",[612,702,797,885,1078]],["Inventory",[406,456,521,571,705]],["Other assets",[1002,962,962,1094,1057]],["Total assets",[4580,4860,5210,5650,6150],1,1]],
+    cf: [["Cash from operations",[330,420,540,650,765],1,1],["Capital spending",[-190,-205,-220,-238,-245],1],["Free cash flow",[140,215,320,412,520],1,1],["Other investing",[-25,-25,-35,-32,-45]],
+      ["Cash from investing",[-215,-230,-255,-270,-290]],["Dividends paid",[-51,-68,-86,-103,-128]],["Debt repaid, interest & other",[-44,-72,-149,-227,-287]],["Cash from financing",[-95,-140,-235,-330,-415]],["Net change in cash",[20,50,50,50,60],1,1]]
+  };
+  var FLAGS = [
+    ["g", "No pledged shares", "Founders have not pledged any shares as loan security.", "Founders haven't borrowed against their shares", "So they won't be forced to sell in bad times."],
+    ["g", "Founders not selling", "Promoter stake unchanged at 58.2% for 8 quarters.", "Founders are not selling", "They still own 58%, the same as 2 years ago."],
+    ["g", "No dilution", "No new shares issued in 5 years.", "Your slice isn't shrinking", "No new shares made in 5 years."],
+    ["g", "Clean audit", "Same auditor for 6 years, no qualifications.", "Accounts checked and clean", "The same checker for 6 years found no problems."],
+    ["g", "Low related-party deals", "1.2% of sales, within normal range.", "Few deals with the owners' other firms", "Only about ₹1 in every ₹100 of sales."],
+    ["g", "Profit matches cash", "Operating cash beat profit in 5 of 5 years.", "Profits are real cash", "The cash came in every year for 5 years."],
+    ["g", "Contingent claims small", "11.9% of net worth and falling.", "Few legal claims hanging over it", "Small, and getting smaller."],
+    ["w", "Customers paying slower", "Working capital rose from 62 to 71 days in 5 quarters.", "Customers paying a bit slower", "Keep an eye on this in the next results."]
+  ];
+
+  // ---------- helpers ----------
+  function fmt(n, d) { return Number(n).toLocaleString("en-IN", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+  function val(m, v) {
+    if (m.u === "txt") return String(v);
+    var dp = m.dp || 0;
+    switch (m.u) {
+      case "cr": return "₹" + fmt(v) + " Cr";
+      case "pct": return fmt(v, dp) + "%";
+      case "x": return fmt(v, dp) + "×";
+      case "inr": return "₹" + fmt(v, dp);
+      case "days": return fmt(v) + " days";
+      case "sh": return fmt(v, dp) + " Cr";
+      default: return fmt(v, dp);
+    }
+  }
+  var STW = { g: "Good", w: "Watch", r: "Weak", n: "Neutral" };
+  function css(n) { return getComputedStyle(root).getPropertyValue(n).trim(); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  var UNIT = { cr: "₹ Cr", pct: "%", x: "times", inr: "₹", days: "days", sh: "Cr shares" };
+  function bare(m, v) {
+    if (v == null || v === "") return "";
+    if (m.u === "txt") return String(v);
+    return fmt(v, m.u === "cr" || m.u === "days" ? 0 : (m.dp || 0));
+  }
+  function nameCell(m, unitOverride) {
+    var u = unitOverride || UNIT[m.u];
+    return '<th scope="row"><div class="mname"><span class="cell">' + esc(m.p) + (u ? '<span class="unit">' + u + '</span>' : '') + infoBtn(m) + '</span><small>' + esc(m.s) + '</small></div></th>';
+  }
+  function statusCell(m) { return '<span class="status ' + m.st + '"><i></i>' + STW[m.st] + '</span>'; }
+  function infoBtn(m) { return '<button class="info" data-id="' + m.id + '" aria-label="What is ' + esc(m.p) + '?">i</button>'; }
+  function spark(h) {
+    if (!h || typeof h[0] !== "number") return "";
+    var mn = Math.min.apply(null, h), mx = Math.max.apply(null, h), w = 60, ht = 18;
+    var pts = h.map(function (v, i) { return (i * w / (h.length - 1)).toFixed(1) + "," + (mx === mn ? ht / 2 : (ht - 2 - (v - mn) / (mx - mn) * (ht - 4))).toFixed(1); });
+    var last = pts[pts.length - 1].split(",");
+    return '<svg class="spark" width="' + w + '" height="' + ht + '" viewBox="0 0 ' + w + ' ' + ht + '"><polyline points="' + pts.join(" ") + '" fill="none" stroke="' + css("--accent") + '" stroke-width="1.5"/><circle cx="' + last[0] + '" cy="' + last[1] + '" r="2.2" fill="' + css("--accent") + '"/></svg>';
+  }
+
+  // ---------- render metric groups ----------
+  var expanded = {};
+  function renderGroup(el) {
+    var key = el.dataset.group, items = G[key], mode = root.dataset.mode, h = "";
+    if (mode === "simple") { el.innerHTML = ""; return; }
+    if (false) {
+    } else if (key === "growth") {
+      h += '<div class="tw"><table><thead><tr><th>Metric</th>' + PERIODS.map(function (p, i) { return '<th' + (i === 1 ? ' class="now"' : '') + '>' + p + '</th>'; }).join("") + '<th>Sector 3 yr</th><th>Status</th></tr></thead><tbody>';
+      items.forEach(function (m) {
+        h += '<tr>' + nameCell(m, "% a year") + m.per.map(function (v, i) { return '<td' + (i === 1 ? ' class="now"' : '') + '>' + bare(m, v) + '</td>'; }).join("") +
+          '<td class="dim">' + bare(m, m.sec) + '</td><td>' + statusCell(m) + '</td></tr>';
+      });
+      h += '</tbody></table></div>';
+    } else {
+      h += '<div class="tw"><table><thead><tr><th>Metric</th>' + YRS.map(function (y) { return '<th class="old">' + y + '</th>'; }).join("") + '<th class="now">Now</th><th>Sector</th><th>5 yr trend</th><th>Status</th></tr></thead><tbody>';
+      items.forEach(function (m) {
+        var cells = YRS.map(function (_, i) { return '<td class="dim">' + (m.h ? bare(m, m.h[i]) : "") + '</td>'; }).join("");
+        h += '<tr>' + nameCell(m) + cells + '<td class="now">' + esc(bare(m, m.v)) + '</td>' +
+          '<td class="dim">' + bare(m, m.sec) + '</td><td>' + spark(m.h) + '</td><td>' + statusCell(m) + '</td></tr>';
+      });
+      h += '</tbody></table></div>';
+    }
+    el.innerHTML = h;
+  }
+  function renderAllGroups() { document.querySelectorAll(".metrics").forEach(renderGroup); }
+
+  // ---------- charts ----------
+  function niceMax(v) { var p = Math.pow(10, Math.floor(Math.log10(v))); return Math.ceil(v / p * 2) / 2 * p; }
+  var period = "y";
+  function drawTrend() {
+    var pro = root.dataset.mode === "pro";
+    var d = period === "y" ? Y : Q, n = d.labels.length, W = 680, H = 250, L = 46, R = 40, T = 14, B = 26, cw = (W - L - R) / n;
+    var max = niceMax(Math.max.apply(null, d.sales)), mMax = 20;
+    var y = function (v) { return T + (H - T - B) * (1 - v / max); }, ym = function (v) { return T + (H - T - B) * (1 - v / mMax); };
+    var s = "";
+    for (var g = 0; g <= 4; g++) {
+      var yy = y(max * g / 4);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '" stroke="' + css("--line") + '"/>';
+      s += '<text x="' + (L - 6) + '" y="' + (yy + 4) + '" text-anchor="end">' + fmt(max * g / 4) + '</text>' + (pro ? '<text x="' + (W - R + 6) + '" y="' + (ym(mMax * g / 4) + 4) + '">' + (mMax * g / 4) + '%</text>' : '');
+    }
+    var bw = Math.min(18, cw * 0.32);
+    d.labels.forEach(function (lab, i) {
+      var cx = L + cw * i + cw / 2;
+      s += '<rect x="' + (cx - bw - 1) + '" y="' + y(d.sales[i]) + '" width="' + bw + '" height="' + (y(0) - y(d.sales[i])) + '" rx="3" fill="' + css("--chart-4") + '"><title>' + lab + ' sales ₹' + fmt(d.sales[i]) + ' Cr</title></rect>';
+      s += '<rect x="' + (cx + 1) + '" y="' + y(d.profit[i]) + '" width="' + bw + '" height="' + (y(0) - y(d.profit[i])) + '" rx="3" fill="' + css("--chart-1") + '"><title>' + lab + ' profit ₹' + fmt(d.profit[i]) + ' Cr</title></rect>';
+      s += '<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle">' + lab.replace("FY", period === "q" ? "" : "FY") + '</text>';
+    });
+    var pts = d.margin.map(function (m, i) { return (L + cw * i + cw / 2).toFixed(1) + "," + ym(m).toFixed(1); });
+    var lx = L + cw * (n - 1) + cw / 2, ly = ym(d.margin[n - 1]);
+    if (pro) s += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + css("--chart-3") + '" stroke-width="2.2"/>' + '<circle cx="' + lx + '" cy="' + ly + '" r="4" fill="' + css("--chart-3") + '"/><text x="' + (lx - 6) + '" y="' + (ly - 9) + '" text-anchor="end" style="fill:' + css("--chart-3") + ';font-weight:500">' + d.margin[n - 1] + '%</text>';
+    document.getElementById("trend-chart").innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Sales, profit and margin trend">' + s + '</svg>';
+  }
+  function lineChart(id, series, labels, maxV, unit, refLine) {
+    var W = 420, H = 200, L = 34, R = 34, T = 12, B = 24, n = labels.length, cw = (W - L - R) / (n - 1);
+    var y = function (v) { return T + (H - T - B) * (1 - v / maxV); }, s = "";
+    for (var g = 0; g <= 4; g++) { var yy = y(maxV * g / 4); s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '" stroke="' + css("--line") + '"/><text x="' + (L - 6) + '" y="' + (yy + 4) + '" text-anchor="end">' + (maxV * g / 4) + unit + '</text>'; }
+    if (refLine != null) s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(refLine) + '" y2="' + y(refLine) + '" stroke="' + css("--chart-4") + '" stroke-width="2" stroke-dasharray="5 4"/>';
+    labels.forEach(function (lab, i) { s += '<text x="' + (L + cw * i) + '" y="' + (H - 7) + '" text-anchor="middle">' + lab + '</text>'; });
+    // End labels: push apart when two lines finish close together
+    var ends = series.map(function (se) { return y(se.v[se.v.length - 1]); }), labY = ends.slice();
+    var order = labY.map(function (_, i) { return i; }).sort(function (a, b) { return labY[a] - labY[b]; });
+    for (var k = 1; k < order.length; k++) { if (labY[order[k]] - labY[order[k - 1]] < 13) labY[order[k]] = labY[order[k - 1]] + 13; }
+    series.forEach(function (se, j) {
+      var pts = se.v.map(function (v, i) { return (L + cw * i).toFixed(1) + "," + y(v).toFixed(1); });
+      s += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + css(se.c) + '" stroke-width="2.5"/>';
+      var last = se.v.length - 1;
+      s += '<circle cx="' + (L + cw * last) + '" cy="' + ends[j] + '" r="4" fill="' + css(se.c) + '"/><text x="' + (L + cw * last + 7) + '" y="' + (labY[j] + 4) + '" style="fill:' + css(se.c) + ';font-weight:500">' + se.v[last] + '</text>';
+    });
+    document.getElementById(id).innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img">' + s + '</svg>';
+  }
+  function barChart(id, labels, series, maxV) {
+    var W = 680, H = 210, L = 46, R = 10, T = 10, B = 24, n = labels.length, cw = (W - L - R) / n, bw = Math.min(22, cw / (series.length + 1.2));
+    var y = function (v) { return T + (H - T - B) * (1 - v / maxV); }, s = "";
+    for (var g = 0; g <= 4; g++) { var yy = y(maxV * g / 4); s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '" stroke="' + css("--line") + '"/><text x="' + (L - 6) + '" y="' + (yy + 4) + '" text-anchor="end">' + fmt(maxV * g / 4) + '</text>'; }
+    labels.forEach(function (lab, i) {
+      var x0 = L + cw * i + (cw - bw * series.length - 2 * (series.length - 1)) / 2;
+      series.forEach(function (se, j) {
+        var v = se.v[i], x = x0 + j * (bw + 2);
+        s += '<rect x="' + x.toFixed(1) + '" y="' + y(v).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (y(0) - y(v)).toFixed(1) + '" rx="3" fill="' + css(se.c) + '"><title>' + lab + ' ' + se.n + ' ₹' + fmt(v) + ' Cr</title></rect>';
+      });
+      s += '<text x="' + (L + cw * i + cw / 2) + '" y="' + (H - 7) + '" text-anchor="middle">' + lab + '</text>';
+    });
+    document.getElementById(id).innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img">' + s + '</svg>';
+  }
+  function drawHold() {
+    var W = 680, H = 210, L = 34, R = 8, T = 8, B = 24, n = HOLD.labels.length, cw = (W - L - R) / n, bw = cw * 0.6;
+    var y = function (v) { return T + (H - T - B) * (1 - v / 100); }, s = "";
+    [0, 50, 100].forEach(function (v) { s += '<text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + v + '%</text>'; });
+    var keys = [["promoter", "--chart-1"], ["fii", "--chart-2"], ["dii", "--chart-3"], ["pub", "--chart-4"]];
+    HOLD.labels.forEach(function (lab, i) {
+      var x = L + cw * i + (cw - bw) / 2, acc = 0;
+      keys.forEach(function (k) {
+        var v = HOLD[k[0]][i];
+        s += '<rect x="' + x.toFixed(1) + '" y="' + y(acc + v).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (y(acc) - y(acc + v) - 1.5).toFixed(1) + '" rx="2" fill="' + css(k[1]) + '"><title>' + lab + ' ' + v + '%</title></rect>';
+        acc += v;
+      });
+      s += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (H - 7) + '" text-anchor="middle">' + lab.replace(" FY", " ") + '</text>';
+    });
+    document.getElementById("hold-chart").innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Shareholding pattern">' + s + '</svg>';
+  }
+  function drawDonut() {
+    var parts = [[46, "--chart-1"], [31, "--chart-2"], [23, "--chart-3"]], C = 2 * Math.PI * 38, off = 0, s = "";
+    parts.forEach(function (p) {
+      var len = C * p[0] / 100;
+      s += '<circle cx="50" cy="50" r="38" fill="none" stroke="' + css(p[1]) + '" stroke-width="18" stroke-dasharray="' + (len - 1.5).toFixed(1) + ' ' + (C - len + 1.5).toFixed(1) + '" stroke-dashoffset="' + (-off).toFixed(1) + '" transform="rotate(-90 50 50)"/>';
+      off += len;
+    });
+    s += '<text x="50" y="47" text-anchor="middle" style="font-size:8px">Sales last year</text><text x="50" y="60" text-anchor="middle" style="font-size:11px;fill:' + css("--ink") + ';font-weight:500">₹5,960 Cr</text>';
+    document.getElementById("seg-chart").innerHTML = '<svg viewBox="0 0 100 100" role="img" aria-label="Sales by segment">' + s + '</svg>';
+  }
+
+  // ---------- tables ----------
+  function drawQTable() {
+    var rows = [["Sales", Q.sales, 0], ["EBITDA", Q.ebitda, 0], ["Operating margin %", Q.margin, 1], ["Net profit", Q.profit, 0], ["EPS (₹)", Q.eps, 1], ["Sales growth YoY %", Q.salesYoY, 1], ["Profit growth YoY %", Q.profitYoY, 1]];
+    var h = '<thead><tr><th>₹ Cr</th>' + Q.labels.map(function (l, i) { return '<th' + (i === Q.labels.length - 1 ? ' class="now"' : '') + '>' + l + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr><th scope="row">' + r[0] + '</th>' + r[1].map(function (v, i) { return '<td' + (i === r[1].length - 1 ? ' class="now"' : ' class="dim"') + '>' + fmt(v, r[2]) + '</td>'; }).join("") + '</tr>'; });
+    document.getElementById("q-table").innerHTML = h + '</tbody>';
+  }
+  function drawHoldTable() {
+    var rows = [["Promoters %", HOLD.promoter, 1], ["FII %", HOLD.fii, 1], ["DII %", HOLD.dii, 1], ["of which mutual funds %", HOLD.mf, 1], ["Public %", HOLD.pub, 1], ["Pledged % of promoter", HOLD.labels.map(function () { return 0; }), 1], ["Shareholders (lakh)", HOLD.holders, 2]];
+    var last = HOLD.labels.length - 1;
+    var h = '<thead><tr><th>Holder</th>' + HOLD.labels.map(function (l, i) { return '<th' + (i === last ? ' class="now"' : '') + '>' + l + '</th>'; }).join("") + '</tr></thead><tbody>';
+    rows.forEach(function (r) { h += '<tr><th scope="row">' + r[0] + '</th>' + r[1].map(function (v, i) { return '<td' + (i === last ? ' class="now"' : ' class="dim"') + '>' + fmt(v, r[2]) + '</td>'; }).join("") + '</tr>'; });
+    document.getElementById("hold-table").innerHTML = h + '</tbody>';
+  }
+  function drawPeers() {
+    var simple = root.dataset.mode === "simple";
+    var cols = PEERS.head.map(function (_, i) { return i; }).filter(function (i) { return !simple || !PEERS.pro[i]; });
+    var dps = [0, 0, 1, 2, 1, 1, 2, 1, 1, 1];
+    var h = '<thead><tr>' + cols.map(function (i) { return '<th>' + PEERS.head[i][simple ? 0 : 1] + '</th>'; }).join("") + '</tr></thead><tbody>';
+    PEERS.rows.forEach(function (r) {
+      h += '<tr' + (r[10] ? ' class="' + r[10] + '"' : '') + '>' + cols.map(function (i) { return i === 0 ? '<th scope="row">' + r[0] + '</th>' : '<td>' + fmt(r[i], dps[i]) + (simple && (i === 4 || i === 7) ? "%" : "") + '</td>'; }).join("") + '</tr>';
+    });
+    document.getElementById("peer-table").innerHTML = h + '</tbody>';
+  }
+  var stmt = "pl";
+  function drawStatement() {
+    var simple = root.dataset.mode === "simple";
+    var rows = ST[stmt].filter(function (r) { return !simple || r[2]; });
+    var h = '<thead><tr><th>₹ Crore</th>' + YRS.map(function (c, i) { return '<th' + (i === YRS.length - 1 ? ' class="now"' : '') + '>' + c + '</th>'; }).join("") + '<th>5 yr</th></tr></thead><tbody>';
+    rows.forEach(function (r) {
+      var vals = r[1], dec = vals.some(function (v) { return v % 1 !== 0; }) ? 1 : 0, first = Math.abs(vals[0]), last = Math.abs(vals[vals.length - 1]);
+      var trend = last >= first ? '<span class="up">▲</span>' : '<span class="dn">▼</span>';
+      h += '<tr' + (r[3] ? ' class="sum"' : '') + '><th scope="row">' + r[0] + '</th>' + vals.map(function (v, i) { return '<td' + (i === vals.length - 1 ? ' class="now"' : '') + '>' + (v < 0 ? "(" + fmt(-v, dec) + ")" : fmt(v, dec)) + '</td>'; }).join("") + '<td>' + trend + '</td></tr>';
+    });
+    document.getElementById("st-table").innerHTML = h + '</tbody>';
+  }
+  var PIO = [
+    ["Profit", "Net profit is positive", "₹602 Cr", "₹486 Cr"], ["Profit", "Operating cash flow is positive", "₹765 Cr", "₹650 Cr"],
+    ["Profit", "Return on assets went up", "10.2%", "9.0%"], ["Profit", "Cash flow is higher than profit", "₹765 vs ₹602 Cr", "₹650 vs ₹486 Cr"],
+    ["Debt & liquidity", "Debt ratio went down", "0.40", "0.49"], ["Debt & liquidity", "Current ratio went up", "1.62", "1.57"],
+    ["Debt & liquidity", "No new shares issued", "17.1 Cr", "17.1 Cr"], ["Efficiency", "Gross margin went up", "38.2%", "37.5%"],
+    ["Efficiency", "Asset turnover went up", "1.01", "0.93"]
+  ];
+  function drawPio() {
+    var h = '<thead><tr><th>Piotroski test</th><th style="text-align:left">Area</th><th class="now">FY26</th><th>FY25</th><th>Result</th></tr></thead><tbody>';
+    PIO.forEach(function (t) { h += '<tr><th scope="row">' + t[1] + '</th><td class="dim" style="font-family:var(--f-body);text-align:left">' + t[0] + '</td><td class="now">' + t[2] + '</td><td class="dim">' + t[3] + '</td><td><span class="status g"><i></i>Pass</span></td></tr>'; });
+    document.getElementById("pio-table").innerHTML = h + '<tr class="sum"><th scope="row">Score</th><td></td><td class="now">9 / 9</td><td></td><td><span class="status g"><i></i>Strong</span></td></tr></tbody>';
+  }
+  function drawFlags() {
+    document.getElementById("flags").innerHTML = FLAGS.map(function (f) {
+      return '<div class="flag ' + f[0] + '"><span class="ic">' + (f[0] === "g" ? "✓" : "!") + '</span><div><b><span class="p-only">' + f[1] + '</span><span class="s-only">' + f[3] + '</span></b><span><span class="p-only">' + f[2] + '</span><span class="s-only">' + f[4] + '</span></span></div></div>';
+    }).join("");
+  }
+
+  // ---------- DCF ----------
+  var FAIR = { fv: 0, buy: 0 };
+  function dcf() {
+    var g = +document.getElementById("dcf-g").value / 100, r = +document.getElementById("dcf-r").value / 100;
+    var t = +document.getElementById("dcf-t").value / 100, m = +document.getElementById("dcf-m").value / 100;
+    document.getElementById("o-g").textContent = (g * 100).toFixed(1) + "%";
+    document.getElementById("o-r").textContent = (r * 100).toFixed(1) + "%";
+    document.getElementById("o-t").textContent = (t * 100).toFixed(1) + "%";
+    document.getElementById("o-m").textContent = Math.round(m * 100) + "%";
+    var f = 520, pv = 0;
+    for (var yr = 1; yr <= 10; yr++) { f *= 1 + g; pv += f / Math.pow(1 + r, yr); }
+    pv += (r > t ? f * (1 + t) / (r - t) : 0) / Math.pow(1 + r, 10);
+    var fv = Math.max(0, (pv - 960) / 17.1), buy = fv * (1 - m), gap = fv > 0 ? (1248.6 / fv - 1) * 100 : 0;
+    FAIR = { fv: fv, buy: buy, gap: gap };
+    document.getElementById("fv-val").textContent = "₹" + fmt(fv);
+    document.getElementById("fv-buy").textContent = "₹" + fmt(buy);
+    var el = document.getElementById("fv-gap");
+    el.textContent = (gap > 0 ? "+" : "") + gap.toFixed(0) + "%";
+    el.className = gap > 0 ? "bad" : "good";
+    el.title = gap > 0 ? "Price is above fair value" : "Price is below fair value";
+  }
+
+  // ---------- section index ----------
+  function drawIndex() {
+    var simple = root.dataset.mode === "simple";
+    var cards = Array.prototype.filter.call(document.querySelectorAll(".card[id]"), function (c) { return getComputedStyle(c).display !== "none"; });
+    document.getElementById("index").innerHTML = cards.map(function (c) {
+      return '<a href="#' + c.id + '"><span>' + esc(simple ? c.dataset.titleS : c.dataset.titleP) + '</span><i class="' + c.dataset.v + '"></i></a>';
+    }).join("");
+  }
+
+  // ---------- popover ----------
+  var pop = document.getElementById("pop"), lastBtn = null;
+  function openPop(btn) {
+    var m = BY_ID[btn.dataset.id]; if (!m) return;
+    lastBtn = btn;
+    document.getElementById("pop-title").textContent = m.s;
+    document.getElementById("pop-pro").textContent = "Also called: " + m.p;
+    document.getElementById("pop-d").textContent = m.d;
+    document.getElementById("pop-f").textContent = m.f || "";
+    document.getElementById("pop-f-wrap").hidden = !m.f;
+    document.getElementById("pop-g").textContent = m.g || "";
+    document.getElementById("pop-g-wrap").hidden = !m.g;
+    var now = val(m, m.v);
+    var r = "ACME: " + now + (m.sec != null ? " vs sector " + val(m, m.sec) + "." : ".") + " " +
+      ({ g: "This looks good.", w: "Worth keeping an eye on.", r: "This is a weak spot.", n: "No judgement on its own." })[m.st] + (m.note ? " " + m.note : "");
+    document.getElementById("pop-r").textContent = r;
+    pop.hidden = false;
+    var b = btn.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+    var left = Math.min(Math.max(16, b.left - pw / 2), window.innerWidth - pw - 16);
+    var top = b.bottom + 8 + ph > window.innerHeight ? Math.max(16, b.top - ph - 8) : b.bottom + 8;
+    pop.style.left = left + "px"; pop.style.top = top + "px";
+    document.getElementById("pop-x").focus();
+  }
+  function closePop() { if (!pop.hidden) { pop.hidden = true; if (lastBtn) lastBtn.focus(); } }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest(".info");
+    if (b) { e.stopPropagation(); openPop(b); return; }
+    if (!pop.contains(e.target)) closePop();
+    var more = e.target.closest("[data-more]");
+    if (more) { var k = more.dataset.more; expanded[k] = !expanded[k]; renderGroup(document.querySelector('.metrics[data-group="' + k + '"]')); }
+  });
+  document.getElementById("pop-x").addEventListener("click", closePop);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closePop(); closeMenu(); } });
+  window.addEventListener("scroll", function () { if (window.innerWidth > 600) closePop(); }, { passive: true });
+
+  // ---------- signal tiles: one detail panel open at a time ----------
+  document.querySelectorAll(".hzc").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var open = b.getAttribute("aria-expanded") !== "true";
+      document.querySelectorAll(".hzc").forEach(function (x) {
+        x.setAttribute("aria-expanded", "false");
+        document.getElementById("hzd-" + x.dataset.hz).hidden = true;
+      });
+      if (open) { b.setAttribute("aria-expanded", "true"); document.getElementById("hzd-" + b.dataset.hz).hidden = false; }
+    });
+  });
+
+  // ---------- mode ----------
+  function setMode(mode) {
+    root.dataset.mode = mode;
+    document.querySelectorAll("[data-mode]").forEach(function (b) { if (b.tagName === "BUTTON") b.setAttribute("aria-pressed", String(b.dataset.mode === mode)); });
+    document.getElementById("mode-hint").textContent = mode === "simple" ? "Explained simply" : "Full tables and ratios";
+    try { localStorage.setItem("stockai-mode", mode); } catch (e) {}
+    renderAllGroups(); drawPeers(); drawStatement(); drawTrend(); drawIndex(); closePop();
+  }
+  document.querySelectorAll("button[data-mode]").forEach(function (b) { b.addEventListener("click", function () { setMode(b.dataset.mode); }); });
+  document.querySelectorAll("[data-per]").forEach(function (b) { b.addEventListener("click", function () { period = b.dataset.per; document.querySelectorAll("[data-per]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); drawTrend(); }); });
+  document.querySelectorAll("[data-st]").forEach(function (b) { b.addEventListener("click", function () { stmt = b.dataset.st; document.querySelectorAll("[data-st]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); drawStatement(); }); });
+  ["dcf-g", "dcf-r", "dcf-t", "dcf-m"].forEach(function (id) { document.getElementById(id).addEventListener("input", dcf); });
+
+  // ---------- downloads ----------
+  var menu = document.getElementById("dl-menu"), dlBtn = document.getElementById("dl-btn"), downloadsP = null;
+  function closeMenu() { if (!menu.hidden) { menu.hidden = true; dlBtn.setAttribute("aria-expanded", "false"); } }
+  // Connect to the viewer's download service on first use. Null means this view can't save files.
+  function getDownloads() {
+    if (!downloadsP) {
+      downloadsP = window.claude && window.claude.use ? window.claude.use("downloads").catch(function () { return null; }) : Promise.resolve(null);
+      downloadsP.then(function (d) { if (!d) { downloadsP = null; markUnavailable(); } });
+    }
+    return downloadsP;
+  }
+  dlBtn.addEventListener("click", function (e) { e.stopPropagation(); menu.hidden = !menu.hidden; dlBtn.setAttribute("aria-expanded", String(!menu.hidden)); if (!menu.hidden) getDownloads(); });
+  document.addEventListener("click", function (e) { if (!menu.contains(e.target) && e.target !== dlBtn) closeMenu(); });
+  function markUnavailable() { document.getElementById("dl-unavail").hidden = false; }
+  var toastTimer;
+  function toast(msg) { var t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200); }
+  function loadScript(src) { return new Promise(function (ok, fail) { var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = function () { fail(new Error("Could not load " + src)); }; document.head.appendChild(s); }); }
+  var LIBS = { xlsx: "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", jspdf: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", autotable: "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" };
+
+  function ratioRows() {
+    var rows = [["Group", "Metric", "Plain meaning", "FY22", "FY23", "FY24", "FY25", "FY26", "Now", "Sector", "Status"]];
+    Object.keys(G).forEach(function (k) {
+      G[k].forEach(function (m) {
+        var h = m.per ? ["1y " + m.per[0], "3y " + m.per[1], "5y " + m.per[2], "FY17+ " + m.per[3], ""] : (m.h || ["", "", "", "", ""]);
+        rows.push([k, m.p, m.s].concat(h).concat([m.v, m.sec != null ? m.sec : "", STW[m.st]]));
+      });
+    });
+    return rows;
+  }
+  function csvOf(rows) { return rows.map(function (r) { return r.map(function (c) { c = String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(","); }).join("\n"); }
+  function stmtRows(key) { return [["₹ Cr"].concat(YRS)].concat(ST[key].map(function (r) { return [r[0]].concat(r[1]); })); }
+
+  function buildXlsx() {
+    var X = window.XLSX, wb = X.utils.book_new();
+    function add(name, rows) { X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(rows), name); }
+    add("Summary", [["ACME Industries Ltd (SAMPLE DATA)"], ["NSE: ACME", "Price ₹1,248.60", "As of 16 Oct 2026"], [], ["Signal, short term (2 to 6 weeks)", "NEUTRAL", "Results due 28 Oct"], ["Signal, medium term (1 to 6 months)", "BUY", "Momentum score 74/100"], ["Signal, long term (1 to 3 years)", "BUY", "Quality 78, price 7% below fair value"], ["Fair value (blend)", 1347], ["Price vs fair value %", -7], ["Strong buy below", 1145], [], ["Fundamental score", 78], ["Growth", "A"], ["Profitability", "A-"], ["Debt & safety", "B+"], ["Cash flow", "B+"], ["Efficiency", "B"], ["Valuation", "C"], [], ["Fair value (your DCF inputs)", Math.round(FAIR.fv)], ["Buy below", Math.round(FAIR.buy)]]);
+    add("Ratios", ratioRows());
+    add("Quarterly", [["₹ Cr"].concat(Q.labels), ["Sales"].concat(Q.sales), ["EBITDA"].concat(Q.ebitda), ["Operating margin %"].concat(Q.margin), ["Net profit"].concat(Q.profit), ["EPS"].concat(Q.eps), ["Sales YoY %"].concat(Q.salesYoY), ["Profit YoY %"].concat(Q.profitYoY)]);
+    add("Profit & loss", stmtRows("pl")); add("Balance sheet", stmtRows("bs")); add("Cash flow", stmtRows("cf"));
+    add("Shareholding", [["%"].concat(HOLD.labels), ["Promoters"].concat(HOLD.promoter), ["FII"].concat(HOLD.fii), ["DII"].concat(HOLD.dii), ["Mutual funds"].concat(HOLD.mf), ["Public"].concat(HOLD.pub)]);
+    add("Peers", [PEERS.head.map(function (h) { return h[1]; })].concat(PEERS.rows.map(function (r) { return r.slice(0, 10); })));
+    return X.write(wb, { bookType: "xlsx", type: "array" });
+  }
+  function pdfText(s) { return String(s).replace(/₹/g, "Rs ").replace(/[−–]/g, "-").replace(/×/g, "x").replace(/·/g, "|").replace(/√/g, "sqrt").replace(/▲/g, "+").replace(/▼/g, "-"); }
+  function buildPdf() {
+    var doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" }), y = 50, accent = [86, 54, 211];
+    doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.text("ACME Industries Ltd", 40, y);
+    doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(94, 90, 122);
+    doc.text(pdfText("Fundamentals report | NSE: ACME | Price ₹1,248.60 | As of 16 Oct 2026 | SAMPLE DATA, NOT A REAL COMPANY"), 40, y += 16);
+    [["Short term (2-6 wks)", "NEUTRAL", [94, 90, 122]], ["Medium term (1-6 mo)", "BUY", [18, 135, 90]], ["Long term (1-3 yrs)", "BUY", [18, 135, 90]]].forEach(function (sg, i) {
+      var x = 40 + i * 175;
+      doc.setFillColor(sg[2][0], sg[2][1], sg[2][2]); doc.roundedRect(x, y + 14, 70, 22, 11, 11, "F");
+      doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.text(sg[1], x + 35, y + 29, { align: "center" });
+      doc.setTextColor(28, 24, 56); doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.text(sg[0], x + 76, y + 29);
+    });
+    y += 50; doc.setFontSize(9); doc.setTextColor(28, 24, 56);
+    doc.text(pdfText("Wait for Q2 results (28 Oct) before a short-term trade. Fair value ₹1,347, price 7% below. Strong buy below ₹1,145."), 40, y);
+    doc.setTextColor(28, 24, 56); doc.setFontSize(13); doc.setFont("helvetica", "bold");
+    doc.text("Score 78/100: a strong, growing business, priced above its peers", 40, y += 28);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    doc.text("Grades: Growth A | Profitability A- | Debt & safety B+ | Cash flow B+ | Efficiency B | Valuation C", 40, y += 16);
+    doc.text(pdfText("Fair value (DCF): ₹" + fmt(FAIR.fv) + " | Buy below: ₹" + fmt(FAIR.buy)), 40, y += 14);
+    var strengths = ["Sales up 18% and profit up 26% a year over 3 years", "Debt cut from 0.90 to 0.40 times net worth since FY22", "Operating cash flow beat profit in each of the last 5 years", "Foreign investors raised their stake 7 quarters in a row"];
+    var weak = ["P/E of 34 is above the sector's 27", "Working capital up from 62 to 71 days", "38% of sales from government orders"];
+    doc.autoTable({ startY: y + 12, head: [["Strengths", "Weaknesses"]], body: strengths.map(function (s, i) { return [s, weak[i] || ""]; }), theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 9 } });
+    var titles = { valuation: "Valuation", growth: "Growth (CAGR: 1y | 3y | 5y | since FY17)", profitability: "Profitability & returns", health: "Balance sheet & liquidity", efficiency: "Working capital & efficiency", cashflow: "Cash flow quality", dividends: "Dividends" };
+    Object.keys(G).forEach(function (k) {
+      var body = G[k].map(function (m) {
+        var hist = m.per ? m.per.map(function (v) { return val(m, v); }).join(" | ") : (m.h ? m.h.map(function (v) { return val(m, v); }).join(" | ") : "");
+        return [pdfText(m.p), pdfText(m.s), pdfText(val(m, m.v)), m.sec != null ? pdfText(val(m, m.sec)) : "", pdfText(hist), STW[m.st]];
+      });
+      doc.autoTable({ startY: doc.lastAutoTable.finalY + 18, head: [[titles[k], "Meaning", "Now", "Sector", m5(k), "Status"]], body: body, theme: "striped", headStyles: { fillColor: accent }, styles: { fontSize: 8, cellPadding: 3 }, columnStyles: { 1: { cellWidth: 120 }, 4: { cellWidth: 130 } } });
+    });
+    function m5(k) { return k === "growth" ? "Periods" : "FY22 to FY26"; }
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 18, head: [["Quarterly (Rs Cr)"].concat(Q.labels)], body: [["Sales"].concat(Q.sales), ["EBITDA"].concat(Q.ebitda), ["Margin %"].concat(Q.margin), ["Net profit"].concat(Q.profit), ["EPS"].concat(Q.eps)], theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 8 } });
+    [["pl", "Profit & loss (Rs Cr)"], ["bs", "Balance sheet (Rs Cr)"], ["cf", "Cash flow (Rs Cr)"]].forEach(function (s) {
+      doc.autoTable({ startY: doc.lastAutoTable.finalY + 18, head: [[s[1]].concat(YRS)], body: ST[s[0]].map(function (r) { return [pdfText(r[0])].concat(r[1].map(function (v) { return v < 0 ? "(" + fmt(-v, v % 1 ? 1 : 0) + ")" : fmt(v, v % 1 ? 1 : 0); })); }), theme: "striped", headStyles: { fillColor: accent }, styles: { fontSize: 8 } });
+    });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 18, head: [["Red-flag check", "Result"]], body: FLAGS.map(function (f) { return [(f[0] === "g" ? "PASS  " : "WATCH  ") + f[1], f[2]]; }), theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 8 } });
+    var pages = doc.getNumberOfPages();
+    for (var p = 1; p <= pages; p++) { doc.setPage(p); doc.setFontSize(7); doc.setTextColor(120); doc.text("Stock AI | Sample data for layout review | Not investment advice | Page " + p + " of " + pages, 40, 820); }
+    return doc.output("arraybuffer");
+  }
+  menu.querySelectorAll("[data-dl]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var kind = b.dataset.dl, downloads = null; closeMenu(); toast("Preparing your file…");
+      var job = getDownloads().then(function (d) {
+        if (!d) throw { code: "unavailable" };
+        downloads = d;
+      }).then(function () { return kind === "csv" ? Promise.resolve({ filename: "ACME_key_ratios.csv", data: csvOf(ratioRows()) })
+        : kind === "xlsx" ? loadScript(LIBS.xlsx).then(function () { return { filename: "ACME_fundamentals.xlsx", data: buildXlsx() }; })
+        : loadScript(LIBS.jspdf).then(function () { return loadScript(LIBS.autotable); }).then(function () { return { filename: "ACME_fundamentals_report.pdf", data: buildPdf() }; }); });
+      job.then(function (file) { return downloads.save(file); })
+        .then(function () { toast("Saved"); })
+        .catch(function (err) {
+          var c = err && err.code;
+          toast(c === "declined" ? "Download cancelled" : c === "rate_limited" ? "A download is already waiting for you to confirm" : c === "unavailable" || c === "not_granted" ? "Downloads aren't available in this view" : "Couldn't create the file. Try again.");
+        });
+    });
+  });
+
+  // ---------- boot ----------
+  var mode = "simple";
+  try { mode = localStorage.getItem("stockai-mode") || "simple"; } catch (e) {}
+  drawDonut(); drawTrend(); drawHold(); drawHoldTable(); drawQTable(); drawFlags(); drawPio(); dcf();
+  lineChart("returns-chart", [{ v: [12.0, 14.2, 16.0, 17.3, 18.7], c: "--chart-1" }, { v: [13.2, 14.9, 16.3, 17.2, 18.1], c: "--chart-2" }], YRS, 20, "%", 15.2);
+  barChart("cash-chart", YRS, [{ n: "Cash from operations", v: CASH.cfo, c: "--chart-1" }, { n: "Net profit", v: CASH.np, c: "--chart-4" }, { n: "Free cash flow", v: CASH.fcf, c: "--chart-3" }], 800);
+  setMode(mode === "pro" ? "pro" : "simple");
+})();
+</script>

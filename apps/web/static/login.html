@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · Stock AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/auth.css">
+</head>
+<body>
+<main class="auth">
+  <section class="auth-art" aria-label="About Stock AI">
+    <span class="brand"><i aria-hidden="true"></i>Stock AI</span>
+    <div>
+      <h1>Research NSE stocks in plain English.</h1>
+      <p>Verdicts, daily picks, a time machine for your trades and a health check for your portfolio. Invite only.</p>
+    </div>
+    <ul>
+      <li>Every signal explains itself</li>
+      <li>Your portfolio stays private to you</li>
+      <li>Advice only: it never places trades</li>
+    </ul>
+  </section>
+  <section class="auth-form">
+    <form class="card" id="form" novalidate>
+      <h2>Sign in</h2>
+      <p class="sub">Use the email and password from your invite.</p>
+      <label class="fld">Email<input id="email" type="email" autocomplete="username" required></label>
+      <label class="fld">Password<input id="password" type="password" autocomplete="current-password" required></label>
+      <p class="msg err" id="err" role="alert" hidden></p>
+      <button class="btn primary wide" id="go">Sign in</button>
+      <p class="note">No account? Stock AI is invite only. Ask the admin for an invite link.<br>Forgot your password? Ask the admin for a reset link.</p>
+    </form>
+  </section>
+</main>
+<script>
+(function () {
+  var form = document.getElementById("form"), err = document.getElementById("err"), go = document.getElementById("go");
+  var next = new URLSearchParams(location.search).get("next") || "/";
+  if (!/^\/(?!\/)/.test(next)) next = "/";   // only ever return to a page on this site
+  document.getElementById("email").focus();
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    err.hidden = true; go.disabled = true; go.textContent = "Signing in…";
+    fetch("/api/auth/login", {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: document.getElementById("email").value, password: document.getElementById("password").value })
+    }).then(function (r) {
+      if (r.ok) { location.href = next; return; }
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        err.textContent = typeof j.detail === "string" ? j.detail : "Couldn't sign in. Try again.";
+        err.hidden = false; go.disabled = false; go.textContent = "Sign in";
+      });
+    }, function () {
+      err.textContent = "Can't reach the Stock AI server. Is it running?"; err.hidden = false; go.disabled = false; go.textContent = "Sign in";
+    });
+  });
+})();
+</script>
+</body>
+</html>

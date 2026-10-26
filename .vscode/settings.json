@@ -1,0 +1,20 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.cwd": "${workspaceFolder}/services/engine",
+  "python.testing.pytestArgs": ["tests"],
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  // The approved pages in apps/web/pages must stay byte-for-byte as designed: never auto-format them.
+  "[html]": { "editor.formatOnSave": false },
+  "[javascript]": { "editor.formatOnSave": false },
+  "[css]": { "editor.formatOnSave": false },
+  "files.associations": { ".env.example": "dotenv" },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true
+  }
+}

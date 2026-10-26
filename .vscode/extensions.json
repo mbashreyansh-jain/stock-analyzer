@@ -1,0 +1,13 @@
+{
+  // VS Code shows "Install recommended extensions" when this folder is opened.
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff",
+    "ms-ossdata.vscode-pgsql",
+    "mikestead.dotenv",
+    "tamasfe.even-better-toml"
+  ],
+  // Live Server opens pages without the backend, so sign-in and the blog won't work there. Use `stockai serve`.
+  "unwantedRecommendations": ["ritwickdey.liveserver"]
+}

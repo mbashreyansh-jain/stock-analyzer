@@ -1,0 +1,12 @@
+{
+  "name": "stockai",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose stop",
+    "engine": "cd services/engine && uv run stockai",
+    "engine:test": "cd services/engine && uv run pytest -q",
+    "engine:api": "cd services/engine && uv run uvicorn stockai.api.main:app --reload --port 8000"
+  }
+}

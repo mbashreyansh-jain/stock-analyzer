@@ -1,0 +1,799 @@
+<title>Daily Picks Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Shared with the Fundamentals tab. Layout: style C "Friendly & bold". Sticky top bar with the app-wide Simple/Pro switch, a section index on the left
+   (chips on phones), and rounded cards per question. Single light look by design. */
+:root {
+  --bg: #F6F5FC; --surface: #FFFFFF; --surface-2: #EFEDF9; --ink: #1C1838; --ink-2: #5E5A7A; --line: #E4E1F2;
+  --accent: #5636D3; --accent-soft: #ECE8FD; --good: #12875A; --good-soft: #DDF4EA; --warn: #B86E06; --warn-soft: #FCEEDA;
+  --bad: #D2433A; --bad-soft: #FBE4E2; --chart-1: #5636D3; --chart-2: #F2A541; --chart-3: #12875A; --chart-4: #C9C3E6;
+  --zebra: #FAF9FE; --now-bg: #F1EDFD; --deep-good: #0B6A45; --deep-bad: #A3241B;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-num: "DM Mono", ui-monospace, Menlo, monospace;
+  --radius: 20px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--f-body); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { margin: 0; font-family: var(--f-display); text-wrap: balance; line-height: 1.2; }
+p { margin: 0; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+/* mode visibility */
+:root[data-mode="simple"] .p-only { display: none !important; }
+:root[data-mode="pro"] .s-only { display: none !important; }
+
+/* prototype strip */
+.proto { background: var(--ink); color: #E9E6FA; padding-inline: 16px; padding-block: 7px; font-size: 12.5px; display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center; }
+.proto b { background: var(--chart-2); color: var(--ink); padding: 1px 7px; border-radius: 4px; font-size: 11px; letter-spacing: 0.04em; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.topbar-in { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 10px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { font: 800 1.1rem var(--f-display); display: flex; align-items: center; gap: 8px; }
+.brand i { width: 24px; height: 24px; border-radius: 8px; background: var(--accent); display: inline-block; }
+.search { flex: 1 1 200px; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); font-size: 0.9em; }
+.search kbd { margin-left: auto; font: 500 11px var(--f-num); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+.mode { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; }
+.mode-lbl { font-size: 0.8em; color: var(--ink-2); }
+.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 999px; }
+.seg button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-size: 0.86em; color: var(--ink-2); font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; font-weight: 700; }
+
+/* page */
+.page { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 70px; display: grid; gap: 16px; }
+.stock { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.stock h1 { font-size: 1.9em; font-weight: 800; letter-spacing: -0.01em; }
+.stock .meta { color: var(--ink-2); font-size: 0.9em; }
+.stock .px { font: 500 1.5em var(--f-num); }
+.stock .chg { font: 500 0.95em var(--f-num); color: var(--good); }
+.stock .actions { margin-left: auto; display: flex; gap: 8px; position: relative; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 16px; font-weight: 600; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px; }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 18px 40px -18px rgba(28, 24, 56, 0.35); padding: 6px; width: 290px; z-index: 40; display: grid; gap: 2px; }
+.menu button { border: 0; background: transparent; text-align: left; padding: 10px 12px; border-radius: 10px; display: grid; gap: 1px; }
+.menu button:hover, .menu button:focus-visible { background: var(--surface-2); }
+.menu b { font-size: 0.92em; }
+.menu small { color: var(--ink-2); font-size: 0.78em; }
+.menu .unavail { font-size: 0.78em; color: var(--warn); padding: 6px 12px; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 0.9em; z-index: 60; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.4); }
+.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.tabs span { flex: none; padding: 7px 16px; border-radius: 999px; color: var(--ink-2); font-weight: 500; font-size: 0.94em; }
+.tabs span.on { background: var(--ink); color: #fff; font-weight: 700; }
+.asof { font-size: 0.8em; color: var(--ink-2); }
+
+.layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 22px; align-items: start; }
+.index { position: sticky; top: 76px; display: grid; gap: 2px; font-size: 0.88em; }
+.index a { color: var(--ink-2); text-decoration: none; padding: 6px 12px; border-radius: 10px; display: flex; justify-content: space-between; gap: 8px; }
+.index a:hover { background: var(--surface); color: var(--ink); }
+.index a i { width: 8px; height: 8px; border-radius: 50%; align-self: center; flex: none; }
+.index a i.g { background: var(--good); } .index a i.w { background: var(--warn); } .index a i.n { background: var(--chart-4); }
+.main { display: grid; gap: 18px; min-width: 0; }
+
+.card { background: var(--surface); border-radius: var(--radius); padding: 22px; display: grid; gap: 16px; align-content: start; min-width: 0; scroll-margin-top: 80px;
+  box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); }
+/* Grid children default to min-width:auto, which lets a wide table stretch the card past the screen. */
+.card > *, .metrics, .two > *, .biz > * { min-width: 0; }
+.sh { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sh h2 { font-size: 1.35em; font-weight: 800; }
+:root[data-mode="pro"] .sh h2 { font-size: 1.15em; }
+.sh .sub { color: var(--ink-2); font-size: 0.85em; }
+.verdict { font: 600 0.78em var(--f-num); padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
+.verdict.g, .chip.g { background: var(--good-soft); color: var(--good); }
+.verdict.w, .chip.w { background: var(--warn-soft); color: var(--warn); }
+.verdict.r, .chip.r { background: var(--bad-soft); color: var(--bad); }
+.verdict.n, .chip.n { background: var(--surface-2); color: var(--ink-2); }
+.chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.means { color: var(--ink); background: var(--accent-soft); border-radius: 14px; padding: 12px 16px; display: flex; gap: 10px; font-size: 0.93em; }
+.means::before { content: "i"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 12px/20px var(--f-num); text-align: center; }
+:root[data-mode="pro"] .means { background: transparent; padding: 0; color: var(--ink-2); font-size: 0.88em; }
+:root[data-mode="pro"] .means::before { content: "Takeaway"; width: auto; height: auto; border-radius: 4px; padding: 1px 6px; font: 600 10px/16px var(--f-num); text-transform: uppercase; letter-spacing: 0.05em; background: var(--surface-2); color: var(--ink-2); align-self: flex-start; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.two > * { min-width: 0; }
+.note { font-size: 0.8em; color: var(--ink-2); }
+
+/* summary */
+.summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+.ring { position: relative; width: 128px; height: 128px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.05; }
+.ring .lbl b { font: 600 2.2em var(--f-num); display: block; }
+.ring .lbl small { font-size: 0.72em; color: var(--ink-2); }
+.sum-body { display: grid; gap: 12px; min-width: 0; }
+.sum-body h2 { font-size: 1.85em; font-weight: 800; letter-spacing: -0.01em; }
+.grades { display: flex; flex-wrap: wrap; gap: 8px; }
+.grade { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; font-size: 0.86em; font-weight: 500; text-decoration: none; color: var(--ink); }
+.grade b { font: 600 0.9em var(--f-num); min-width: 32px; text-align: center; padding: 2px 4px; border-radius: 999px; background: var(--surface); }
+.grade.g { background: var(--good-soft); } .grade.g b { color: var(--good); }
+.grade.w { background: var(--warn-soft); } .grade.w b { color: var(--warn); }
+.pc { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pc ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.92em; }
+.pc li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
+.pc .pros li::before { content: "▲"; color: var(--good); font-size: 0.7em; padding-top: 4px; }
+.pc .cons li::before { content: "▼"; color: var(--bad); font-size: 0.7em; padding-top: 4px; }
+.pc h3 { font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); margin-bottom: 6px; font-family: var(--f-body); }
+.breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.breakdown div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.82em; }
+.breakdown b { font: 600 1.25em var(--f-num); }
+
+/* metric tiles (simple) */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tile { border-radius: 16px; background: var(--surface-2); padding: 14px; display: grid; gap: 4px; align-content: start; }
+.tile.g { background: var(--good-soft); } .tile.w { background: var(--warn-soft); } .tile.r { background: var(--bad-soft); }
+.t-top { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.t-name { font-size: 0.86em; font-weight: 500; }
+.t-val { font: 500 1.5em var(--f-num); font-variant-numeric: tabular-nums; }
+.t-pro { font-size: 0.74em; color: var(--ink-2); }
+.t-cmp { font-size: 0.78em; color: var(--ink-2); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tile .chip { background: var(--surface); }
+.more { justify-self: start; border: 0; background: transparent; color: var(--accent); font-weight: 600; font-size: 0.88em; padding: 4px 0; }
+.info { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--ink-2); background: transparent; color: var(--ink-2); font: 700 11px/1 var(--f-num); padding: 0; display: inline-grid; place-items: center; }
+.info:hover { border-color: var(--accent); color: var(--accent); }
+
+/* tables: units live in the row label so cells hold clean numbers; zebra rows; the current column is tinted */
+.tw { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 0.9em; }
+th, td { padding: 11px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+th:first-child, td:first-child { text-align: left; }
+thead th { background: var(--surface-2); color: var(--ink-2); font: 600 0.74em/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.05em; padding-block: 10px; }
+thead th.old { color: color-mix(in srgb, var(--ink-2) 70%, transparent); }
+tbody tr:nth-child(even) > * { background: var(--zebra); }
+tbody tr:hover > * { background: var(--accent-soft); }
+tbody tr:last-child > * { border-bottom: 0; }
+tbody th { font-weight: 600; }
+td { font-family: var(--f-num); font-variant-numeric: tabular-nums; color: var(--ink); }
+td.dim { color: var(--ink-2); }
+tbody th.now, tbody td.now, thead th.now { background: var(--now-bg); }
+tbody tr:hover > .now { background: var(--accent-soft); }
+td.now { font-weight: 700; }
+thead th.now { color: var(--accent); }
+/* Metric names stay visible while numbers scroll sideways on small screens */
+.tw th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: 1px 0 0 var(--line); }
+.tw thead th:first-child { background: var(--surface-2); }
+.tw tbody tr:nth-child(even) > th:first-child { background: var(--zebra); }
+.tw tbody tr:hover > th:first-child { background: var(--accent-soft); }
+.mname { display: grid; gap: 2px; min-width: 190px; max-width: 250px; white-space: normal; }
+.mname .cell { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mname small { font-weight: 400; color: var(--ink-2); font-size: 0.82em; line-height: 1.3; }
+.unit { font: 500 0.78em var(--f-num); color: var(--ink-2); background: var(--surface-2); border-radius: 4px; padding: 0 5px; }
+tr.me > *, .tw tr.me > th:first-child { background: var(--accent-soft); font-weight: 700; }
+tr.med > *, .tw tr.med > th:first-child { color: var(--ink-2); font-style: italic; }
+tr.sum > * { font-weight: 700; }
+tr.sum > *:not(.now) { background: var(--zebra); }
+td .up { color: var(--good); } td .dn { color: var(--bad); }
+.status { display: inline-flex; align-items: center; gap: 6px; font: 600 0.82em var(--f-body); }
+.status i { width: 8px; height: 8px; border-radius: 50%; }
+.status.g { color: var(--good); } .status.g i { background: var(--good); }
+.status.w { color: var(--warn); } .status.w i { background: var(--warn); }
+.status.r { color: var(--bad); } .status.r i { background: var(--bad); }
+.status.n { color: var(--ink-2); } .status.n i { background: var(--chart-4); }
+.spark { display: inline-block; vertical-align: middle; }
+
+/* charts */
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-2); font: 400 11px var(--f-num); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82em; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* business */
+.biz { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.facts div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 0.8em; color: var(--ink-2); display: grid; gap: 2px; }
+.facts b { color: var(--ink); font: 600 1.1em var(--f-num); }
+.donut-wrap { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; align-items: center; }
+.seglist { display: grid; gap: 8px; font-size: 0.86em; }
+.seglist div { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; }
+.seglist i { width: 12px; height: 12px; border-radius: 4px; }
+.geo { height: 14px; border-radius: 7px; overflow: hidden; display: flex; }
+
+/* valuation */
+.band { display: grid; gap: 8px; }
+.band-track { position: relative; height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--good-soft), var(--surface-2) 50%, var(--bad-soft)); border: 1px solid var(--line); }
+.band-mark { position: absolute; top: -6px; width: 4px; height: 24px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); }
+.band-mid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink-2); opacity: 0.6; }
+.band-scale { display: flex; justify-content: space-between; font: 400 0.78em var(--f-num); color: var(--ink-2); }
+.dcf { display: grid; gap: 10px; background: var(--surface-2); border-radius: 16px; padding: 16px; }
+.sl { display: grid; grid-template-columns: minmax(0, 1fr) 62px; gap: 2px 10px; align-items: center; font-size: 0.86em; }
+.sl label { color: var(--ink-2); }
+.sl output { font: 500 0.95em var(--f-num); text-align: right; }
+.sl input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.fv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fv div { display: grid; gap: 2px; }
+.fv small { font-size: 0.76em; color: var(--ink-2); }
+.fv b { font: 600 1.25em var(--f-num); }
+.fv b.good { color: var(--good); } .fv b.bad { color: var(--bad); }
+
+/* dupont */
+.dupont { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dupont div { background: var(--surface-2); border-radius: 12px; padding: 10px 14px; display: grid; gap: 1px; font-size: 0.8em; color: var(--ink-2); }
+.dupont div b { font: 600 1.25em var(--f-num); color: var(--ink); }
+.dupont div.res { background: var(--good-soft); }
+.dupont span { font: 600 1.2em var(--f-num); color: var(--ink-2); }
+
+/* results */
+.qcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.qcards div { background: var(--surface-2); border-radius: 16px; padding: 14px; display: grid; gap: 2px; }
+.qcards small { color: var(--ink-2); font-size: 0.8em; }
+.qcards b { font: 500 1.4em var(--f-num); }
+.qcards em { font-style: normal; font: 500 0.85em var(--f-num); color: var(--good); }
+.ai-box { display: grid; gap: 8px; border: 1.5px dashed var(--accent); border-radius: 16px; padding: 14px 16px; }
+.ai-box ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 0.92em; }
+.ai-box .src { font-size: 0.78em; color: var(--ink-2); }
+.ai-chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+
+/* red flags */
+.flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; }
+.flag { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.flag .ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--f-num); background: var(--good-soft); color: var(--good); }
+.flag.w .ic { background: var(--warn-soft); color: var(--warn); }
+.flag.w { background: var(--warn-soft); }
+.flag b { display: block; }
+.flag span { color: var(--ink-2); font-size: 0.92em; }
+.qs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.q { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto 44px auto auto 1fr; gap: 8px; align-content: start; }
+.q-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92em; }
+.q-val { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.q-val .big { font: 600 1.9em/1 var(--f-num); }
+.q-val .big small { font-size: 0.5em; color: var(--ink-2); }
+.zbar { position: relative; height: 10px; }
+.zbar .segs { display: flex; height: 100%; border-radius: 5px; overflow: hidden; }
+.zbar .segs span { height: 100%; }
+.zbar i { position: absolute; top: -5px; width: 4px; height: 20px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface-2); }
+.zlbl { display: flex; font-size: 0.72em; color: var(--ink-2); }
+.zlbl span { text-align: center; }
+.q .why { color: var(--ink-2); font-size: 0.84em; }
+.flags { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; }
+
+.signal { gap: 16px; border: 2px solid var(--good-soft); }
+.signal { gap: 12px; padding: 18px 20px; }
+.sig-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.hzc { border: 1.5px solid transparent; background: var(--surface-2); border-radius: 14px; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; min-width: 0; }
+.hzc:hover { border-color: var(--line); }
+.hzc[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.hzc .t { display: grid; line-height: 1.2; min-width: 0; }
+.hzc .t b { font-size: 0.86em; }
+.hzc .t small { font-size: 0.72em; color: var(--ink-2); }
+.hzc .sp { font: 800 0.74em/1 var(--f-body); letter-spacing: 0.04em; padding: 6px 10px; border-radius: 999px; color: #fff; white-space: nowrap; flex: none; }
+.sp.buy { background: var(--good); } .sp.sbuy { background: var(--deep-good); } .sp.neutral { background: var(--ink-2); } .sp.sell { background: var(--bad); } .sp.ssell { background: var(--deep-bad); }
+.hz-detail { background: var(--surface-2); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; font-size: 0.92em; }
+.hz-detail .drivers { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); column-gap: 24px; }
+.sig-line { font-size: 0.95em; font-weight: 600; }
+.sig-hint { font-size: 0.76em; color: var(--ink-2); }
+@media (max-width: 560px) {
+  .hzc { flex-direction: column; align-items: flex-start; padding: 8px 10px; }
+  .hzc .sp { font-size: 0.68em; padding: 5px 8px; }
+  .hzc .wt { display: none; }
+}
+.hz-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.hz { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto auto auto auto 1fr; gap: 10px; align-content: start; border-top: 4px solid var(--ink-2); }
+.hz.buy { border-top-color: var(--good); } .hz.sbuy { border-top-color: var(--deep-good); } .hz.neutral { border-top-color: var(--chart-4); }
+.hz.sell { border-top-color: var(--bad); } .hz.ssell { border-top-color: var(--deep-bad); }
+.hz-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+.hz-head b { display: block; font-size: 0.98em; }
+.hz-head small { color: var(--ink-2); font-size: 0.8em; }
+.hz-pill { justify-self: start; font: 800 1.25em/1 var(--f-display); padding: 8px 18px; border-radius: 999px; color: #fff; letter-spacing: 0.03em; }
+.hz.buy .hz-pill { background: var(--good); } .hz.sbuy .hz-pill { background: var(--deep-good); } .hz.neutral .hz-pill { background: var(--ink-2); }
+.hz.sell .hz-pill { background: var(--bad); } .hz.ssell .hz-pill { background: var(--deep-bad); }
+.mini { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+.mini span { height: 8px; border-radius: 4px; background: var(--surface); }
+.mini span.on { height: 12px; margin-top: -2px; }
+.mini span.on.c0 { background: var(--deep-bad); } .mini span.on.c1 { background: var(--bad); } .mini span.on.c2 { background: var(--ink-2); }
+.mini span.on.c3 { background: var(--good); } .mini span.on.c4 { background: var(--deep-good); }
+.mini-lbl { display: flex; justify-content: space-between; font-size: 0.7em; color: var(--ink-2); margin-top: -4px; }
+.hz p { font-size: 0.88em; }
+.drivers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.82em; }
+.drivers li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 5px; }
+.drivers li span { color: var(--ink-2); }
+.drivers li b { font-family: var(--f-num); font-weight: 500; text-align: right; }
+.drivers li.rule { border: 0; color: var(--ink); font-style: italic; }
+.sig-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.sig-head h2 { font-size: 1.35em; font-weight: 800; }
+@media (max-width: 760px) { .hz-grid { grid-template-columns: 1fr; } }
+.sig-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.sig-lbl { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.sig-pill { font: 800 1.7em/1 var(--f-display); padding: 10px 26px; border-radius: 999px; color: #fff; background: var(--good); letter-spacing: 0.03em; }
+.sig-h { font-size: 0.86em; color: var(--ink-2); }
+.sig-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.ss { text-align: center; font: 600 0.78em/1.2 var(--f-body); padding: 9px 4px; background: var(--surface-2); color: var(--ink-2); border-radius: 6px; }
+.ss:first-child { border-radius: 999px 6px 6px 999px; } .ss:last-child { border-radius: 6px 999px 999px 6px; }
+.ss.sb, .ss.s { color: var(--bad); } .ss.b, .ss.stb { color: var(--good); }
+.ss.on { color: #fff; font-weight: 800; box-shadow: 0 6px 16px -8px rgba(28, 24, 56, 0.5); }
+.ss.on.sb { background: var(--deep-bad); } .ss.on.s { background: var(--bad); } .ss.on.n { background: var(--ink-2); }
+.ss.on.b { background: var(--good); } .ss.on.stb { background: var(--deep-good); }
+.sig-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.sig-stats div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.8em; color: var(--ink-2); }
+.sig-stats b { font: 600 1.3em var(--f-num); color: var(--ink); }
+.sig-stats em { font-style: normal; font-weight: 600; }
+.matrix td { text-align: center; font-family: var(--f-body); }
+.matrix th:first-child { min-width: 150px; }
+.matrix td.hit { outline: 2.5px solid var(--accent); outline-offset: -3px; border-radius: 10px; font-weight: 800; }
+
+.docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+.doc { display: grid; grid-template-columns: 38px 1fr; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.doc .ft { width: 38px; height: 44px; border-radius: 8px; background: var(--surface); display: grid; place-items: center; font: 600 10px var(--f-num); color: var(--bad); border: 1px solid var(--line); }
+.doc small { color: var(--ink-2); display: block; }
+
+.ca { display: grid; gap: 6px; font-size: 0.88em; }
+.ca div { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding: 8px 12px; background: var(--surface-2); border-radius: 10px; }
+.ca span { font-family: var(--f-num); color: var(--ink-2); }
+
+/* popover */
+.pop { position: fixed; z-index: 70; width: min(360px, calc(100vw - 32px)); background: var(--surface); border-radius: 18px; padding: 18px; box-shadow: 0 24px 60px -20px rgba(28, 24, 56, 0.45); border: 1px solid var(--line); display: grid; gap: 10px; font-size: 0.9em; }
+.pop h3 { font-size: 1.15em; font-weight: 800; padding-right: 26px; }
+.pop .pro-name { font: 500 0.8em var(--f-num); color: var(--ink-2); }
+.pop dl { margin: 0; display: grid; gap: 8px; }
+.pop dt { font-size: 0.74em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+.pop dd { margin: 0; }
+.pop .x { position: absolute; top: 12px; right: 12px; border: 0; background: var(--surface-2); width: 28px; height: 28px; border-radius: 50%; font-weight: 700; }
+.pop .reading { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; }
+
+.foot { font-size: 0.8em; color: var(--ink-2); text-align: center; padding-top: 6px; }
+
+@media (max-width: 1200px) {
+  .layout { grid-template-columns: 1fr; }
+  .index { position: sticky; top: 64px; z-index: 20; display: flex; overflow-x: auto; gap: 6px; padding-block: 6px; background: var(--bg); scrollbar-width: none; }
+  .index a { flex: none; background: var(--surface); border-radius: 999px; padding: 6px 12px; }
+  .biz, .two { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .topbar-in, .page { padding-inline: 16px; }
+  .mode { margin-left: 0; width: 100%; justify-content: space-between; }
+  .summary { grid-template-columns: 1fr; justify-items: start; }
+  .pc { grid-template-columns: 1fr; }
+  .stock .actions { margin-left: 0; }
+  .fv { grid-template-columns: 1fr 1fr; }
+  .donut-wrap { grid-template-columns: 100px minmax(0, 1fr); }
+  .pop { left: 16px !important; right: 16px; top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: auto; }
+  .card { padding: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .q .bar i { transition: width 0.5s ease; }
+}
+.mode-note { font-size: 0.82em; color: var(--ink-2); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 8px 12px; }
+/* ---------- Daily picks page: the day's best-scoring ideas from the whole market ---------- */
+.kick { font: 700 0.72em var(--f-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.apptabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; max-width: 100%; }
+.track > *, .sec > * { min-width: 0; }
+.apptabs span { flex: none; padding: 7px 16px; border-radius: 999px; color: var(--ink-2); font-weight: 500; font-size: 0.94em; }
+.apptabs span.on { background: var(--ink); color: #fff; font-weight: 700; }
+.dp-hero { position: relative; overflow: hidden; border-radius: 26px; color: #fff; padding: 26px 30px; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; align-items: center;
+  background: radial-gradient(circle at 95% 10%, rgba(242, 165, 65, 0.5), transparent 32%), radial-gradient(circle at 0% 120%, rgba(57, 181, 126, 0.45), transparent 40%), linear-gradient(135deg, #160F45 0%, #3A22A6 55%, #6446E8 100%); }
+.dp-hero .when { font: 700 0.74em var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+.dp-hero h1 { font: 800 clamp(1.7em, 3.4vw, 2.5em)/1.08 var(--f-display); letter-spacing: -0.02em; margin-top: 6px; }
+.dp-hero p { opacity: 0.92; margin-top: 10px; line-height: 1.5; max-width: 56ch; }
+.hchips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.hchips span { background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.24); border-radius: 999px; padding: 4px 12px; font-size: 0.82em; font-weight: 600; }
+.funnel { display: grid; gap: 5px; }
+.funnel div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 0.82em; }
+.funnel .fb { height: 24px; border-radius: 8px; background: rgba(255, 255, 255, 0.16); position: relative; overflow: hidden; }
+.funnel .fb i { position: absolute; inset: 0 auto 0 0; background: rgba(255, 255, 255, 0.34); border-radius: 8px; }
+.funnel .fb span { position: relative; z-index: 1; padding-left: 10px; line-height: 24px; color: #fff; font-weight: 700; white-space: nowrap; }
+.funnel b { font: 600 1.05em var(--f-num); min-width: 34px; text-align: right; }
+.funnel .last .fb i { background: var(--chart-2); }
+
+.mkt { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.mkt div { background: var(--surface); border-radius: 16px; padding: 12px 14px; display: grid; gap: 1px; font-size: 0.8em; color: var(--ink-2); line-height: 1.35; box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06); }
+.mkt b { font: 600 1.4em var(--f-num); color: var(--ink); letter-spacing: -0.02em; }
+.mkt em { font-style: normal; font-weight: 700; }
+.mkt .g em { color: var(--good); } .mkt .r em { color: var(--bad); } .mkt .w em { color: var(--warn); }
+.mood-line { background: var(--warn-soft); color: #7A4A04; border-radius: 14px; padding: 10px 14px; font-size: 0.9em; line-height: 1.5; }
+
+.ctrl { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.ctrl .seg button { display: inline-flex; gap: 6px; align-items: center; }
+.ctrl .ct { font: 600 0.82em var(--f-num); background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 0 7px; }
+.ctrl .seg button[aria-pressed="true"] .ct { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.ctrl select { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 12px; font: 600 0.86em var(--f-body); color: var(--ink); }
+.ctrl .sp { flex: 1; }
+
+.picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+.pk { background: var(--surface); border-radius: 22px; padding: 18px; display: grid; gap: 12px; align-content: start; box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 10px 26px -18px rgba(40, 30, 90, 0.35); border-top: 5px solid var(--good); min-width: 0; }
+.pk.sb { border-top-color: var(--deep-good); }
+.pk-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: start; }
+.pk-top h3 { font-size: 1.12em; font-weight: 800; line-height: 1.2; }
+.pk-top .meta { font-size: 0.78em; color: var(--ink-2); margin-top: 2px; }
+.pk-top .pxl { font: 600 0.95em var(--f-num); margin-top: 6px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.pk-top .pxl em { font-style: normal; font-size: 0.86em; }
+.up { color: var(--good); } .dn { color: var(--bad); }
+.hz { display: inline-block; font: 700 0.7em var(--f-body); letter-spacing: 0.05em; text-transform: uppercase; border-radius: 999px; padding: 3px 9px; background: var(--accent-soft); color: var(--accent); }
+.sc { width: 70px; text-align: center; display: grid; justify-items: center; gap: 2px; }
+.sc svg { width: 62px; height: 62px; }
+.sc .trk { fill: none; stroke: var(--surface-2); stroke-width: 7; }
+.sc .arc { fill: none; stroke-width: 7; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 31px 31px; }
+.sc .num { font: 800 17px var(--f-display); fill: var(--ink); }
+.sc .lab { font: 800 0.66em var(--f-body); letter-spacing: 0.05em; color: #fff; border-radius: 999px; padding: 2px 8px; }
+.lab.sbuy { background: var(--deep-good); } .lab.buy { background: var(--good); }
+.spark { width: 100%; height: 44px; display: block; }
+.pil { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.pil div { display: grid; gap: 3px; font-size: 0.72em; color: var(--ink-2); line-height: 1.2; }
+.pil .bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.pil .bar i { display: block; height: 100%; border-radius: 3px; }
+.pil b { font: 600 1.1em var(--f-num); color: var(--ink); }
+.pil small { font-size: 0.9em; }
+.why { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; font-size: 0.88em; line-height: 1.45; }
+.why li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; }
+.why .ic, .risk .ic { width: 22px; height: 22px; align-self: start; border-radius: 7px; display: grid; place-items: center; font: 800 10px var(--f-body); color: #fff; }
+.ic.news { background: #2F6FD6; } .ic.sector { background: #B86E06; } .ic.tech { background: var(--accent); } .ic.fund { background: var(--good); } .ic.rk { background: var(--bad); }
+.risk { background: var(--bad-soft); border-radius: 12px; padding: 8px 10px; font-size: 0.85em; line-height: 1.45; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; }
+.lv { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.lv div { background: var(--surface-2); border-radius: 10px; padding: 7px 8px; display: grid; font-size: 0.7em; color: var(--ink-2); line-height: 1.25; }
+.lv b { font: 600 1.25em var(--f-num); color: var(--ink); }
+.lv .x b { color: var(--bad); } .lv .t b { color: var(--good); }
+.pk-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.8em; color: var(--ink-2); border-top: 1px dashed var(--line); padding-top: 10px; }
+.dots { display: inline-flex; gap: 3px; vertical-align: middle; margin-left: 4px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.dots i.on { background: var(--accent); }
+.ev { background: var(--warn-soft); color: var(--warn); border-radius: 999px; padding: 2px 9px; font-weight: 700; }
+.pk-foot .acts { margin-left: auto; display: flex; gap: 6px; }
+.mini-btn { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 10px; font-size: 0.95em; font-weight: 700; color: var(--ink); }
+.mini-btn[aria-pressed="true"] { background: var(--chart-2); border-color: var(--chart-2); }
+.mini-btn:hover { border-color: var(--accent); }
+
+.tablewrap { background: var(--surface); border-radius: var(--radius); padding: 8px; overflow-x: auto; box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); }
+table.pt { width: 100%; border-collapse: collapse; font-size: 0.84em; }
+table.pt th, table.pt td { padding: 9px 8px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.pt th:first-child, table.pt td:first-child { text-align: left; }
+table.pt th { font-size: 0.76em; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; cursor: pointer; user-select: none; }
+table.pt th[aria-sort] { color: var(--accent); }
+table.pt td { font-family: var(--f-num); }
+table.pt td:first-child { font-family: var(--f-body); font-weight: 700; }
+table.pt tr:hover td { background: var(--zebra); }
+
+.sec { display: grid; gap: 12px; }
+.sec-h { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; justify-content: space-between; }
+.sec-h h2 { font-size: 1.35em; font-weight: 800; }
+.sec-h p { color: var(--ink-2); font-size: 0.88em; }
+.avoid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.av { background: var(--surface); border-radius: 18px; padding: 14px 16px; display: grid; gap: 6px; border-left: 5px solid var(--bad); box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06); }
+.av b { font-size: 1.02em; }
+.av .tag { justify-self: start; font: 800 0.68em var(--f-body); letter-spacing: 0.05em; text-transform: uppercase; border-radius: 999px; padding: 3px 9px; color: #fff; background: var(--bad); }
+.av .tag.w { background: var(--warn); }
+.av p { font-size: 0.86em; color: var(--ink-2); line-height: 1.45; }
+.rules { background: var(--surface); border-radius: var(--radius); padding: 20px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--surface-2); border-radius: 12px; padding: 8px 12px 8px 8px; font-size: 0.88em; line-height: 1.4; }
+.steps li::before { content: counter(s); width: 30px; height: 30px; border-radius: 9px; background: var(--ink); color: #fff; display: grid; place-items: center; font: 700 0.85em var(--f-num); }
+.steps b { font: 600 1.05em var(--f-num); }
+.steps small { display: block; color: var(--ink-2); font-size: 0.88em; }
+.wt { width: 100%; border-collapse: collapse; font-size: 0.84em; }
+.wt th, .wt td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: right; }
+.wt th:first-child, .wt td:first-child { text-align: left; }
+.wt th { font-size: 0.78em; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; }
+.wt td { font-family: var(--f-num); }
+.track { background: var(--surface); border-radius: var(--radius); padding: 20px; display: grid; gap: 14px; box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); }
+.tr-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.tr-tiles div { background: var(--surface-2); border-radius: 14px; padding: 10px 14px; display: grid; font-size: 0.8em; color: var(--ink-2); }
+.tr-tiles b { font: 600 1.45em var(--f-num); color: var(--ink); }
+.months { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.mo { display: grid; gap: 6px; font-size: 0.8em; }
+.mo .stack { display: flex; height: 16px; border-radius: 6px; overflow: hidden; gap: 2px; background: var(--surface); }
+.mo .stack i { display: block; height: 100%; }
+.mo .vs { display: flex; justify-content: space-between; font-family: var(--f-num); }
+.res { font: 700 0.74em var(--f-body); border-radius: 999px; padding: 2px 8px; color: #fff; }
+.res.t { background: var(--good); } .res.s { background: var(--bad); } .res.x { background: #6F6A9A; }
+.legal { background: var(--surface); border: 1px dashed var(--line); border-radius: 14px; padding: 12px 16px; font-size: 0.82em; color: var(--ink-2); line-height: 1.5; }
+.empty { background: var(--surface); border: 1.5px dashed var(--line); border-radius: 20px; padding: 26px; text-align: center; color: var(--ink-2); }
+@media (max-width: 1000px) { .dp-hero { grid-template-columns: 1fr; } .mkt { grid-template-columns: repeat(3, minmax(0, 1fr)); } .rules { grid-template-columns: 1fr; } .months { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .dp-hero { padding: 22px 18px; } .mkt { grid-template-columns: repeat(2, minmax(0, 1fr)); } .picks { grid-template-columns: 1fr; }
+  .tr-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lv { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ctrl .sp { display: none; }
+  .pk-foot .acts { margin-left: 0; width: 100%; } .pk-foot .acts .mini-btn { flex: 1; }
+  .ctrl #f-h { width: 100%; } .ctrl #f-h button { flex: 1; padding: 6px 4px; justify-content: center; } .ctrl select { flex: 1; min-width: 0; }
+}
+</style>
+
+<div class="proto"><b>PROTOTYPE</b><span>Every company here is made up (ACME, Kestrel Bank, Vayu Power and the rest). Picks and the track record are sample data to show the layout.</span></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="brand"><i aria-hidden="true"></i>Stock AI</span>
+    <div class="search" aria-hidden="true">Search any NSE stock <kbd>⌘K</kbd></div>
+    <div class="mode">
+      <span class="mode-lbl" id="mode-hint">Plain-English explanations</span>
+      <div class="seg" role="group" aria-label="Detail level for every tab">
+        <button id="mode-simple" data-mode="simple" aria-pressed="true">Simple</button>
+        <button id="mode-pro" data-mode="pro" aria-pressed="false">Pro</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="stock">
+    <nav class="apptabs" aria-label="App sections"><span>Stocks</span><span class="on">Daily picks</span><span>Watchlist</span><span>Portfolio</span></nav>
+    <div class="actions">
+      <button class="btn primary" id="dl-btn" aria-haspopup="true" aria-expanded="false">Download ▾</button>
+      <div class="menu" id="dl-menu" role="menu" hidden>
+        <button role="menuitem" data-dl="pdf"><b>Today's picks (PDF)</b><small>Every pick with its reasons, risks and price levels</small></button>
+        <button role="menuitem" data-dl="csv"><b>Picks table (CSV)</b><small>Scores, pillars, levels and events for every pick</small></button>
+        <p class="unavail" id="dl-unavail" hidden>Downloads work when this page is opened on claude.ai.</p>
+      </div>
+    </div>
+  </div>
+  <p class="mode-note"><span class="s-only">You're in <b>Simple</b> mode: each idea in plain words with why, the risk and the prices to use. Switch to <b>Pro</b> for pillar scores, weights, a sortable table and the full selection rules.</span><span class="p-only">You're in <b>Pro</b> mode: pillar scores, mood adjustment, reward-to-risk, a sortable table and the scoring rules. Switch to <b>Simple</b> for the plain view.</span></p>
+
+  <section class="dp-hero" aria-labelledby="dp-h">
+    <div>
+      <span class="when" id="dp-when"></span>
+      <h1 id="dp-h"></h1>
+      <p id="dp-p"></p>
+      <div class="hchips" id="dp-chips"></div>
+    </div>
+    <div class="funnel" id="funnel" aria-label="How many stocks passed each step"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="mkt-h">
+    <div class="sec-h"><h2 id="mkt-h" style="font-size:1.1em"><span class="s-only">The market today</span><span class="p-only">Market backdrop</span></h2><p>Friday 16 Oct 2026 close</p></div>
+    <div class="mkt" id="mkt"></div>
+    <p class="mood-line" id="mood-line"></p>
+  </section>
+
+  <section class="sec" aria-labelledby="picks-h">
+    <div class="sec-h"><h2 id="picks-h"><span class="s-only">Today's ideas</span><span class="p-only">Picks</span></h2></div>
+    <div class="ctrl">
+      <div class="seg" role="group" aria-label="Time frame" id="f-h"></div>
+      <select id="f-sector" aria-label="Sector"></select>
+      <select id="f-cap" aria-label="Company size"><option value="">All sizes</option><option value="Large">Large</option><option value="Mid">Mid</option><option value="Small">Small</option></select>
+      <span class="sp"></span>
+      <div class="seg p-only" role="group" aria-label="View" id="f-view"></div>
+    </div>
+    <div class="picks" id="picks"></div>
+    <div class="tablewrap" id="tbl" hidden><table class="pt" id="pt"></table></div>
+  </section>
+
+  <section class="sec" aria-labelledby="av-h">
+    <div class="sec-h"><h2 id="av-h"><span class="s-only">Be careful with these</span><span class="p-only">Caution list</span></h2><p id="av-p"></p></div>
+    <div class="avoid" id="avoid"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="how-h">
+    <div class="sec-h"><h2 id="how-h"><span class="s-only">How we pick</span><span class="p-only">Selection rules</span></h2><p>The same engine as the AI Verdict tab, run on every stock in the NIFTY 500</p></div>
+    <div class="rules">
+      <div><span class="kick" style="margin-bottom:10px">Step by step</span><ol class="steps" id="steps"></ol></div>
+      <div id="weights"></div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="tr-h">
+    <div class="sec-h"><h2 id="tr-h"><span class="s-only">How past picks did</span><span class="p-only">Track record</span></h2><p id="tr-p"></p></div>
+    <div class="track">
+      <div class="tr-tiles" id="tr-tiles"></div>
+      <div class="months" id="months"></div>
+      <div style="overflow-x:auto"><table class="pt" id="recent"></table></div>
+    </div>
+  </section>
+
+  <p class="legal"><b>Please note.</b> Daily picks are research ideas made by a computer from public data, not personal advice. Prices can fall as well as rise. If this app is ever offered to other people, sharing stock picks publicly in India needs registration with SEBI as a Research Analyst.</p>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function fmt(x, dp) { return Number(x).toLocaleString("en-IN", { minimumFractionDigits: dp || 0, maximumFractionDigits: dp || 0 }); }
+  function pc(x, dp) { return (x < 0 ? "−" : "+") + Math.abs(x).toFixed(dp == null ? 1 : dp) + "%"; }
+  function simple() { return root.dataset.mode === "simple"; }
+
+  // ---------- the same rules as the AI Verdict tab (D17) ----------
+  var W = { short: { tech: 40, news: 25, sector: 20, fund: 15 }, medium: { fund: 30, tech: 25, sector: 25, news: 20 }, long: { fund: 55, sector: 20, tech: 15, news: 10 } };
+  var MOOD = { short: -2, medium: -1, long: 0 };
+  var HZ = { short: ["Short term", "Next few weeks", "2–6 weeks"], medium: ["Medium term", "Next few months", "1–6 months"], long: ["Long term", "Next few years", "1–3 years"] };
+  var PIL = [["news", "News", "News"], ["sector", "Industry", "Sector"], ["tech", "Price chart", "Technicals"], ["fund", "Company health", "Fundamentals"]];
+  var PCOL = { news: "#2F6FD6", sector: "#B86E06", tech: "#5636D3", fund: "#12875A" };
+  function band(sc) { return sc >= 85 ? "sb" : sc >= 70 ? "b" : sc >= 40 ? "n" : sc >= 25 ? "s" : "ss"; }
+  function finalOf(p) {
+    var h = p.h, sc = Object.keys(W[h]).reduce(function (a, k) { return a + W[h][k] / 100 * p.s[k]; }, 0) + MOOD[h];
+    var agree = Object.keys(p.s).filter(function (k) { return p.s[k] >= 70; }).length, conv = agree >= 4 ? 3 : agree === 3 ? 2 : 1;
+    if ([85, 70, 40, 25].some(function (b) { return Math.abs(sc - b) < 3; })) conv = Math.max(1, conv - 1);
+    return { sc: sc, k: band(sc), conv: conv, agree: agree };
+  }
+
+  // ---------- today's picks (sample) ----------
+  // s = pillar scores for the pick's time frame; why = [pillar, simple, pro]; lv = buy zone low/high, exit, target 1, target 2 (long term: zone, rethink level, fair value)
+  var PICKS = [
+    { sym: "KESTREL", name: "Kestrel Bank", sector: "Banks", cap: "Large", px: 1612.4, chg: 1.2, h: "short", s: { tech: 84, news: 78, sector: 74, fund: 72 }, ev: "Results 12 Nov", liq: 410, seed: 11,
+      why: [["tech", "Broke out of a 3-month range at ₹1,590 with 1.8 times the usual buying", "Range breakout > 1,590 on 1.8× volume; RSI 63"], ["news", "Loans grew 16% in its September update and bad loans are at a 6-year low", "Advances +16% YoY (Sep update); GNPA 6-year low"], ["sector", "Banks are beating the market this month", "Bank index +3.1% vs NIFTY +2.0% (1M)"]],
+      risk: ["Foreign investors are selling banks; a market dip could pull it down", "FII net sellers in financials; high beta to NIFTY"], lv: [1595, 1612, 1548, 1680, 1725] },
+    { sym: "VAYU", name: "Vayu Power", sector: "Power", cap: "Mid", px: 486.2, chg: 2.6, h: "short", s: { tech: 82, news: 80, sector: 79, fund: 62 }, ev: "", liq: 96, seed: 23,
+      why: [["news", "The government raised spending on power grids on 15 Oct", "Grid capex outlay raised (15 Oct)"], ["sector", "Power is the strongest industry this month", "Power index +6.2% (1M), leading on rotation"], ["tech", "At a new 52-week high, above all its averages", "52-week high; above 20/50/200 DMA"]],
+      risk: ["Its profit record is weaker than rivals' (company health 62/100)", "Fundamentals 62: ROE 11% vs sector 14%"], lv: [478, 486, 462, 508, 522] },
+    { sym: "PELICAN", name: "Pelican Auto Parts", sector: "Auto parts", cap: "Small", px: 342.75, chg: 4.1, h: "short", s: { tech: 86, news: 76, sector: 66, fund: 71 }, ev: "", liq: 31, seed: 37,
+      why: [["news", "Won a ₹180 crore order for electric-vehicle parts", "₹180 Cr EV component order (14% of FY26 sales)"], ["tech", "Jumped above ₹330 with 2.1 times the usual buying", "Breakout > 330 on 2.1× volume"], ["fund", "Cut its debt in half in two years", "Debt/equity 0.62 → 0.31 in 2 years"]],
+      risk: ["A small company: its price can swing sharply, and the auto industry is only average right now", "Small cap, ₹31 Cr ADV; sector score 66 (neutral)"], lv: [332, 340, 318, 362, 375] },
+    { sym: "ACME", name: "ACME Industries", sector: "Capital goods", cap: "Mid", px: 1248.6, chg: 1.8, h: "medium", s: { fund: 70, tech: 90, sector: 76, news: 74 }, ev: "Results 28 Oct", liq: 182, seed: 41,
+      why: [["tech", "Broke above ₹1,225 on heavy buying, at a record high", "Breakout > 1,225 on 1.65× volume"], ["news", "Won a ₹640 crore order, 11% of last year's sales", "₹640 Cr order; order book ~₹10,400 Cr"], ["fund", "Profit has grown 26% a year for three years", "PAT CAGR 26%, ROE 18.7%"]],
+      risk: ["Results on 28 Oct, and it costs more than rivals (34 times profit vs 27)", "Earnings 28 Oct; P/E 34 vs sector 27"], lv: [1225, 1240, 1182, 1295, 1345] },
+    { sym: "LUMEN", name: "Lumen Pharma", sector: "Pharma", cap: "Mid", px: 2214, chg: 0.8, h: "medium", s: { fund: 80, tech: 74, sector: 71, news: 82 }, ev: "", liq: 74, seed: 53,
+      why: [["news", "The US drug regulator cleared its new factory with no concerns", "USFDA inspection closed, zero observations"], ["fund", "Profit has risen five quarters in a row", "PAT up 5 straight quarters; ROE 19%"], ["sector", "Medicine makers hold up well when markets get jumpy", "Defensive sector; low beta"]],
+      risk: ["A government price-control review covers two of its medicines", "NPPA review on 2 products (~6% of sales)"], lv: [2170, 2200, 2095, 2330, 2420] },
+    { sym: "TIDEWTR", name: "Tidewater Logistics", sector: "Logistics", cap: "Small", px: 612.3, chg: 1.5, h: "medium", s: { fund: 76, tech: 80, sector: 72, news: 70 }, ev: "", liq: 14, seed: 67,
+      why: [["tech", "Steady climb: higher highs and higher lows for four months", "HH/HL structure 4 months; ADX 27"], ["fund", "Sales have grown 24% a year and new warehouses are filling up", "Revenue CAGR 24%; utilisation 82%"], ["sector", "Goods movement across India keeps rising", "E-way bills +14% YoY"]],
+      risk: ["Small and lightly traded (about ₹14 crore a day), so prices can jump", "ADV ₹14 Cr; wide spreads"], lv: [598, 608, 571, 650, 678] },
+    { sym: "TEAL", name: "Teal Textiles", sector: "Textiles", cap: "Small", px: 188.4, chg: 0.6, h: "medium", s: { fund: 74, tech: 78, sector: 70, news: 71 }, ev: "", liq: 22, seed: 79,
+      why: [["news", "The company says export orders are up 30% this quarter", "Mgmt: export order book +30% QoQ"], ["tech", "Bounced off its 200-day average", "Bounce at 200 DMA; MACD turning up"], ["fund", "Holds cash and has no debt", "Net cash; debt-free"]],
+      risk: ["Cotton prices swing a lot and can squeeze profit", "Cotton volatility; OPM sensitivity ~1.5 pp per 10%"], lv: [184, 188, 176, 202, 210] },
+    { sym: "GRANITE", name: "Granite Cement", sector: "Cement", cap: "Large", px: 9840, chg: 0.4, h: "long", s: { fund: 84, sector: 74, tech: 72, news: 68 }, ev: "", liq: 260, seed: 83,
+      why: [["fund", "Debt down 40% in two years and cash flow at a record", "Net debt −40% in 2 yrs; record FCF"], ["sector", "Building demand is strong and cement prices are firm", "Cement demand +9% YoY; prices firm"], ["tech", "A steady uptrend above its 200-day average", "Above 200 DMA for 9 months"]],
+      risk: ["Fuel costs (coal and petcoke) can squeeze margins", "Fuel ~30% of costs; petcoke volatility"], lv: [9600, 9850, 8900, 11600] },
+    { sym: "CORAL", name: "Coral Hospitals", sector: "Healthcare", cap: "Mid", px: 742.5, chg: 1.1, h: "long", s: { fund: 82, sector: 78, tech: 70, news: 74 }, ev: "", liq: 58, seed: 97,
+      why: [["fund", "Returns on shareholders' money rose from 11% to 17% in three years", "ROE 11% → 17% in 3 yrs"], ["news", "Opening 600 new beds over the next two years", "+600 beds by FY28 (+35%)"], ["sector", "Healthcare is a long-term growth industry in India", "Sector earnings growth 18% (5-yr)"]],
+      risk: ["New hospitals usually lose money for their first one to two years", "New-bed EBITDA drag in FY27–28"], lv: [725, 745, 650, 905] },
+    { sym: "SAFFRON", name: "Saffron Foods", sector: "FMCG", cap: "Large", px: 3488, chg: -0.3, h: "long", s: { fund: 82, sector: 70, tech: 72, news: 74 }, ev: "", liq: 205, seed: 101,
+      why: [["fund", "Sales have grown about 12% a year for 10 years, with almost no debt", "10-yr sales CAGR 12%; D/E 0.05"], ["news", "Demand in villages has picked up for three quarters", "Rural volume growth 3 straight quarters"], ["tech", "Back above its 200-day average after a six-month dip", "Reclaimed 200 DMA after 6-month base"]],
+      risk: ["Already expensive at 48 times profit", "P/E 48 vs 5-yr median 52; little margin of safety"], lv: [3420, 3500, 3180, 4050] }
+  ];
+  PICKS.forEach(function (p) { p.f = finalOf(p); });
+  var AVOID = [
+    ["NOVA", "Nova Machines", "Capital goods", "w", "Falling trend", "Bearish for the next few weeks", "The price keeps making lower highs while its industry rises. Each bounce has faded.", "Short-term score 31 (Sell): below 50/200 DMA, lower highs since April."],
+    ["NIMBUS", "Nimbus Realty", "Real estate", "r", "Red flag", "Founders have pledged more shares", "The founders have pledged 34% of their shares as loan security, up from 22%, while company debt is rising.", "Promoter pledge 22% → 34% QoQ; net debt/equity 1.4."],
+    ["MARIGOLD", "Marigold Chemicals", "Chemicals", "r", "Red flag", "Its auditor resigned mid-year", "The company's auditor quit before finishing the year's audit. That is a warning sign worth waiting out.", "Statutory auditor resigned mid-term (exchange filing 14 Oct)."]
+  ];
+  var FUNNEL = [["Stocks in the NIFTY 500", "Universe: NIFTY 500", 500], ["Traded enough (₹10 crore+ a day)", "ADV ≥ ₹10 Cr", 431], ["No red flags", "Red-flag screen", 409], ["Full data available", "Data complete", 402], ["Scored Buy for some time frame", "Final ≥ 70 on a horizon", 61], ["Medium or high confidence", "Conviction ≥ medium", 27], ["Today's picks", "After limits", PICKS.length]];
+  var TRACK = [["Jul", 38, 22, 12, 4, 1.9, 0.8], ["Aug", 41, 26, 11, 4, 2.6, 1.2], ["Sep", 36, 19, 14, 3, 0.9, 0.4], ["Oct*", 21, 13, 6, 2, 2.1, 1.0]];
+  var RECENT = [["14 Oct", "Quartz Infotech", "short", "t", 5.2, 9], ["13 Oct", "Banyan Finance", "medium", "s", -4.1, 6], ["10 Oct", "Vayu Power", "short", "t", 6.8, 4], ["9 Oct", "Meera Steel", "short", "s", -3.6, 3], ["8 Oct", "Granite Cement", "medium", "t", 7.4, 15], ["7 Oct", "Pelican Auto Parts", "short", "x", 1.2, 20], ["3 Oct", "Lumen Pharma", "medium", "t", 5.9, 11], ["1 Oct", "Kestrel Bank", "short", "s", -3.0, 5]];
+
+  // ---------- state ----------
+  var st = { h: "all", sector: "", cap: "", view: "cards", sort: ["score", -1] }, watch = {};
+  try { watch = JSON.parse(localStorage.getItem("stockai-watch") || "{}") || {}; var sv = JSON.parse(localStorage.getItem("stockai-picks") || "null"); if (sv) Object.keys(st).forEach(function (k) { if (sv[k] != null) st[k] = sv[k]; }); } catch (e) {}
+  function save() { try { localStorage.setItem("stockai-picks", JSON.stringify(st)); } catch (e) {} }
+  function list() { return PICKS.filter(function (p) { return (st.h === "all" || p.h === st.h) && (!st.sector || p.sector === st.sector) && (!st.cap || p.cap === st.cap); }); }
+
+  // ---------- drawing ----------
+  function drawHero() {
+    var sim = simple(), n = { short: 0, medium: 0, long: 0 }; PICKS.forEach(function (p) { n[p.h]++; });
+    $("dp-when").textContent = sim ? "Ideas for Monday 19 Oct · from Friday's close" : "Picks for 19 Oct 2026 · data to 16 Oct close";
+    $("dp-h").textContent = sim ? PICKS.length + " ideas from 500 stocks" : PICKS.length + " picks · " + n.short + " short / " + n.medium + " medium / " + n.long + " long";
+    $("dp-p").textContent = sim ? "Every evening the AI scores all 500 big NSE companies on their news, their industry, their price chart and their business, then keeps the strongest few. The market is in a greedy mood, so we're picking fewer quick trades today." : "Full D17 verdict on the NIFTY 500 after liquidity and red-flag screens; conviction ≥ medium; max 2 per sector, max 4 per horizon. Short-term slots cut to 3 (Fear & Greed 68).";
+    $("dp-chips").innerHTML = [[n.short, sim ? "for the next few weeks" : "short (2–6 wks)"], [n.medium, sim ? "for the next few months" : "medium (1–6 mths)"], [n.long, sim ? "for the next few years" : "long (1–3 yrs)"]].map(function (c) { return '<span>' + c[0] + ' ' + c[1] + '</span>'; }).join("");
+    $("funnel").innerHTML = FUNNEL.map(function (f, i) { return '<div class="' + (i === FUNNEL.length - 1 ? "last" : "") + '"><div class="fb"><i style="width:' + Math.max(14, f[2] / 500 * 100) + '%"></i><span>' + (sim ? f[0] : f[1]) + '</span></div><b>' + f[2] + '</b></div>'; }).join("");
+  }
+  function drawMarket() {
+    var sim = simple();
+    var t = sim ? [["NIFTY 50", "25,840", "+2.0% in a month", "g"], ["Fear & greed", "68", "Greedy", "w"], ["Foreign investors", "−₹8,420 Cr", "Selling (5 days)", "r"], ["Indian funds", "+₹12,910 Cr", "Buying (5 days)", "g"], ["Stocks rising", "64%", "Healthy", "g"], ["Calm meter (VIX)", "13.8", "Calm", "g"]]
+      : [["NIFTY 50", "25,840", "+2.0% 1M · uptrend", "g"], ["Fear & Greed", "68", "Greed", "w"], ["FII 5d", "−8,420 Cr", "Net sell", "r"], ["DII 5d", "+12,910 Cr", "Net buy", "g"], ["Breadth >200 DMA", "64%", "Healthy", "g"], ["India VIX", "13.8", "vs 14.9 50-d avg", "g"]];
+    $("mkt").innerHTML = t.map(function (x) { return '<div class="' + x[3] + '">' + x[0] + '<b>' + x[1] + '</b><em>' + x[2] + '</em></div>'; }).join("");
+    $("mood-line").innerHTML = sim ? "<b>What this means for today's ideas:</b> the market is upbeat but a little over-excited, and foreign investors are selling. So we take 2 points off every short-term score and 1 off medium-term, and we pick only 3 quick trades instead of up to 4." : "<b>Mood overlay:</b> −2 pts short, −1 medium, 0 long (12 macro readings, total −2). Short-term slots capped at 3 while Fear & Greed ≥ 65.";
+  }
+  function ring(sc, k) { var r = 25, c = 2 * Math.PI * r; return '<svg viewBox="0 0 62 62" aria-hidden="true"><circle class="trk" cx="31" cy="31" r="' + r + '"/><circle class="arc" cx="31" cy="31" r="' + r + '" stroke="' + (k === "sb" ? "#0B6A45" : "#12875A") + '" stroke-dasharray="' + (c * sc / 100).toFixed(1) + ' ' + c.toFixed(1) + '"/><text class="num" x="31" y="37" text-anchor="middle">' + Math.round(sc) + '</text></svg>'; }
+  function spark(p) {
+    var r = p.seed, rnd = function () { r = (r * 9301 + 49297) % 233280; return r / 233280; }, v = [p.px], up = p.f.sc > 75 ? 0.0035 : 0.002;
+    for (var i = 1; i < 40; i++) v.unshift(v[0] / (1 + up + (rnd() - 0.5) * 0.03));
+    v[v.length - 2] = p.px / (1 + p.chg / 100);
+    var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v), W2 = 300, H2 = 44;
+    var pts = v.map(function (x, i) { return (i / (v.length - 1) * W2).toFixed(1) + "," + (H2 - 4 - (x - lo) / (hi - lo) * (H2 - 8)).toFixed(1); }).join(" ");
+    return '<svg class="spark" viewBox="0 0 ' + W2 + ' ' + H2 + '" preserveAspectRatio="none" role="img" aria-label="' + esc(p.name) + ' price over the last 2 months"><polyline points="' + pts + '" fill="none" stroke="#5636D3" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>';
+  }
+  function dots(c) { return '<span class="dots">' + [1, 2, 3].map(function (i) { return '<i class="' + (i <= c ? "on" : "") + '"></i>'; }).join("") + '</span>'; }
+  function levels(p, sim) {
+    var l = p.lv;
+    if (p.h === "long") return '<div class="lv" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div>' + (sim ? "Buy between" : "Accumulate") + '<b>₹' + fmt(l[0]) + '–' + fmt(l[1]) + '</b></div><div class="x">' + (sim ? "Rethink if below" : "Review below") + '<b>₹' + fmt(l[2]) + '</b></div><div class="t">' + (sim ? "Fair value" : "Fair value") + '<b>₹' + fmt(l[3]) + '</b></div></div>';
+    var rr = (l[4] - (l[0] + l[1]) / 2) / ((l[0] + l[1]) / 2 - l[2]);
+    return '<div class="lv"><div>' + (sim ? "Buy between" : "Entry") + '<b>' + fmt(l[0]) + '–' + fmt(l[1]) + '</b></div><div class="x">' + (sim ? "Exit if below" : "Stop") + '<b>' + fmt(l[2]) + '</b></div><div class="t">' + (sim ? "Target 1" : "T1") + '<b>' + fmt(l[3]) + '</b></div><div class="t">' + (sim ? "Target 2" : "T2 · R:R " + rr.toFixed(1)) + '<b>' + fmt(l[4]) + '</b></div></div>';
+  }
+  function card(p) {
+    var sim = simple(), f = p.f, h = HZ[p.h];
+    var pil = PIL.map(function (x) { var v = p.s[x[0]]; return '<div><span>' + (sim ? x[1] : x[2] + " · " + W[p.h][x[0]] + "%") + '</span><span class="bar"><i style="width:' + v + '%;background:' + PCOL[x[0]] + '"></i></span>' + (sim ? "" : '<b>' + v + '</b>') + '</div>'; }).join("");
+    return '<article class="pk ' + (f.k === "sb" ? "sb" : "") + '" aria-label="' + esc(p.name) + '">' +
+      '<div class="pk-top"><div><span class="hz">' + (sim ? h[1] : h[0] + " · " + h[2]) + '</span><h3 style="margin-top:6px">' + esc(p.name) + '</h3><div class="meta">' + (sim ? p.sector + " · " + p.cap + " company" : "NSE: " + p.sym + " · " + p.sector + " · " + p.cap + " cap · ADV ₹" + p.liq + " Cr") + '</div>' +
+      '<div class="pxl">₹' + fmt(p.px, 2) + '<em class="' + (p.chg >= 0 ? "up" : "dn") + '">' + (p.chg >= 0 ? "▲ " : "▼ ") + pc(p.chg) + '</em></div></div>' +
+      '<div class="sc">' + ring(f.sc, f.k) + '<span class="lab ' + (f.k === "sb" ? "sbuy" : "buy") + '">' + (f.k === "sb" ? "STRONG BUY" : "BUY") + '</span></div></div>' +
+      spark(p) +
+      '<div class="pil">' + pil + '</div>' +
+      '<ul class="why">' + p.why.map(function (w) { return '<li><span class="ic ' + w[0] + '" title="' + PIL.filter(function (x) { return x[0] === w[0]; })[0][2] + '">' + { news: "N", sector: "S", tech: "T", fund: "F" }[w[0]] + '</span><span>' + esc(sim ? w[1] : w[2]) + '</span></li>'; }).join("") + '</ul>' +
+      '<div class="risk"><span class="ic rk">!</span><span><b>' + (sim ? "Watch out: " : "Risk: ") + '</b>' + esc(sim ? p.risk[0] : p.risk[1]) + '</span></div>' +
+      levels(p, sim) +
+      '<div class="pk-foot"><span>' + (sim ? "Confidence" : "Conviction · " + f.agree + "/4 agree") + dots(f.conv) + '</span>' + (sim ? "" : '<span>Score ' + f.sc.toFixed(1) + ' (mood ' + MOOD[p.h] + ')</span>') + (p.ev ? '<span class="ev">' + esc(p.ev) + '</span>' : "") +
+      '<span class="acts"><button class="mini-btn" data-watch="' + p.sym + '" aria-pressed="' + !!watch[p.sym] + '">' + (watch[p.sym] ? "★ Watching" : "☆ Watch") + '</button><button class="mini-btn" data-go="tm" data-sym="' + p.sym + '">Test it</button><button class="mini-btn" data-go="open" data-sym="' + p.sym + '">Full analysis →</button></span></div></article>';
+  }
+  function drawControls() {
+    var sim = simple(), c = { all: PICKS.length, short: 0, medium: 0, long: 0 }; PICKS.forEach(function (p) { c[p.h]++; });
+    $("f-h").innerHTML = [["all", "All"], ["short", sim ? "Weeks" : "Short"], ["medium", sim ? "Months" : "Medium"], ["long", sim ? "Years" : "Long"]].map(function (x) { return '<button data-fh="' + x[0] + '" aria-pressed="' + (st.h === x[0]) + '">' + x[1] + ' <span class="ct">' + c[x[0]] + '</span></button>'; }).join("");
+    var secs = PICKS.map(function (p) { return p.sector; }).filter(function (s, i, a) { return a.indexOf(s) === i; }).sort();
+    $("f-sector").innerHTML = '<option value="">' + (sim ? "All industries" : "All sectors") + '</option>' + secs.map(function (s) { return '<option' + (st.sector === s ? " selected" : "") + '>' + esc(s) + '</option>'; }).join("");
+    $("f-cap").value = st.cap; $("f-cap").options[0].textContent = sim ? "All company sizes" : "All market caps";
+    $("f-view").innerHTML = [["cards", "Cards"], ["table", "Table"]].map(function (x) { return '<button data-fv="' + x[0] + '" aria-pressed="' + (st.view === x[0]) + '">' + x[1] + '</button>'; }).join("");
+  }
+  function drawPicks() {
+    var L = list(), table = !simple() && st.view === "table";
+    var HO = ["short", "medium", "long"]; L.sort(function (a, b) { return HO.indexOf(a.h) - HO.indexOf(b.h) || b.f.sc - a.f.sc; });
+    $("picks").hidden = table; $("tbl").hidden = !table;
+    if (!L.length) { $("picks").hidden = false; $("tbl").hidden = true; $("picks").innerHTML = '<div class="empty">No picks match these filters today. Try "All".</div>'; return; }
+    if (!table) { $("picks").innerHTML = L.map(card).join(""); return; }
+    var cols = [["name", "Stock"], ["h", "Horizon"], ["score", "Score"], ["news", "News"], ["sector", "Sector"], ["tech", "Tech"], ["fund", "Fund"], ["conv", "Conv."], ["entry", "Entry"], ["stop", "Stop / review"], ["tgt", "Target / FV"], ["rr", "R:R"], ["liq", "ADV ₹Cr"], ["ev", "Event"]];
+    function val(p, k) { var l = p.lv, mid = (l[0] + l[1]) / 2; return k === "name" ? p.name : k === "h" ? ["short", "medium", "long"].indexOf(p.h) : k === "score" ? p.f.sc : k === "conv" ? p.f.conv : k === "entry" ? mid : k === "stop" ? l[2] : k === "tgt" ? (p.h === "long" ? l[3] : l[4]) : k === "rr" ? (p.h === "long" ? (l[3] - mid) / (mid - l[2]) : (l[4] - mid) / (mid - l[2])) : k === "liq" ? p.liq : k === "ev" ? p.ev : p.s[k]; }
+    L.sort(function (a, b) { var x = val(a, st.sort[0]), y = val(b, st.sort[0]); return (x > y ? 1 : x < y ? -1 : 0) * st.sort[1]; });
+    $("pt").innerHTML = '<thead><tr>' + cols.map(function (c) { return '<th data-sort="' + c[0] + '"' + (st.sort[0] === c[0] ? ' aria-sort="' + (st.sort[1] > 0 ? "ascending" : "descending") + '"' : "") + '>' + c[1] + (st.sort[0] === c[0] ? (st.sort[1] > 0 ? " ▲" : " ▼") : "") + '</th>'; }).join("") + '</tr></thead><tbody>' +
+      L.map(function (p) { var l = p.lv; return '<tr><td>' + esc(p.name) + '</td><td>' + HZ[p.h][0].split(" ")[0] + '</td><td>' + p.f.sc.toFixed(1) + '</td>' + ["news", "sector", "tech", "fund"].map(function (k) { return '<td>' + p.s[k] + '</td>'; }).join("") + '<td>' + ["", "Low", "Med", "High"][p.f.conv] + '</td><td>' + fmt(l[0]) + '–' + fmt(l[1]) + '</td><td>' + fmt(l[2]) + '</td><td>' + fmt(p.h === "long" ? l[3] : l[4]) + '</td><td>' + val(p, "rr").toFixed(1) + '</td><td>' + p.liq + '</td><td>' + esc(p.ev || "–") + '</td></tr>'; }).join("") + '</tbody>';
+  }
+  function drawAvoid() {
+    var sim = simple();
+    $("av-p").textContent = sim ? "Stocks to stay away from for now: falling prices or warning signs in their filings." : "Sell-rated or red-flag stocks in the universe, excluded from picks.";
+    $("avoid").innerHTML = AVOID.map(function (a) { return '<div class="av"><span class="tag ' + (a[3] === "w" ? "w" : "") + '">' + a[4] + '</span><b>' + esc(a[1]) + ' <small style="color:var(--ink-2);font-weight:500">· ' + esc(a[2]) + '</small></b><p><b style="color:var(--ink)">' + esc(a[5]) + '.</b> ' + esc(sim ? a[6] : a[7]) + '</p></div>'; }).join("");
+  }
+  function drawRules() {
+    var sim = simple();
+    var steps = sim ? [["Start with the 500 biggest NSE companies", 500], ["Drop stocks that hardly trade, so you can buy and sell easily", 431], ["Drop stocks with warning signs: pledged shares, auditor exits, fraud news, rating cuts", 409], ["Score the rest on news, industry, price chart and company health, then adjust for the market mood", 402], ["Keep only scores of 70 or more where at least 3 of the 4 checks agree", 27], ["Take the best few for each time frame, at most 2 from one industry", PICKS.length]]
+      : [["Universe: NIFTY 500 constituents", 500], ["Liquidity: 20-day ADV ≥ ₹10 Cr", 431], ["Red flags: pledge ↑, auditor exit, SEBI/fraud news, rating downgrade, going-concern note", 409], ["Pillar scores per horizon (Fundamentals, Technicals, Sector, News) + mood overlay; results ≤ 15 days caps short at 69", 402], ["Final ≥ 70 and conviction ≥ medium (≥ 3 pillars on the buy side, −1 step within 3 pts of a band)", 27], ["Rank by score; ≤ 4 per horizon (short ≤ 3 while F&G ≥ 65); ≤ 2 per sector", PICKS.length]];
+    $("steps").innerHTML = steps.map(function (s) { return '<li><span>' + esc(s[0]) + '</span><b>' + s[1] + '</b></li>'; }).join("");
+    $("weights").innerHTML = '<span class="kick" style="margin-bottom:10px">' + (sim ? "What counts most for each time frame" : "Pillar weights (%) and mood points") + '</span><table class="wt"><thead><tr><th></th><th>' + (sim ? "Weeks" : "Short") + '</th><th>' + (sim ? "Months" : "Medium") + '</th><th>' + (sim ? "Years" : "Long") + '</th></tr></thead><tbody>' +
+      PIL.map(function (x) { return '<tr><td style="font-family:var(--f-body);font-weight:600"><span class="ic ' + x[0] + '" style="display:inline-grid;width:18px;height:18px;border-radius:5px;margin-right:6px;font-size:9px">' + { news: "N", sector: "S", tech: "T", fund: "F" }[x[0]] + '</span>' + (sim ? x[1] : x[2]) + '</td><td>' + W.short[x[0]] + '%</td><td>' + W.medium[x[0]] + '%</td><td>' + W.long[x[0]] + '%</td></tr>'; }).join("") +
+      '<tr><td style="font-family:var(--f-body);font-weight:600">' + (sim ? "Market mood today" : "Mood points") + '</td><td>−2</td><td>−1</td><td>0</td></tr></tbody></table><p class="hint" style="font-size:0.8em;color:var(--ink-2);margin-top:10px;line-height:1.5">' + (sim ? "Quick trades lean on the price chart and news; long-term ideas lean on how good the business is. Analysts' forecasts are not used, so every reason can be checked against public data." : "No analyst-consensus inputs: every factor comes from exchange data, filings and the licensed news feed. Weights are starting values pending backtests.") + '</p>';
+  }
+  function drawTrack() {
+    var sim = simple(), tot = TRACK.reduce(function (a, m) { return [a[0] + m[1], a[1] + m[2], a[2] + m[3], a[3] + m[4]]; }, [0, 0, 0, 0]);
+    var avg = TRACK.reduce(function (a, m) { return a + m[5] * m[1]; }, 0) / tot[0], nif = TRACK.reduce(function (a, m) { return a + m[6] * m[1]; }, 0) / tot[0];
+    $("tr-p").textContent = sim ? "Every pick since July, counted honestly, losers included" : "All closed picks since 1 Jul; entry next open, exits at stop, target or time; NIFTY over the same days";
+    $("tr-tiles").innerHTML = [[sim ? "Ideas closed" : "Closed picks", tot[0]], [sim ? "Reached target 1" : "Target hit", Math.round(tot[1] / tot[0] * 100) + "%"], [sim ? "Hit the exit price" : "Stopped out", Math.round(tot[2] / tot[0] * 100) + "%"], [sim ? "Average result vs NIFTY" : "Avg return vs NIFTY", pc(avg) + " vs " + pc(nif)]].map(function (t) { return '<div>' + t[0] + '<b>' + t[1] + '</b></div>'; }).join("");
+    $("months").innerHTML = TRACK.map(function (m) { return '<div class="mo"><b style="font-family:var(--f-display)">' + m[0] + ' <small style="color:var(--ink-2);font-weight:500">' + m[1] + ' ideas</small></b><div class="stack" role="img" aria-label="' + m[2] + ' targets, ' + m[3] + ' stops, ' + m[4] + ' time exits"><i style="flex:' + m[2] + ';background:#12875A"></i><i style="flex:' + m[3] + ';background:#D2433A"></i><i style="flex:' + m[4] + ';background:#6F6A9A"></i></div><div class="vs"><span>' + (sim ? "Ideas " : "Picks ") + pc(m[5]) + '</span><span style="color:var(--ink-2)">NIFTY ' + pc(m[6]) + '</span></div></div>'; }).join("");
+    $("months").insertAdjacentHTML("beforeend", '<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:0.8em;color:var(--ink-2)">' + [["#12875A", sim ? "Reached target" : "Target hit"], ["#D2433A", sim ? "Hit the exit price" : "Stopped out"], ["#6F6A9A", sim ? "Time ran out" : "Time exit"]].map(function (x) { return '<span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + x[0] + ';margin-right:6px"></i>' + x[1] + '</span>'; }).join("") + '</div>');
+    var lab = { t: sim ? "Target" : "Target hit", s: sim ? "Exit hit" : "Stopped", x: sim ? "Time up" : "Time exit" };
+    $("recent").innerHTML = '<thead><tr><th>' + (sim ? "Picked" : "Date") + '</th><th style="text-align:left">Stock</th><th style="text-align:left">' + (sim ? "For" : "Horizon") + '</th><th style="text-align:left">Result</th><th>Return</th><th>Days</th></tr></thead><tbody>' +
+      RECENT.map(function (r) { return '<tr><td>' + r[0] + '</td><td style="text-align:left;font-family:var(--f-body);font-weight:700">' + esc(r[1]) + '</td><td style="text-align:left;font-family:var(--f-body)">' + (sim ? HZ[r[2]][1].replace("Next few ", "") : HZ[r[2]][0]) + '</td><td style="text-align:left"><span class="res ' + r[3] + '">' + lab[r[3]] + '</span></td><td class="' + (r[4] >= 0 ? "up" : "dn") + '">' + pc(r[4]) + '</td><td>' + r[5] + '</td></tr>'; }).join("") + '</tbody>' +
+      '<caption style="caption-side:bottom;text-align:left;font-size:0.8em;color:var(--ink-2);padding-top:8px">* October to date. Past results don\'t promise future ones. Sample data.</caption>';
+  }
+
+  // ---------- events ----------
+  function redraw() { drawHero(); drawMarket(); drawControls(); drawPicks(); drawAvoid(); drawRules(); drawTrack(); }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-fh],[data-fv],[data-sort],[data-watch],[data-go]"); if (!b) return;
+    if (b.dataset.fh) { st.h = b.dataset.fh; drawControls(); drawPicks(); }
+    if (b.dataset.fv) { st.view = b.dataset.fv; drawControls(); drawPicks(); }
+    if (b.dataset.sort) { st.sort = st.sort[0] === b.dataset.sort ? [b.dataset.sort, -st.sort[1]] : [b.dataset.sort, b.dataset.sort === "name" || b.dataset.sort === "h" ? 1 : -1]; drawPicks(); }
+    if (b.dataset.watch) { var s = b.dataset.watch; if (watch[s]) delete watch[s]; else watch[s] = 1; try { localStorage.setItem("stockai-watch", JSON.stringify(watch)); } catch (er) {} drawPicks(); toast(watch[s] ? "Added to your watchlist" : "Removed from your watchlist"); }
+    if (b.dataset.go) { var p = PICKS.filter(function (x) { return x.sym === b.dataset.sym; })[0]; toast(b.dataset.go === "tm" ? "Opens the Time Machine with " + p.name + "'s buy price, exit and target filled in" : "Opens " + p.name + "'s Overview tab"); }
+    save();
+  });
+  $("f-sector").addEventListener("change", function () { st.sector = this.value; save(); drawPicks(); });
+  $("f-cap").addEventListener("change", function () { st.cap = this.value; save(); drawPicks(); });
+  var toastTimer; function toast(msg) { var t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3000); }
+  function setMode(mode) { root.dataset.mode = mode; document.querySelectorAll("button[data-mode]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === mode)); }); $("mode-hint").textContent = mode === "simple" ? "Plain-English explanations" : "Full detail"; try { localStorage.setItem("stockai-mode", mode); } catch (e) {} redraw(); }
+  document.querySelectorAll("button[data-mode]").forEach(function (b) { b.addEventListener("click", function () { setMode(b.dataset.mode); }); });
+
+  // ---------- downloads ----------
+  var menu = $("dl-menu"), dlBtn = $("dl-btn"), downloadsP = null;
+  function closeMenu() { if (!menu.hidden) { menu.hidden = true; dlBtn.setAttribute("aria-expanded", "false"); } }
+  function getDownloads() { if (!downloadsP) { downloadsP = window.claude && window.claude.use ? window.claude.use("downloads").catch(function () { return null; }) : Promise.resolve(null); downloadsP.then(function (d) { if (!d) { downloadsP = null; $("dl-unavail").hidden = false; } }); } return downloadsP; }
+  dlBtn.addEventListener("click", function (e) { e.stopPropagation(); menu.hidden = !menu.hidden; dlBtn.setAttribute("aria-expanded", String(!menu.hidden)); if (!menu.hidden) getDownloads(); });
+  document.addEventListener("click", function (e) { if (!menu.contains(e.target) && e.target !== dlBtn) closeMenu(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+  function loadScript(u) { return new Promise(function (ok, fail) { var s = document.createElement("script"); s.src = u; s.onload = ok; s.onerror = function () { fail(new Error("load")); }; document.head.appendChild(s); }); }
+  function ascii(s) { return String(s).replace(/₹/g, "Rs ").replace(/[−–]/g, "-").replace(/×/g, "x").replace(/[^\x20-\x7E]/g, ""); }
+  function csvData() {
+    var rows = [["Picks for 19 Oct 2026 (data to 16 Oct close)", "SAMPLE DATA"], [], ["Symbol", "Name", "Sector", "Size", "Horizon", "Price", "Score", "Signal", "Conviction", "News", "Sector score", "Technicals", "Fundamentals", "Mood pts", "Entry low", "Entry high", "Stop / review", "Target 1 / fair value", "Target 2", "ADV Rs Cr", "Event", "Why 1", "Why 2", "Why 3", "Risk"]];
+    PICKS.forEach(function (p) { var l = p.lv; rows.push([p.sym, p.name, p.sector, p.cap, HZ[p.h][0], p.px, p.f.sc.toFixed(1), p.f.k === "sb" ? "Strong buy" : "Buy", ["", "Low", "Medium", "High"][p.f.conv], p.s.news, p.s.sector, p.s.tech, p.s.fund, MOOD[p.h], l[0], l[1], l[2], l[3], l[4] || "", p.liq, p.ev].concat(p.why.map(function (w) { return w[2]; }), [p.risk[1]])); });
+    rows.push([], ["Caution list"]); AVOID.forEach(function (a) { rows.push([a[0], a[1], a[2], a[4], a[7]]); });
+    return rows.map(function (r) { return r.map(function (c) { c = String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(","); }).join("\n");
+  }
+  function buildPdf() {
+    var doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" }), acc = [86, 54, 211];
+    doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.text("Stock AI daily picks", 40, 48);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(94, 90, 122);
+    doc.text("For Monday 19 Oct 2026 | data to 16 Oct close | NIFTY 25,840 | Fear & Greed 68 (greed) | FII -8,420 Cr, DII +12,910 Cr (5d) | SAMPLE DATA", 40, 63);
+    doc.autoTable({ startY: 78, head: [["Stock", "Horizon", "Score", "Entry", "Stop / review", "Target / FV", "Why", "Risk"]],
+      body: PICKS.slice().sort(function (a, b) { return ["short", "medium", "long"].indexOf(a.h) - ["short", "medium", "long"].indexOf(b.h) || b.f.sc - a.f.sc; }).map(function (p) { var l = p.lv; return [p.name + "\n" + p.sector, HZ[p.h][0], p.f.sc.toFixed(0) + (p.f.k === "sb" ? " Strong buy" : " Buy"), fmt(l[0]) + "-" + fmt(l[1]), fmt(l[2]), p.h === "long" ? fmt(l[3]) : fmt(l[3]) + " / " + fmt(l[4]), p.why.map(function (w) { return "- " + ascii(w[1]); }).join("\n"), ascii(p.risk[0])]; }),
+      theme: "grid", headStyles: { fillColor: acc }, styles: { fontSize: 7.5, cellPadding: 4 }, columnStyles: { 0: { cellWidth: 72 }, 6: { cellWidth: 150 }, 7: { cellWidth: 90 } } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 12, head: [["Be careful with", "Why"]], body: AVOID.map(function (a) { return [a[1], a[5] + ". " + a[6]]; }), theme: "striped", headStyles: { fillColor: [210, 67, 58] }, styles: { fontSize: 8 } });
+    doc.setFontSize(7); doc.setTextColor(120); doc.text("Research ideas from public data, not personal advice. Sharing picks publicly in India needs SEBI Research Analyst registration.", 40, 820);
+    return doc.output("arraybuffer");
+  }
+  menu.querySelectorAll("[data-dl]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var kind = b.dataset.dl, downloads = null; closeMenu(); toast("Preparing your file…");
+      getDownloads().then(function (d) { if (!d) throw { code: "unavailable" }; downloads = d; })
+        .then(function () { return kind === "csv" ? { filename: "daily_picks_2026-10-19.csv", data: csvData() } : loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js").then(function () { return loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"); }).then(function () { return { filename: "daily_picks_2026-10-19.pdf", data: buildPdf() }; }); })
+        .then(function (file) { return downloads.save(file); }).then(function () { toast("Saved"); })
+        .catch(function (err) { var c = err && err.code; toast(c === "declined" ? "Download cancelled" : c === "rate_limited" ? "A download is already waiting for you to confirm" : c === "unavailable" || c === "not_granted" ? "Downloads aren't available in this view" : "Couldn't create the file. Try again."); });
+    });
+  });
+
+  var mode = "simple"; try { mode = localStorage.getItem("stockai-mode") || "simple"; } catch (e) {}
+  setMode(mode === "pro" ? "pro" : "simple");
+})();
+</script>

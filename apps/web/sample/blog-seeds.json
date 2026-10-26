@@ -1,0 +1,72 @@
+[
+  {
+    "id": "acme-2026-09-25", "v": 1, "stock": "ACME", "name": "ACME Industries",
+    "title": "Analysts are warming up to ACME. Should you?",
+    "dek": "Fifteen analysts follow ACME, and most of them just raised their targets. We check whether the numbers back them up.",
+    "publishedAt": "2026-09-25T13:00:00.000Z", "asOf": "25 Sep 2026", "price": 1186, "readMin": 3, "reader": "everyday",
+    "verdict": { "short": "b", "medium": "b", "long": "b" },
+    "chartLine": { "v": 1225, "label": "Ceiling ₹1,225" },
+    "news": [["24 Sep", "Analysts raise targets after a strong Q1", "g"], ["18 Sep", "₹85 Cr payment from a utility is overdue", "r"]],
+    "tags": ["Analysts", "Capital goods"],
+    "sections": [
+      { "k": "market", "h": "The market", "p": ["The NIFTY 50 is near its highs and Indian funds keep buying every dip, even as foreign investors sell. Capital goods remain one of the market's favourite corners."] },
+      { "k": "news", "h": "What's new", "p": ["Analysts raised their average ACME target by 9% to ₹1,420 after a strong first quarter. 11 of the 15 are positive, 3 are neutral and 1 is negative, and they now expect profit to grow about 18% this year.", "The one blemish: a state utility is late paying ₹85 crore. ACME says the money should arrive by December."] },
+      { "k": "analysis", "h": "Our take", "p": ["The chart has been stuck below ₹1,225 since July, so the stock needs a clean break above that line to start its next leg up. The business itself looks solid, with **profit growing faster than sales**."] },
+      { "k": "bottom", "h": "The bottom line", "p": ["A good company waiting for a breakout. The longer-term signals are bullish; the short-term picture turns clearly bullish only on a close above ₹1,225."] }
+    ]
+  },
+  {
+    "id": "acme-2026-08-13", "v": 1, "stock": "ACME", "name": "ACME Industries",
+    "title": "ACME's first quarter: profit up 20%, and the orders keep coming",
+    "dek": "Sales grew 17% and margins improved. Here's what the results mean for the stock.",
+    "publishedAt": "2026-08-13T12:30:00.000Z", "asOf": "13 Aug 2026", "price": 1187.2, "readMin": 3, "reader": "everyday",
+    "verdict": { "short": "b", "medium": "b", "long": "b" },
+    "news": [["12 Aug", "Q1: sales up 17%, profit up 20%", "g"], ["12 Aug", "Final dividend of ₹7.50 a share", "g"]],
+    "tags": ["Results", "Q1 FY27"],
+    "sections": [
+      { "k": "news", "h": "The results", "p": ["ACME's sales rose 17% to ₹1,560 crore in April to June, and profit grew 20% to ₹158 crore. It kept 15.7 paise of every rupee of sales as operating profit, more than a year ago, and beat what analysts expected by 3.1%.", "The board also approved a final dividend of ₹7.50 a share."], "quote": "Profit growing faster than sales is the sign of a business getting more efficient." },
+      { "k": "analysis", "h": "What it means", "p": ["The shares jumped 4.6% on the day before giving some of it back. The price is now testing ₹1,221, a level where sellers showed up before."] },
+      { "k": "bottom", "h": "The bottom line", "p": ["Strong numbers that support the long-term case. The short-term move depends on getting past ₹1,221."] }
+    ]
+  },
+  {
+    "id": "acme-2026-07-29", "v": 1, "stock": "ACME", "name": "ACME Industries",
+    "title": "A ₹310 crore export order: ACME's quiet push abroad",
+    "dek": "A Middle East grid operator has picked ACME. Exports are becoming a bigger part of the story.",
+    "publishedAt": "2026-07-29T12:30:00.000Z", "asOf": "29 Jul 2026", "price": 1159, "readMin": 2, "reader": "everyday",
+    "verdict": { "short": "b", "medium": "b", "long": "n" },
+    "news": [["28 Jul", "₹310 Cr export order from the Middle East", "g"]],
+    "tags": ["Orders", "Exports"],
+    "sections": [
+      { "k": "news", "h": "What happened", "p": ["ACME won a ₹310 crore order from a grid operator in the Middle East. Exports now make up 28% of its sales."] },
+      { "k": "company", "h": "Why it matters", "p": ["Selling abroad spreads ACME's risk. It relies less on Indian government orders, which make up 38% of its book and can be slow to pay."] },
+      { "k": "bottom", "h": "The bottom line", "p": ["A steady stream of orders keeps the medium-term view positive. For the long term we'd like to see the price cheaper compared with profit."] }
+    ]
+  },
+  {
+    "id": "orbit-2026-10-09", "v": 1, "stock": "ORBIT", "name": "Orbit Engineering",
+    "title": "Orbit Engineering at a record. Is the uptrend still intact?",
+    "dek": "The sector's largest company keeps climbing. We weigh a strong trend against a rich price.",
+    "publishedAt": "2026-10-09T12:45:00.000Z", "asOf": "9 Oct 2026", "price": 2941, "readMin": 2, "reader": "everyday",
+    "verdict": { "short": "n", "medium": "b", "long": "b" },
+    "tags": ["Large cap", "Capital goods"],
+    "sections": [
+      { "k": "market", "h": "The backdrop", "p": ["Government spending on power grids and railways has lifted the whole capital goods sector this year, and the biggest names have led the way."] },
+      { "k": "analysis", "h": "Our take", "p": ["Orbit's price has risen from about ₹2,210 a year ago to near ₹2,940, and it trades above all its main averages. After such a run the next few weeks could be choppy, but **the trend for the months ahead is still up**."] },
+      { "k": "bottom", "h": "The bottom line", "p": ["A quality leader. The signals are bullish for the months ahead and neutral for the next few weeks, after a long run."] }
+    ]
+  },
+  {
+    "id": "nova-2026-10-05", "v": 1, "stock": "NOVA", "name": "Nova Machines",
+    "title": "Nova Machines keeps sliding. What would make it turn?",
+    "dek": "While its sector rallies, this small cap has drifted lower for months. Here's what to watch.",
+    "publishedAt": "2026-10-05T12:15:00.000Z", "asOf": "5 Oct 2026", "price": 668, "readMin": 2, "reader": "everyday",
+    "verdict": { "short": "s", "medium": "n", "long": "n" },
+    "tags": ["Small cap", "Downtrend"],
+    "sections": [
+      { "k": "analysis", "h": "What's going on", "p": ["Nova's price has slipped from about ₹780 in April 2025 to below ₹670, even as other capital goods makers hit records. The trend is down and **each bounce has faded**."] },
+      { "k": "watch", "h": "What would change our mind", "items": ["A close back above its 200-day average", "Bigger orders in the next results", "Big investors adding shares, not cutting them"] },
+      { "k": "bottom", "h": "The bottom line", "p": ["The short-term signal is bearish and the longer view neutral. A close above the 200-day average would be the first sign of a turn."] }
+    ]
+  }
+]

@@ -1,0 +1,93 @@
+/*
+ * Stock AI design tokens. Dark is the default theme. Light applies with data-theme="light"
+ * or when the system prefers light and no theme is set.
+ *
+ * Signal colours have one meaning everywhere:
+ *   bull = bullish / profit / target      bear = bearish / loss / stop loss
+ *   hold = neutral / caution              ai = engine verdict     user = the user's own thesis
+ * Always pair a signal colour with an icon or label (▲ ▼, "Buy", "Stop") for colour-blind users.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* surfaces */
+  --bg: #0B111A;
+  --surface: #121A26;
+  --surface-2: #192333;
+  --line: #253144;
+
+  /* text */
+  --ink: #E5EBF3;
+  --ink-2: #98A5B7;
+
+  /* brand */
+  --accent: #F0A04B;
+  --accent-soft: #33261A;
+
+  /* signals */
+  --bull: #43C474;
+  --bull-soft: #13291C;
+  --bear: #F26B5F;
+  --bear-soft: #33191A;
+  --hold: #E4B44A;
+  --hold-soft: #2E2615;
+  --ai: #A68CFF;
+  --ai-soft: #251F3D;
+  --user: #5DA3FF;
+  --user-soft: #172A44;
+
+  /* score pillars (charts) */
+  --pillar-technical: #2F6FB2;
+  --pillar-fundamental: #1F8A70;
+  --pillar-sector: #8A5CC2;
+  --pillar-sentiment: #C47A1E;
+  --pillar-risk: #7A8596;
+
+  /* type */
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+
+  /* shape and space */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #F2F4F7; --surface: #FFFFFF; --surface-2: #E9EDF2; --line: #D6DCE5;
+    --ink: #0F1724; --ink-2: #4A5466;
+    --accent: #B4580F; --accent-soft: #F6E7D8;
+    --bull: #13803B; --bull-soft: #E0F2E6; --bear: #C0352A; --bear-soft: #F8E3E1;
+    --hold: #9A6206; --hold-soft: #F6ECD6; --ai: #6A47D9; --ai-soft: #ECE6FB;
+    --user: #1C68CF; --user-soft: #E1ECFA;
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F2F4F7; --surface: #FFFFFF; --surface-2: #E9EDF2; --line: #D6DCE5;
+  --ink: #0F1724; --ink-2: #4A5466;
+  --accent: #B4580F; --accent-soft: #F6E7D8;
+  --bull: #13803B; --bull-soft: #E0F2E6; --bear: #C0352A; --bear-soft: #F8E3E1;
+  --hold: #9A6206; --hold-soft: #F6ECD6; --ai: #6A47D9; --ai-soft: #ECE6FB;
+  --user: #1C68CF; --user-soft: #E1ECFA;
+}
+
+/* Prices and numbers line up in columns */
+.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }

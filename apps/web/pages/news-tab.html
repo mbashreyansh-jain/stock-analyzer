@@ -1,0 +1,1039 @@
+<title>News Tab Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Shared with the Fundamentals tab. Layout: style C "Friendly & bold". Sticky top bar with the app-wide Simple/Pro switch, a section index on the left
+   (chips on phones), and rounded cards per question. Single light look by design. */
+:root {
+  --bg: #F6F5FC; --surface: #FFFFFF; --surface-2: #EFEDF9; --ink: #1C1838; --ink-2: #5E5A7A; --line: #E4E1F2;
+  --accent: #5636D3; --accent-soft: #ECE8FD; --good: #12875A; --good-soft: #DDF4EA; --warn: #B86E06; --warn-soft: #FCEEDA;
+  --bad: #D2433A; --bad-soft: #FBE4E2; --chart-1: #5636D3; --chart-2: #F2A541; --chart-3: #12875A; --chart-4: #C9C3E6;
+  --zebra: #FAF9FE; --now-bg: #F1EDFD; --deep-good: #0B6A45; --deep-bad: #A3241B;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-num: "DM Mono", ui-monospace, Menlo, monospace;
+  --radius: 20px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--f-body); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { margin: 0; font-family: var(--f-display); text-wrap: balance; line-height: 1.2; }
+p { margin: 0; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+/* mode visibility */
+:root[data-mode="simple"] .p-only { display: none !important; }
+:root[data-mode="pro"] .s-only { display: none !important; }
+
+/* prototype strip */
+.proto { background: var(--ink); color: #E9E6FA; padding-inline: 16px; padding-block: 7px; font-size: 12.5px; display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center; }
+.proto b { background: var(--chart-2); color: var(--ink); padding: 1px 7px; border-radius: 4px; font-size: 11px; letter-spacing: 0.04em; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.topbar-in { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 10px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { font: 800 1.1rem var(--f-display); display: flex; align-items: center; gap: 8px; }
+.brand i { width: 24px; height: 24px; border-radius: 8px; background: var(--accent); display: inline-block; }
+.search { flex: 1 1 200px; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); font-size: 0.9em; }
+.search kbd { margin-left: auto; font: 500 11px var(--f-num); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+.mode { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; }
+.mode-lbl { font-size: 0.8em; color: var(--ink-2); }
+.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 999px; }
+.seg button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-size: 0.86em; color: var(--ink-2); font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; font-weight: 700; }
+
+/* page */
+.page { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 70px; display: grid; gap: 16px; }
+.stock { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.stock h1 { font-size: 1.9em; font-weight: 800; letter-spacing: -0.01em; }
+.stock .meta { color: var(--ink-2); font-size: 0.9em; }
+.stock .px { font: 500 1.5em var(--f-num); }
+.stock .chg { font: 500 0.95em var(--f-num); color: var(--good); }
+.stock .actions { margin-left: auto; display: flex; gap: 8px; position: relative; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 16px; font-weight: 600; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px; }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 18px 40px -18px rgba(28, 24, 56, 0.35); padding: 6px; width: 290px; z-index: 40; display: grid; gap: 2px; }
+.menu button { border: 0; background: transparent; text-align: left; padding: 10px 12px; border-radius: 10px; display: grid; gap: 1px; }
+.menu button:hover, .menu button:focus-visible { background: var(--surface-2); }
+.menu b { font-size: 0.92em; }
+.menu small { color: var(--ink-2); font-size: 0.78em; }
+.menu .unavail { font-size: 0.78em; color: var(--warn); padding: 6px 12px; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 0.9em; z-index: 60; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.4); }
+.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.tabs span { flex: none; padding: 7px 16px; border-radius: 999px; color: var(--ink-2); font-weight: 500; font-size: 0.94em; }
+.tabs span.on { background: var(--ink); color: #fff; font-weight: 700; }
+.asof { font-size: 0.8em; color: var(--ink-2); }
+
+.layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 22px; align-items: start; }
+.index { position: sticky; top: 76px; display: grid; gap: 2px; font-size: 0.88em; }
+.index a { color: var(--ink-2); text-decoration: none; padding: 6px 12px; border-radius: 10px; display: flex; justify-content: space-between; gap: 8px; }
+.index a:hover { background: var(--surface); color: var(--ink); }
+.index a i { width: 8px; height: 8px; border-radius: 50%; align-self: center; flex: none; }
+.index a i.g { background: var(--good); } .index a i.w { background: var(--warn); } .index a i.n { background: var(--chart-4); }
+.main { display: grid; gap: 18px; min-width: 0; }
+
+.card { background: var(--surface); border-radius: var(--radius); padding: 22px; display: grid; gap: 16px; align-content: start; min-width: 0; scroll-margin-top: 80px;
+  box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); }
+/* Grid children default to min-width:auto, which lets a wide table stretch the card past the screen. */
+.card > *, .metrics, .two > *, .biz > * { min-width: 0; }
+.sh { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sh h2 { font-size: 1.35em; font-weight: 800; }
+:root[data-mode="pro"] .sh h2 { font-size: 1.15em; }
+.sh .sub { color: var(--ink-2); font-size: 0.85em; }
+.verdict { font: 600 0.78em var(--f-num); padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
+.verdict.g, .chip.g { background: var(--good-soft); color: var(--good); }
+.verdict.w, .chip.w { background: var(--warn-soft); color: var(--warn); }
+.verdict.r, .chip.r { background: var(--bad-soft); color: var(--bad); }
+.verdict.n, .chip.n { background: var(--surface-2); color: var(--ink-2); }
+.chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.means { color: var(--ink); background: var(--accent-soft); border-radius: 14px; padding: 12px 16px; display: flex; gap: 10px; font-size: 0.93em; }
+.means::before { content: "i"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 12px/20px var(--f-num); text-align: center; }
+:root[data-mode="pro"] .means { background: transparent; padding: 0; color: var(--ink-2); font-size: 0.88em; }
+:root[data-mode="pro"] .means::before { content: "Takeaway"; width: auto; height: auto; border-radius: 4px; padding: 1px 6px; font: 600 10px/16px var(--f-num); text-transform: uppercase; letter-spacing: 0.05em; background: var(--surface-2); color: var(--ink-2); align-self: flex-start; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.two > * { min-width: 0; }
+.note { font-size: 0.8em; color: var(--ink-2); }
+
+/* summary */
+.summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+.ring { position: relative; width: 128px; height: 128px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.05; }
+.ring .lbl b { font: 600 2.2em var(--f-num); display: block; }
+.ring .lbl small { font-size: 0.72em; color: var(--ink-2); }
+.sum-body { display: grid; gap: 12px; min-width: 0; }
+.sum-body h2 { font-size: 1.85em; font-weight: 800; letter-spacing: -0.01em; }
+.grades { display: flex; flex-wrap: wrap; gap: 8px; }
+.grade { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; font-size: 0.86em; font-weight: 500; text-decoration: none; color: var(--ink); }
+.grade b { font: 600 0.9em var(--f-num); min-width: 32px; text-align: center; padding: 2px 4px; border-radius: 999px; background: var(--surface); }
+.grade.g { background: var(--good-soft); } .grade.g b { color: var(--good); }
+.grade.w { background: var(--warn-soft); } .grade.w b { color: var(--warn); }
+.pc { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pc ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.92em; }
+.pc li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
+.pc .pros li::before { content: "▲"; color: var(--good); font-size: 0.7em; padding-top: 4px; }
+.pc .cons li::before { content: "▼"; color: var(--bad); font-size: 0.7em; padding-top: 4px; }
+.pc h3 { font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); margin-bottom: 6px; font-family: var(--f-body); }
+.breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.breakdown div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.82em; }
+.breakdown b { font: 600 1.25em var(--f-num); }
+
+/* metric tiles (simple) */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tile { border-radius: 16px; background: var(--surface-2); padding: 14px; display: grid; gap: 4px; align-content: start; }
+.tile.g { background: var(--good-soft); } .tile.w { background: var(--warn-soft); } .tile.r { background: var(--bad-soft); }
+.t-top { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.t-name { font-size: 0.86em; font-weight: 500; }
+.t-val { font: 500 1.5em var(--f-num); font-variant-numeric: tabular-nums; }
+.t-pro { font-size: 0.74em; color: var(--ink-2); }
+.t-cmp { font-size: 0.78em; color: var(--ink-2); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tile .chip { background: var(--surface); }
+.more { justify-self: start; border: 0; background: transparent; color: var(--accent); font-weight: 600; font-size: 0.88em; padding: 4px 0; }
+.info { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--ink-2); background: transparent; color: var(--ink-2); font: 700 11px/1 var(--f-num); padding: 0; display: inline-grid; place-items: center; }
+.info:hover { border-color: var(--accent); color: var(--accent); }
+
+/* tables: units live in the row label so cells hold clean numbers; zebra rows; the current column is tinted */
+.tw { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 0.9em; }
+th, td { padding: 11px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+th:first-child, td:first-child { text-align: left; }
+thead th { background: var(--surface-2); color: var(--ink-2); font: 600 0.74em/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.05em; padding-block: 10px; }
+thead th.old { color: color-mix(in srgb, var(--ink-2) 70%, transparent); }
+tbody tr:nth-child(even) > * { background: var(--zebra); }
+tbody tr:hover > * { background: var(--accent-soft); }
+tbody tr:last-child > * { border-bottom: 0; }
+tbody th { font-weight: 600; }
+td { font-family: var(--f-num); font-variant-numeric: tabular-nums; color: var(--ink); }
+td.dim { color: var(--ink-2); }
+tbody th.now, tbody td.now, thead th.now { background: var(--now-bg); }
+tbody tr:hover > .now { background: var(--accent-soft); }
+td.now { font-weight: 700; }
+thead th.now { color: var(--accent); }
+/* Metric names stay visible while numbers scroll sideways on small screens */
+.tw th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: 1px 0 0 var(--line); }
+.tw thead th:first-child { background: var(--surface-2); }
+.tw tbody tr:nth-child(even) > th:first-child { background: var(--zebra); }
+.tw tbody tr:hover > th:first-child { background: var(--accent-soft); }
+.mname { display: grid; gap: 2px; min-width: 190px; max-width: 250px; white-space: normal; }
+.mname .cell { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mname small { font-weight: 400; color: var(--ink-2); font-size: 0.82em; line-height: 1.3; }
+.unit { font: 500 0.78em var(--f-num); color: var(--ink-2); background: var(--surface-2); border-radius: 4px; padding: 0 5px; }
+tr.me > *, .tw tr.me > th:first-child { background: var(--accent-soft); font-weight: 700; }
+tr.med > *, .tw tr.med > th:first-child { color: var(--ink-2); font-style: italic; }
+tr.sum > * { font-weight: 700; }
+tr.sum > *:not(.now) { background: var(--zebra); }
+td .up { color: var(--good); } td .dn { color: var(--bad); }
+.status { display: inline-flex; align-items: center; gap: 6px; font: 600 0.82em var(--f-body); }
+.status i { width: 8px; height: 8px; border-radius: 50%; }
+.status.g { color: var(--good); } .status.g i { background: var(--good); }
+.status.w { color: var(--warn); } .status.w i { background: var(--warn); }
+.status.r { color: var(--bad); } .status.r i { background: var(--bad); }
+.status.n { color: var(--ink-2); } .status.n i { background: var(--chart-4); }
+.spark { display: inline-block; vertical-align: middle; }
+
+/* charts */
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-2); font: 400 11px var(--f-num); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82em; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* business */
+.biz { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.facts div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 0.8em; color: var(--ink-2); display: grid; gap: 2px; }
+.facts b { color: var(--ink); font: 600 1.1em var(--f-num); }
+.donut-wrap { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; align-items: center; }
+.seglist { display: grid; gap: 8px; font-size: 0.86em; }
+.seglist div { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; }
+.seglist i { width: 12px; height: 12px; border-radius: 4px; }
+.geo { height: 14px; border-radius: 7px; overflow: hidden; display: flex; }
+
+/* valuation */
+.band { display: grid; gap: 8px; }
+.band-track { position: relative; height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--good-soft), var(--surface-2) 50%, var(--bad-soft)); border: 1px solid var(--line); }
+.band-mark { position: absolute; top: -6px; width: 4px; height: 24px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); }
+.band-mid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink-2); opacity: 0.6; }
+.band-scale { display: flex; justify-content: space-between; font: 400 0.78em var(--f-num); color: var(--ink-2); }
+.dcf { display: grid; gap: 10px; background: var(--surface-2); border-radius: 16px; padding: 16px; }
+.sl { display: grid; grid-template-columns: minmax(0, 1fr) 62px; gap: 2px 10px; align-items: center; font-size: 0.86em; }
+.sl label { color: var(--ink-2); }
+.sl output { font: 500 0.95em var(--f-num); text-align: right; }
+.sl input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.fv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fv div { display: grid; gap: 2px; }
+.fv small { font-size: 0.76em; color: var(--ink-2); }
+.fv b { font: 600 1.25em var(--f-num); }
+.fv b.good { color: var(--good); } .fv b.bad { color: var(--bad); }
+
+/* dupont */
+.dupont { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dupont div { background: var(--surface-2); border-radius: 12px; padding: 10px 14px; display: grid; gap: 1px; font-size: 0.8em; color: var(--ink-2); }
+.dupont div b { font: 600 1.25em var(--f-num); color: var(--ink); }
+.dupont div.res { background: var(--good-soft); }
+.dupont span { font: 600 1.2em var(--f-num); color: var(--ink-2); }
+
+/* results */
+.qcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.qcards div { background: var(--surface-2); border-radius: 16px; padding: 14px; display: grid; gap: 2px; }
+.qcards small { color: var(--ink-2); font-size: 0.8em; }
+.qcards b { font: 500 1.4em var(--f-num); }
+.qcards em { font-style: normal; font: 500 0.85em var(--f-num); color: var(--good); }
+.ai-box { display: grid; gap: 8px; border: 1.5px dashed var(--accent); border-radius: 16px; padding: 14px 16px; }
+.ai-box ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 0.92em; }
+.ai-box .src { font-size: 0.78em; color: var(--ink-2); }
+.ai-chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+
+/* red flags */
+.flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; }
+.flag { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.flag .ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--f-num); background: var(--good-soft); color: var(--good); }
+.flag.w .ic { background: var(--warn-soft); color: var(--warn); }
+.flag.w { background: var(--warn-soft); }
+.flag b { display: block; }
+.flag span { color: var(--ink-2); font-size: 0.92em; }
+.qs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.q { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto 44px auto auto 1fr; gap: 8px; align-content: start; }
+.q-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92em; }
+.q-val { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.q-val .big { font: 600 1.9em/1 var(--f-num); }
+.q-val .big small { font-size: 0.5em; color: var(--ink-2); }
+.zbar { position: relative; height: 10px; }
+.zbar .segs { display: flex; height: 100%; border-radius: 5px; overflow: hidden; }
+.zbar .segs span { height: 100%; }
+.zbar i { position: absolute; top: -5px; width: 4px; height: 20px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface-2); }
+.zlbl { display: flex; font-size: 0.72em; color: var(--ink-2); }
+.zlbl span { text-align: center; }
+.q .why { color: var(--ink-2); font-size: 0.84em; }
+.flags { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; }
+
+.signal { gap: 16px; border: 2px solid var(--good-soft); }
+.signal { gap: 12px; padding: 18px 20px; }
+.sig-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.hzc { border: 1.5px solid transparent; background: var(--surface-2); border-radius: 14px; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; min-width: 0; }
+.hzc:hover { border-color: var(--line); }
+.hzc[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.hzc .t { display: grid; line-height: 1.2; min-width: 0; }
+.hzc .t b { font-size: 0.86em; }
+.hzc .t small { font-size: 0.72em; color: var(--ink-2); }
+.hzc .sp { font: 800 0.74em/1 var(--f-body); letter-spacing: 0.04em; padding: 6px 10px; border-radius: 999px; color: #fff; white-space: nowrap; flex: none; }
+.sp.buy { background: var(--good); } .sp.sbuy { background: var(--deep-good); } .sp.neutral { background: var(--ink-2); } .sp.sell { background: var(--bad); } .sp.ssell { background: var(--deep-bad); }
+.hz-detail { background: var(--surface-2); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; font-size: 0.92em; }
+.hz-detail .drivers { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); column-gap: 24px; }
+.sig-line { font-size: 0.95em; font-weight: 600; }
+.sig-hint { font-size: 0.76em; color: var(--ink-2); }
+@media (max-width: 560px) {
+  .hzc { flex-direction: column; align-items: flex-start; padding: 8px 10px; }
+  .hzc .sp { font-size: 0.68em; padding: 5px 8px; }
+  .hzc .wt { display: none; }
+}
+.hz-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.hz { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto auto auto auto 1fr; gap: 10px; align-content: start; border-top: 4px solid var(--ink-2); }
+.hz.buy { border-top-color: var(--good); } .hz.sbuy { border-top-color: var(--deep-good); } .hz.neutral { border-top-color: var(--chart-4); }
+.hz.sell { border-top-color: var(--bad); } .hz.ssell { border-top-color: var(--deep-bad); }
+.hz-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+.hz-head b { display: block; font-size: 0.98em; }
+.hz-head small { color: var(--ink-2); font-size: 0.8em; }
+.hz-pill { justify-self: start; font: 800 1.25em/1 var(--f-display); padding: 8px 18px; border-radius: 999px; color: #fff; letter-spacing: 0.03em; }
+.hz.buy .hz-pill { background: var(--good); } .hz.sbuy .hz-pill { background: var(--deep-good); } .hz.neutral .hz-pill { background: var(--ink-2); }
+.hz.sell .hz-pill { background: var(--bad); } .hz.ssell .hz-pill { background: var(--deep-bad); }
+.mini { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+.mini span { height: 8px; border-radius: 4px; background: var(--surface); }
+.mini span.on { height: 12px; margin-top: -2px; }
+.mini span.on.c0 { background: var(--deep-bad); } .mini span.on.c1 { background: var(--bad); } .mini span.on.c2 { background: var(--ink-2); }
+.mini span.on.c3 { background: var(--good); } .mini span.on.c4 { background: var(--deep-good); }
+.mini-lbl { display: flex; justify-content: space-between; font-size: 0.7em; color: var(--ink-2); margin-top: -4px; }
+.hz p { font-size: 0.88em; }
+.drivers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.82em; }
+.drivers li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 5px; }
+.drivers li span { color: var(--ink-2); }
+.drivers li b { font-family: var(--f-num); font-weight: 500; text-align: right; }
+.drivers li.rule { border: 0; color: var(--ink); font-style: italic; }
+.sig-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.sig-head h2 { font-size: 1.35em; font-weight: 800; }
+@media (max-width: 760px) { .hz-grid { grid-template-columns: 1fr; } }
+.sig-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.sig-lbl { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.sig-pill { font: 800 1.7em/1 var(--f-display); padding: 10px 26px; border-radius: 999px; color: #fff; background: var(--good); letter-spacing: 0.03em; }
+.sig-h { font-size: 0.86em; color: var(--ink-2); }
+.sig-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.ss { text-align: center; font: 600 0.78em/1.2 var(--f-body); padding: 9px 4px; background: var(--surface-2); color: var(--ink-2); border-radius: 6px; }
+.ss:first-child { border-radius: 999px 6px 6px 999px; } .ss:last-child { border-radius: 6px 999px 999px 6px; }
+.ss.sb, .ss.s { color: var(--bad); } .ss.b, .ss.stb { color: var(--good); }
+.ss.on { color: #fff; font-weight: 800; box-shadow: 0 6px 16px -8px rgba(28, 24, 56, 0.5); }
+.ss.on.sb { background: var(--deep-bad); } .ss.on.s { background: var(--bad); } .ss.on.n { background: var(--ink-2); }
+.ss.on.b { background: var(--good); } .ss.on.stb { background: var(--deep-good); }
+.sig-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.sig-stats div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.8em; color: var(--ink-2); }
+.sig-stats b { font: 600 1.3em var(--f-num); color: var(--ink); }
+.sig-stats em { font-style: normal; font-weight: 600; }
+.matrix td { text-align: center; font-family: var(--f-body); }
+.matrix th:first-child { min-width: 150px; }
+.matrix td.hit { outline: 2.5px solid var(--accent); outline-offset: -3px; border-radius: 10px; font-weight: 800; }
+
+.docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+.doc { display: grid; grid-template-columns: 38px 1fr; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.doc .ft { width: 38px; height: 44px; border-radius: 8px; background: var(--surface); display: grid; place-items: center; font: 600 10px var(--f-num); color: var(--bad); border: 1px solid var(--line); }
+.doc small { color: var(--ink-2); display: block; }
+
+.ca { display: grid; gap: 6px; font-size: 0.88em; }
+.ca div { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding: 8px 12px; background: var(--surface-2); border-radius: 10px; }
+.ca span { font-family: var(--f-num); color: var(--ink-2); }
+
+/* popover */
+.pop { position: fixed; z-index: 70; width: min(360px, calc(100vw - 32px)); background: var(--surface); border-radius: 18px; padding: 18px; box-shadow: 0 24px 60px -20px rgba(28, 24, 56, 0.45); border: 1px solid var(--line); display: grid; gap: 10px; font-size: 0.9em; }
+.pop h3 { font-size: 1.15em; font-weight: 800; padding-right: 26px; }
+.pop .pro-name { font: 500 0.8em var(--f-num); color: var(--ink-2); }
+.pop dl { margin: 0; display: grid; gap: 8px; }
+.pop dt { font-size: 0.74em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+.pop dd { margin: 0; }
+.pop .x { position: absolute; top: 12px; right: 12px; border: 0; background: var(--surface-2); width: 28px; height: 28px; border-radius: 50%; font-weight: 700; }
+.pop .reading { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; }
+
+.foot { font-size: 0.8em; color: var(--ink-2); text-align: center; padding-top: 6px; }
+
+@media (max-width: 1200px) {
+  .layout { grid-template-columns: 1fr; }
+  .index { position: sticky; top: 64px; z-index: 20; display: flex; overflow-x: auto; gap: 6px; padding-block: 6px; background: var(--bg); scrollbar-width: none; }
+  .index a { flex: none; background: var(--surface); border-radius: 999px; padding: 6px 12px; }
+  .biz, .two { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .topbar-in, .page { padding-inline: 16px; }
+  .mode { margin-left: 0; width: 100%; justify-content: space-between; }
+  .summary { grid-template-columns: 1fr; justify-items: start; }
+  .pc { grid-template-columns: 1fr; }
+  .stock .actions { margin-left: 0; }
+  .fv { grid-template-columns: 1fr 1fr; }
+  .donut-wrap { grid-template-columns: 100px minmax(0, 1fr); }
+  .pop { left: 16px !important; right: 16px; top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: auto; }
+  .card { padding: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .q .bar i { transition: width 0.5s ease; }
+}
+
+/* ---------- News tab ---------- */
+.ndc-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ndc { border: 1.5px solid transparent; background: var(--surface-2); border-radius: 14px; padding: 9px 12px; display: grid; gap: 6px; text-align: left; min-width: 0; align-content: start; }
+.ef-short { display: none; }
+.ndc:hover { border-color: var(--line); }
+.ndc[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.ndc-h { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; line-height: 1.2; }
+.ndc-h b { font-size: 0.86em; } .ndc-h small { font-size: 0.72em; color: var(--ink-2); white-space: nowrap; }
+.ndc-b { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ndc .sp { font: 800 0.72em/1 var(--f-body); letter-spacing: 0.04em; padding: 5px 9px; border-radius: 999px; color: #fff; }
+.ndc-eff { font-size: 0.74em; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.ndc-eff.g { background: var(--good-soft); color: var(--good); } .ndc-eff.w { background: var(--warn-soft); color: var(--warn); } .ndc-eff.n { background: var(--surface); color: var(--ink-2); }
+.nd-detail { background: var(--surface-2); border-radius: 14px; padding: 12px 14px; display: grid; gap: 6px; font-size: 0.92em; }
+.more-d { border-radius: 14px; background: var(--surface-2); padding: 10px 14px; }
+.more-d summary { cursor: pointer; font-weight: 600; font-size: 0.9em; color: var(--accent); }
+.more-d[open] { display: grid; gap: 12px; }
+.more-d .change > div { background: var(--surface); }
+.sig-hint { font-size: 0.76em; color: var(--ink-2); }
+@media (max-width: 560px) {
+  .ndc { padding: 8px 9px; }
+  .ndc-h { flex-direction: column; justify-content: flex-start; gap: 0; }
+  .ndc .wt { display: none; }
+  .ef-full { display: none; } .ef-short { display: inline; }
+}
+.nd-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.nd { background: var(--surface-2); border-radius: 16px; padding: 14px; display: grid; gap: 10px; align-content: start; grid-template-rows: auto auto auto 1fr; }
+.nd-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.nd-h b { font-size: 0.95em; } .nd-h small { color: var(--ink-2); font-size: 0.78em; }
+.nd-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nd-flow .lbl { font-size: 0.7em; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.nd .sp { font: 800 0.8em/1 var(--f-body); letter-spacing: 0.04em; padding: 6px 11px; border-radius: 999px; color: #fff; }
+.nd .arr { font: 700 1.1em var(--f-num); color: var(--ink-2); }
+.nd-eff { justify-self: start; font-size: 0.8em; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.nd-eff.g { background: var(--good-soft); color: var(--good); } .nd-eff.w { background: var(--warn-soft); color: var(--warn); } .nd-eff.n { background: var(--surface); color: var(--ink-2); } .nd-eff.r { background: var(--bad-soft); color: var(--bad); }
+.nd p { font-size: 0.88em; }
+.change { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.change > div { border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; }
+.change .up { background: var(--good-soft); } .change .down { background: var(--bad-soft); }
+.change h3 { font: 700 0.9em var(--f-body); }
+.change .up h3 { color: var(--good); } .change .down h3 { color: var(--bad); }
+.change ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 0.88em; }
+.effs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.8em; padding-top: 8px; border-top: 1px dashed var(--line); }
+.effs-l { color: var(--ink-2); font-weight: 600; margin-right: 2px; }
+.hzx { font-weight: 700; padding: 2px 10px; border-radius: 999px; font-family: var(--f-body); }
+.hzx.g { background: var(--good-soft); color: var(--good); } .hzx.r { background: var(--bad-soft); color: var(--bad); }
+.hzx.w { background: var(--warn-soft); color: var(--warn); } .hzx.n { background: var(--surface-2); color: var(--ink-2); }
+.eff { font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+.eff.g { background: var(--good-soft); color: var(--good); } .eff.r { background: var(--bad-soft); color: var(--bad); }
+.eff.w { background: var(--warn-soft); color: var(--warn); } .eff.n { background: var(--surface-2); color: var(--ink-2); }
+@media (max-width: 760px) { .nd-row, .change { grid-template-columns: 1fr; } }
+
+.mood { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 22px; align-items: center; }
+.mood-main { display: grid; gap: 4px; }
+.mood-word { font: 800 1.8em/1.15 var(--f-display); }
+.mood-word.g { color: var(--good); } .mood-word.r { color: var(--bad); } .mood-word.n { color: var(--ink-2); }
+.mood-meter { position: relative; margin-top: 10px; }
+.mm-track { display: flex; height: 14px; border-radius: 7px; overflow: hidden; }
+.mm-track span { flex: 1; }
+.mm-bad { background: var(--bad-soft); } .mm-mid { background: var(--surface-2); } .mm-good { background: var(--good-soft); }
+.mm-mark { position: absolute; top: -6px; width: 5px; height: 26px; background: var(--ink); border-radius: 3px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface); }
+.mm-scale { display: flex; justify-content: space-between; font-size: 0.78em; color: var(--ink-2); margin-top: 8px; }
+.mood-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mc { border-radius: 14px; padding: 12px 8px; display: grid; gap: 2px; text-align: center; }
+.mc b { font: 600 1.8em/1.1 var(--f-num); }
+.mc span { font-size: 0.8em; color: var(--ink-2); }
+.mc.g { background: var(--good-soft); } .mc.g b { color: var(--good); }
+.mc.n { background: var(--surface-2); }
+.mc.r { background: var(--bad-soft); } .mc.r b { color: var(--bad); }
+.mood-pro { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+.mood-pro div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.8em; color: var(--ink-2); }
+.mood-pro b { font: 600 1.3em var(--f-num); color: var(--ink); }
+.story { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.story li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 10px; font-size: 0.96em; }
+.story .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 7px; }
+.story li.g .dot { background: var(--good); } .story li.r .dot { background: var(--bad); }
+.events { display: grid; gap: 8px; }
+.ev { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 14px; align-items: center; padding: 12px; border-radius: 14px; background: var(--surface-2); }
+.ev.big { background: var(--warn-soft); }
+.ev-date { display: grid; text-align: center; background: var(--surface); border-radius: 12px; padding: 6px 4px; line-height: 1.15; }
+.ev-date b { font: 600 1.35em var(--f-num); }
+.ev-date span { font-size: 0.74em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.ev-date small { font-size: 0.68em; color: var(--ink-2); }
+.ev-body { display: grid; gap: 4px; justify-items: start; font-size: 0.93em; }
+.ev-body > span:not(.chip) { color: var(--ink-2); }
+.filters { display: grid; gap: 10px; }
+.chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.fchip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 0.85em; font-weight: 500; color: var(--ink-2); }
+.fchip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.fchip small { opacity: 0.7; margin-left: 6px; font-family: var(--f-num); }
+.filters-2 { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
+.feed { display: grid; gap: 10px; }
+.news { display: grid; gap: 8px; padding: 14px 16px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--chart-4); }
+.news.g { border-left-color: var(--good); } .news.r { border-left-color: var(--bad); }
+.n-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 0.78em; color: var(--ink-2); align-items: center; }
+.n-meta .src { font-weight: 700; color: var(--ink); }
+.n-cat { background: var(--surface-2); border-radius: 999px; padding: 1px 9px; }
+.news h3 { font: 700 1.02em/1.35 var(--f-body); }
+.n-sum { font-size: 0.93em; }
+.n-sum b { color: var(--accent); }
+.n-foot { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 0.8em; }
+.tone { font-weight: 700; } .tone.g { color: var(--good); } .tone.r { color: var(--bad); } .tone.n { color: var(--ink-2); }
+.n-foot .imp { color: var(--ink-2); }
+.rx { font-family: var(--f-num); } .rx.up { color: var(--good); } .rx.dn { color: var(--bad); }
+.n-open { margin-left: auto; border: 0; background: transparent; color: var(--accent); font-weight: 600; font-size: 1em; padding: 0; }
+td .n-open { margin: 0; }
+.empty { padding: 24px; text-align: center; color: var(--ink-2); background: var(--surface-2); border-radius: 14px; }
+.themes { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.th { border-radius: 999px; padding: 8px 16px; font-weight: 600; display: inline-flex; gap: 8px; align-items: baseline; }
+.th small { font: 500 0.78em var(--f-num); opacity: 0.85; }
+.th.g { background: var(--good-soft); color: var(--good); } .th.r { background: var(--bad-soft); color: var(--bad); } .th.n { background: var(--surface-2); color: var(--ink-2); }
+.rx-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.rx-stats div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 0.8em; color: var(--ink-2); display: grid; gap: 2px; }
+.rx-stats b { font: 600 1.3em var(--f-num); } .rx-stats .up { color: var(--good); } .rx-stats .dn { color: var(--bad); }
+.deal-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ds { border-radius: 14px; padding: 12px 14px; display: grid; gap: 2px; }
+.ds b { font: 600 1.35em var(--f-num); }
+.ds span { font-size: 0.82em; color: var(--ink-2); }
+.ds.g { background: var(--good-soft); } .ds.g b { color: var(--good); }
+.ds.r { background: var(--bad-soft); } .ds.r b { color: var(--bad); }
+.ds.n { background: var(--surface-2); }
+#alert-btn[aria-pressed="true"] { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.sh h2 .info { margin-left: 8px; vertical-align: 2px; }
+@media (max-width: 760px) { .mood { grid-template-columns: 1fr; } .deal-sum { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .stock .actions { flex-wrap: wrap; } }
+.mode-note { font-size: 0.82em; color: var(--ink-2); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 8px 12px; }
+</style>
+
+<div class="proto"><b>PROTOTYPE</b><span>ACME Industries, the news outlets and the funds named here are made up. Every story is a sample, so the layout can be judged with realistic content.</span></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="brand"><i aria-hidden="true"></i>Stock AI</span>
+    <div class="search" aria-hidden="true">Search any NSE stock <kbd>⌘K</kbd></div>
+    <div class="mode">
+      <span class="mode-lbl" id="mode-hint">Plain-English explanations</span>
+      <div class="seg" role="group" aria-label="Detail level for every tab">
+        <button id="mode-simple" data-mode="simple" aria-pressed="true">Simple</button>
+        <button id="mode-pro" data-mode="pro" aria-pressed="false">Pro</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="stock">
+    <h1>ACME Industries Ltd</h1>
+    <span class="meta">NSE: ACME · Capital Goods · Mid cap</span>
+    <span class="px">₹1,248.60</span>
+    <span class="chg">▲ 22.10 (1.80%)</span>
+    <div class="actions">
+      <button class="btn" id="alert-btn" aria-pressed="false">Get news alerts</button>
+      <button class="btn primary" id="dl-btn" aria-haspopup="true" aria-expanded="false">Download ▾</button>
+      <div class="menu" id="dl-menu" role="menu" hidden>
+        <button role="menuitem" id="dl-pdf" data-dl="pdf"><b>News digest (PDF)</b><small>Mood, summary, upcoming events and every story</small></button>
+        <button role="menuitem" id="dl-csv" data-dl="csv"><b>News list (CSV)</b><small>Every story with date, source, type and tone</small></button>
+        <p class="unavail" id="dl-unavail" hidden>Downloads work when this page is opened on claude.ai.</p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabs" aria-label="Stock sections">
+    <span>Overview</span><span>Fundamentals</span><span>Technicals</span><span>AI Verdict</span><span>Sector</span><span class="on">News</span>
+  </nav>
+  <p class="mode-note"><span class="s-only">You're in <b>Simple</b> mode: quick answers in plain words. Switch to <b>Pro</b> for every chart, full tables and market terms.</span><span class="p-only">You're in <b>Pro</b> mode: every chart, full tables and market terms. Switch to <b>Simple</b> for quick answers in plain words.</span></p>
+  <p class="asof">News up to Sunday 18 October 2026 · Prices as of 16 Oct 2026 close</p>
+
+  <div class="layout">
+    <nav class="index" aria-label="News sections" id="index"></nav>
+
+    <main class="main">
+
+      <!-- MOOD -->
+      <section class="card" id="mood" data-title-s="Good or bad news?" data-title-p="News sentiment" data-v="g">
+        <div class="sh"><h2><span class="s-only">Is the news good or bad?</span><span class="p-only">News sentiment</span><button class="info" data-term="mood" aria-label="What is the news mood?">i</button></h2>
+          <div class="seg" role="group" aria-label="Period for news mood">
+            <button data-mperiod="7" aria-pressed="false">7 days</button><button data-mperiod="30" aria-pressed="true">30 days</button>
+          </div>
+        </div>
+        <div class="mood">
+          <div class="mood-main">
+            <span class="mood-word" id="mood-word">Mostly good</span>
+            <div class="mood-meter" role="img" id="mood-meter-label" aria-label="News mood meter">
+              <div class="mm-track"><span class="mm-bad"></span><span class="mm-mid"></span><span class="mm-good"></span></div>
+              <i class="mm-mark" id="mood-mark" style="left:71%"></i>
+            </div>
+            <div class="mm-scale"><span>Bad news</span><span>Mixed</span><span>Good news</span></div>
+          </div>
+          <div class="mood-counts">
+            <div class="mc g"><b id="cnt-g">6</b><span><span class="s-only">good stories</span><span class="p-only">positive</span></span></div>
+            <div class="mc n"><b id="cnt-n">2</b><span>neutral</span></div>
+            <div class="mc r"><b id="cnt-r">2</b><span><span class="s-only">bad stories</span><span class="p-only">negative</span></span></div>
+          </div>
+        </div>
+        <div class="mood-pro p-only">
+          <div>Sentiment score<b id="mood-score">+0.42</b><span>Scale −1 to +1, impact-weighted</span></div>
+          <div>90-day score<b>+0.25</b><span>Mood is improving</span></div>
+          <div>Sector score (30 days)<b>+0.18</b><span>ACME news is better than its sector</span></div>
+          <div>News volume<b id="mood-vol">10 stories</b><span>Usual month: 7</span></div>
+        </div>
+        <p class="means"><span><span class="s-only">Most news this month has been good for ACME: a big new order and more government spending on power grids. Two things to watch: copper costs more, and one customer is late paying.</span><span class="p-only">Positive skew driven by order inflow and sector capex tailwinds. Negatives are cost-side (copper) and receivables (state utility overdue), consistent with the working-capital watch item on the Fundamentals tab.</span></span></p>
+      </section>
+
+      <!-- DECISION -->
+      <section class="card" id="decision" data-title-s="Buy or sell?" data-title-p="Effect on signals" data-v="g">
+        <div class="sh"><h2><span class="s-only">How does the news affect buying or selling?</span><span class="p-only">News effect on signals</span><button class="info" data-term="decision" aria-label="How does news change the signals?">i</button></h2><span class="sig-hint">Tap a time frame for the reason</span></div>
+        <div class="ndc-row" role="group" aria-label="News effect by time frame">
+          <button class="ndc" id="nd-short" data-nd="short" aria-expanded="false" aria-controls="ndd-short"><span class="ndc-h"><b>Short<span class="wt"> term</span></b><small>2 to 6 weeks</small></span><span class="ndc-b"><span class="sp neutral"><span class="s-only">WAIT</span><span class="p-only">NEUTRAL</span></span><span class="ndc-eff w"><span class="s-only"><span class="ef-full">Good news, but wait</span><span class="ef-short">Wait</span></span><span class="p-only">Unchanged</span></span></span></button>
+          <button class="ndc" id="nd-med" data-nd="med" aria-expanded="false" aria-controls="ndd-med"><span class="ndc-h"><b>Medium<span class="wt"> term</span></b><small>1 to 6 months</small></span><span class="ndc-b"><span class="sp buy"><span class="s-only">BUY</span><span class="p-only">BUY</span></span><span class="ndc-eff g"><span class="s-only">Stronger</span><span class="p-only">Strengthened</span></span></span></button>
+          <button class="ndc" id="nd-long" data-nd="long" aria-expanded="false" aria-controls="ndd-long"><span class="ndc-h"><b>Long<span class="wt"> term</span></b><small>1 to 3 years</small></span><span class="ndc-b"><span class="sp buy"><span class="s-only">BUY</span><span class="p-only">BUY</span></span><span class="ndc-eff n"><span class="s-only">No change</span><span class="p-only">Unchanged</span></span></span></button>
+        </div>
+        <p class="sig-line"><span class="s-only">The news makes buying look better for the next few months. For a quick trade, wait for results on 28 October.</span><span class="p-only">News strengthens the medium-term Buy. Short term stays Neutral (results in 10 days). Long term unchanged.</span></p>
+        <div class="nd-detail" id="ndd-short" hidden>
+          <strong><span class="s-only">Next few weeks: still wait</span><span class="p-only">Short term: Neutral, unchanged</span></strong>
+          <span class="note">Before the news: Wait → after: Wait</span>
+          <p><span class="s-only">The good news has already pushed the price up about 7% in a month. Buying now means paying for that excitement just before results, which can move the price either way.</span><span class="p-only">Catalyst score 53 → 61 on positive news flow, below the 70 needed for Buy. The results-within-15-days rule caps it at Neutral regardless.</span></p>
+        </div>
+        <div class="nd-detail" id="ndd-med" hidden>
+          <strong><span class="s-only">Next few months: buy, now with more reason</span><span class="p-only">Medium term: Buy, strengthened</span></strong>
+          <span class="note">Before the news: Buy → after: Buy (stronger)</span>
+          <p><span class="s-only">The ₹640 crore order and more government spending on power grids mean more sales are already lined up for the coming months.</span><span class="p-only">Momentum score 70 → 74. Order win adds about 4% to next-year revenue visibility. Copper and the overdue payment partly offset it.</span></p>
+        </div>
+        <div class="nd-detail" id="ndd-long" hidden>
+          <strong><span class="s-only">Next few years: buy, no change</span><span class="p-only">Long term: Buy, unchanged</span></strong>
+          <span class="note">Before the news: Buy → after: Buy</span>
+          <p><span class="s-only">This month's news doesn't change how good the company is or what it's worth over the years. Nothing in the news is a serious warning sign.</span><span class="p-only">Quality score and fair value unchanged. News is screened only for red flags at this horizon (fraud, governance, promoter selling, rating downgrade): none found.</span></p>
+        </div>
+        <details class="more-d">
+          <summary><span class="s-only">What could change this?</span><span class="p-only">Upgrade and downgrade triggers, score changes</span></summary>
+          <div class="change">
+          <div class="up"><h3><span class="s-only">What could make it a stronger buy</span><span class="p-only">Upgrade triggers</span></h3><ul>
+            <li><span class="s-only">Results on 28 October are better than expected</span><span class="p-only">Q2 profit beats consensus (₹168 Cr) by 5% or more: short term to Buy</span></li>
+            <li><span class="s-only">More big orders worth over ₹1,000 crore</span><span class="p-only">Order inflow above ₹1,000 Cr in a quarter: medium term to Strong buy</span></li>
+            <li><span class="s-only">The late ₹85 crore payment arrives</span><span class="p-only">Overdue receivable collected: removes the working-capital watch item</span></li>
+          </ul></div>
+          <div class="down"><h3><span class="s-only">What could make it a wait or sell</span><span class="p-only">Downgrade triggers</span></h3><ul>
+            <li><span class="s-only">Results disappoint or profit margins shrink</span><span class="p-only">Q2 miss or operating margin below 14.5%: medium term to Neutral</span></li>
+            <li><span class="s-only">Copper keeps getting more expensive</span><span class="p-only">Copper up another 10% without price pass-through</span></li>
+            <li><span class="s-only">Founders start selling shares, or more customers pay late</span><span class="p-only">Any promoter selling, or overdue receivables above ₹150 Cr: long term reviewed</span></li>
+          </ul></div>
+        </div>
+          <div class="tw p-only">
+          <table>
+            <thead><tr><th>Horizon</th><th>Score before news</th><th>News effect</th><th class="now">Score now</th><th>News weight</th><th>Signal</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Short term (catalyst)</th><td>53</td><td style="color:var(--good)">+8</td><td class="now">61</td><td class="dim">40%</td><td><span class="status n"><i></i>Neutral (results cap)</span></td></tr>
+              <tr><th scope="row">Medium term (momentum)</th><td>70</td><td style="color:var(--good)">+4</td><td class="now">74</td><td class="dim">15%</td><td><span class="status g"><i></i>Buy</span></td></tr>
+              <tr><th scope="row">Long term (quality × price)</th><td>78 / −7%</td><td>0</td><td class="now">78 / −7%</td><td class="dim">Red flags only</td><td><span class="status g"><i></i>Buy</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        </details>
+        <p class="note">Signals come from the Fundamentals tab. News can strengthen or weaken them but never decides them alone. Not investment advice.</p>
+      </section>
+
+      <!-- STORY -->
+      <section class="card" id="story" data-title-s="What's happening?" data-title-p="AI summary" data-v="g">
+        <div class="sh"><h2><span class="s-only">What's happening with ACME?</span><span class="p-only">What's moving the stock</span></h2><span class="ai-chip">AI summary</span></div>
+        <ul class="story">
+          <li class="g"><span class="dot"></span><span><span class="s-only">ACME won a big new order worth <b>₹640 crore</b> from a state power company. That is more work lined up for the next 1 to 2 years.</span><span class="p-only"><b>Order inflow:</b> ₹640 Cr transformer order (16 Oct) lifts the order book to about ₹10,400 Cr, 1.75× FY26 sales. Stock +1.8% on the day.</span></span></li>
+          <li class="g"><span class="dot"></span><span><span class="s-only">The government is spending more on power grids. Companies that make grid equipment, like ACME, should get more orders.</span><span class="p-only"><b>Sector tailwind:</b> higher central grid capex outlay drove a sector rally on 15 Oct (ACME +2.8%, sector index +2.1%).</span></span></li>
+          <li class="r"><span class="dot"></span><span><span class="s-only">Copper, a main material ACME buys, has become more expensive. That could shrink its profit a little.</span><span class="p-only"><b>Cost risk:</b> copper at a 6-month high. Raw materials are 62% of sales, so a 6% copper rise could cut margin by roughly 0.4 points if not passed on.</span></span></li>
+          <li class="r"><span class="dot"></span><span><span class="s-only">One state power company is late paying ACME <b>₹85 crore</b>. That is why customers seem slower to pay.</span><span class="p-only"><b>Receivables:</b> ₹85 Cr overdue from a state utility (clarification filed 18 Sep), explaining the rise in working capital days to 71.</span></span></li>
+        </ul>
+        <span class="note">Written by AI from the stories below · every number checked against the source</span>
+      </section>
+
+      <!-- EVENTS -->
+      <section class="card" id="events" data-title-s="Coming up" data-title-p="Upcoming events" data-v="w">
+        <div class="sh"><h2><span class="s-only">What's coming up?</span><span class="p-only">Upcoming events</span></h2><span class="verdict w">Results in 10 days</span></div>
+        <div class="events">
+          <div class="ev big"><div class="ev-date"><b>28</b><span>Oct</span><small>Wed</small></div><div class="ev-body"><b><span class="s-only">Results for July to September</span><span class="p-only">Q2 FY27 results (board meeting)</span></b><span><span class="s-only">The price can jump or fall a lot around results day.</span><span class="p-only">Consensus: sales ₹1,665 Cr (+18% YoY), profit ₹168 Cr (+19%). Implied move ±5.5%.</span></span><span class="chip w">Big event</span></div></div>
+          <div class="ev"><div class="ev-date"><b>29</b><span>Oct</span><small>Thu</small></div><div class="ev-body"><b><span class="s-only">Managers explain the results</span><span class="p-only">Earnings call, 4:00 pm IST</span></b><span><span class="s-only">They usually talk about new orders and plans.</span><span class="p-only">Watch: guidance, order inflow, receivables, copper pass-through.</span></span></div></div>
+          <div class="ev"><div class="ev-date"><b>Q4</b><span>FY27</span><small>Jan to Mar</small></div><div class="ev-body"><b><span class="s-only">New factory in Gujarat opens</span><span class="p-only">Gujarat transformer plant commissioning</span></b><span><span class="s-only">More factories means it can make and sell more.</span><span class="p-only">Adds about 20% transformer capacity. Capex ₹420 Cr, funded internally.</span></span></div></div>
+        </div>
+      </section>
+
+      <!-- FEED -->
+      <section class="card" id="feed" data-title-s="Latest news" data-title-p="News feed" data-v="g">
+        <div class="sh"><h2><span class="s-only">Latest news</span><span class="p-only">News feed</span><button class="info" data-term="impact" aria-label="What does impact mean?">i</button></h2><span class="sub" id="feed-count"></span></div>
+        <div class="filters">
+          <div class="chips-row" role="group" aria-label="Type of news" id="f-cat"></div>
+          <div class="filters-2">
+            <div class="seg" role="group" aria-label="Good or bad">
+              <button data-tone="all" aria-pressed="true">All</button><button data-tone="g" aria-pressed="false"><span class="s-only">Good</span><span class="p-only">Positive</span></button><button data-tone="r" aria-pressed="false"><span class="s-only">Bad</span><span class="p-only">Negative</span></button>
+            </div>
+            <div class="seg" role="group" aria-label="Time period">
+              <button data-days="7" aria-pressed="false">7 days</button><button data-days="30" aria-pressed="true">30 days</button><button data-days="90" aria-pressed="false">90 days</button>
+            </div>
+          </div>
+        </div>
+        <div class="feed" id="feed-list"></div>
+      </section>
+
+      <!-- REACTION (Pro) -->
+      <section class="card p-only" id="reaction" data-title-s="News and price" data-title-p="News vs price" data-v="n">
+        <div class="sh"><h2>News vs price, last 20 trading days</h2></div>
+        <div class="chart" id="rx-chart"></div>
+        <div class="legend"><span><i style="background:var(--accent);height:3px"></i>Closing price (₹)</span><span><i style="background:var(--good)"></i>Positive news</span><span><i style="background:var(--bad)"></i>Negative news</span><span><i style="background:var(--chart-4)"></i>Neutral news</span></div>
+        <div class="rx-stats">
+          <div>Avg move on positive news<b class="up">+1.4%</b></div>
+          <div>Avg move on negative news<b class="dn">−1.7%</b></div>
+          <div>Price change, 20 days<b class="up">+6.9%</b></div>
+          <div>Sector index, 20 days<b class="up">+3.8%</b></div>
+        </div>
+        <p class="means"><span>The stock reacts about as much to bad news as to good news, and recovered from both negative stories within a week.</span></p>
+      </section>
+
+      <!-- THEMES -->
+      <section class="card" id="themes" data-title-s="Hot topics" data-title-p="Themes" data-v="n">
+        <div class="sh"><h2><span class="s-only">What people are talking about</span><span class="p-only">Themes, last 30 days</span></h2></div>
+        <div class="themes" id="themes-list"></div>
+        <p class="means"><span><span class="s-only">Bigger bubbles mean the topic came up more often. Green topics help the company, red ones could hurt it.</span><span class="p-only">Mention counts across news and filings. Colour shows the average tone of stories on each theme.</span></span></p>
+      </section>
+
+      <!-- FILINGS (Pro) -->
+      <section class="card p-only" id="filings" data-title-s="Announcements" data-title-p="Exchange announcements" data-v="n">
+        <div class="sh"><h2>Exchange announcements</h2><span class="sub">Official filings by the company</span></div>
+        <div class="tw"><table id="filings-table"></table></div>
+      </section>
+
+      <!-- DEALS -->
+      <section class="card" id="deals" data-title-s="Big trades" data-title-p="Insider & block deals" data-v="g">
+        <div class="sh"><h2><span class="s-only">Are insiders or big investors buying or selling?</span><span class="p-only">Insider trades, bulk and block deals</span><button class="info" data-term="deals" aria-label="What are bulk and block deals?">i</button></h2><span class="verdict g">Net buying</span></div>
+        <div class="deal-sum">
+          <div class="ds g"><b>₹83.5 crore</b><span><span class="s-only">bought by big investors</span><span class="p-only">bought (2 deals)</span></span></div>
+          <div class="ds r"><b>₹1.4 crore</b><span><span class="s-only">sold by one company officer</span><span class="p-only">sold (1 insider)</span></span></div>
+          <div class="ds n"><b>₹0</b><span><span class="s-only">sold by the founders</span><span class="p-only">promoter selling</span></span></div>
+        </div>
+        <div class="tw p-only"><table id="deals-table"></table></div>
+        <p class="means"><span><span class="s-only">Two large funds bought about ₹84 crore of shares this month. One company officer sold a small amount for personal reasons. The founders sold nothing.</span><span class="p-only">Institutional accumulation outweighs a small insider sale (0.007% of equity). No promoter transactions in 8 quarters.</span></span></p>
+      </section>
+
+      <p class="foot">ACME Industries, every outlet, fund and story on this page are made up to show the layout. Nothing here is investment advice.</p>
+    </main>
+  </div>
+</div>
+
+<div class="pop" id="pop" role="dialog" aria-modal="false" aria-labelledby="pop-title" hidden>
+  <button class="x" id="pop-x" aria-label="Close">×</button>
+  <h3 id="pop-title"></h3>
+  <span class="pro-name" id="pop-pro"></span>
+  <dl>
+    <div><dt>What it means</dt><dd id="pop-d"></dd></div>
+    <div id="pop-g-wrap"><dt>Why it's useful</dt><dd id="pop-g"></dd></div>
+  </dl>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var TODAY = new Date("2026-10-18T12:00:00");
+
+  // ---------- sample data (fictional company, outlets and funds) ----------
+  var CATS = [
+    ["all", "All news", "All news"], ["orders", "New orders", "Orders"], ["results", "Results", "Results"],
+    ["sector", "Industry & economy", "Sector & macro"], ["ratings", "Experts' views", "Ratings & analysts"],
+    ["investors", "Big investors", "Institutional flows"], ["insider", "Insider trades", "Insider trades"], ["company", "Company updates", "Corporate"]
+  ];
+  var NEWS = [
+    { d: "2026-10-16", t: "6:12 pm", src: "Exchange filing", cat: "orders", tone: "g", imp: "High", rx: 1.8, ef: ["+", "+", "+"],
+      h: "ACME wins ₹640 crore order for grid transformers from a state power utility",
+      s: "A big new order. More work lined up for the next 1 to 2 years.",
+      p: "Order is 11% of FY26 sales, to be executed over 18 to 24 months. Order book rises to about ₹10,400 Cr (1.75× sales)." },
+    { d: "2026-10-15", t: "9:40 am", src: "Market Ledger", cat: "sector", tone: "g", imp: "Medium", rx: 2.8, ef: ["+", "+", "+"],
+      h: "Capital goods stocks rally as government raises power grid spending",
+      s: "The government will spend more on power grids, so companies like ACME should get more orders.",
+      p: "Central grid capex outlay raised. Sector index +2.1% on the day. ACME supplies state transmission utilities directly." },
+    { d: "2026-10-14", t: "5:30 pm", src: "Exchange filing", cat: "results", tone: "n", imp: "Medium", rx: -0.7, ef: ["wait", "0", "0"],
+      h: "Board meeting on 28 October to approve Q2 results",
+      s: "ACME will share its results for July to September on 28 October.",
+      p: "Trading window closed since 1 Oct. Results and earnings call dates confirmed." },
+    { d: "2026-10-11", t: "8:05 am", src: "Daily Bourse", cat: "sector", tone: "r", imp: "Medium", rx: -0.9, next: true, ef: ["-", "-", "0"],
+      h: "Copper prices hit a 6-month high, may squeeze equipment makers' margins",
+      s: "Copper, a main material ACME buys, costs more now. Its profit could dip a little.",
+      p: "Copper +6% in a month. Raw materials are 62% of ACME's sales. Price-variation clauses cover about half the order book." },
+    { d: "2026-10-09", t: "7:20 pm", src: "Exchange filing", cat: "ratings", tone: "g", imp: "Low", rx: 1.0, ef: ["0", "0", "+"],
+      h: "Credit rating reaffirmed at AA− with a stable outlook",
+      s: "Lenders still see ACME as very safe to lend to.",
+      p: "Long-term AA− (Stable) reaffirmed, short-term A1+. Agency cites lower debt and steady order inflow." },
+    { d: "2026-10-07", t: "11:15 am", src: "Market Ledger", cat: "investors", tone: "g", imp: "Low", rx: 0.9, ef: ["+", "+", "0"],
+      h: "Foreign funds raise stakes in mid-cap engineering companies",
+      s: "Big foreign investors are buying more shares of companies like ACME.",
+      p: "Block deal: Global Growth Fund bought 4.2 lakh ACME shares at ₹1,198. FII holding up 7 quarters running." },
+    { d: "2026-10-03", t: "10:00 am", src: "Power Sector Review", cat: "company", tone: "g", imp: "Medium", rx: 0.4, next: true, ef: ["0", "0", "+"],
+      h: "Gujarat transformer plant on track to start in January to March 2027, says management",
+      s: "ACME's new factory is on schedule, so it will soon be able to make more.",
+      p: "Adds about 20% transformer capacity. Capex ₹420 Cr from internal cash. 70% of civil work complete." },
+    { d: "2026-09-29", t: "6:45 pm", src: "Exchange filing", cat: "insider", tone: "n", imp: "Low", rx: -0.4, ef: ["0", "0", "0"],
+      h: "Insider trading disclosure: Chief Financial Officer sells 12,000 shares",
+      s: "A senior officer sold a small number of shares. The founders did not sell.",
+      p: "₹1.41 Cr at ₹1,176 (0.007% of equity). Stated reason: personal. Holding after sale: 38,000 shares." },
+    { d: "2026-09-24", t: "8:30 am", src: "Daily Bourse", cat: "ratings", tone: "g", imp: "Medium", rx: 1.7, ef: ["+", "+", "0"],
+      h: "Analysts raise ACME targets after strong Q1, expect 18% profit growth",
+      s: "Experts who follow ACME think its profit will keep growing.",
+      p: "Average target raised 9% to ₹1,420. 11 Buy, 3 Hold, 1 Sell. FY27 EPS estimate up 3.4% in 90 days." },
+    { d: "2026-09-18", t: "9:10 pm", src: "Exchange filing", cat: "company", tone: "r", imp: "Medium", rx: -2.4, ef: ["-", "-", "0"],
+      h: "Clarification on ₹85 crore overdue payment from a state utility",
+      s: "One customer is late paying ₹85 crore. ACME expects the money by December.",
+      p: "Overdue since June, 1.4% of FY26 sales. Explains the rise in debtor days. Collection expected by December." },
+    { d: "2026-08-12", t: "4:10 pm", src: "Exchange filing", cat: "results", tone: "g", imp: "High", rx: 4.6, ef: ["+", "+", "+"],
+      h: "Q1 FY27 results: sales up 17%, profit up 20%",
+      s: "Sales and profit both grew strongly compared with a year ago.",
+      p: "Sales ₹1,560 Cr (+17%), PAT ₹158 Cr (+20%), OPM 15.7% (+90 bps). Profit beat estimates by 3.1%." },
+    { d: "2026-08-12", t: "6:30 pm", src: "Exchange filing", cat: "company", tone: "g", imp: "Low", rx: null, ef: ["0", "0", "0"],
+      h: "Final dividend of ₹7.50 per share approved",
+      s: "ACME will pay ₹7.50 for each share you own.",
+      p: "Payout 21% of FY26 profit. Record date 21 August." },
+    { d: "2026-07-28", t: "9:00 am", src: "Market Ledger", cat: "orders", tone: "g", imp: "Medium", rx: 1.2, ef: ["0", "+", "+"],
+      h: "ACME bags ₹310 crore export order from a Middle East grid operator",
+      s: "A new order from abroad. Sales outside India keep growing.",
+      p: "Order size ₹310 Cr. Exports now 28% of sales." }
+  ];
+  var THEMES = [["Orders and contracts", 9, "g"], ["Government grid spending", 7, "g"], ["Results", 5, "n"], ["Copper prices", 4, "r"],
+    ["Late payments from utilities", 3, "r"], ["New Gujarat plant", 3, "g"], ["Credit rating", 2, "g"], ["Foreign investors", 2, "g"]];
+  var FILINGS = [["16 Oct", "Order win", "Order of ₹640 Cr from a state transmission utility"], ["14 Oct", "Board meeting", "Board meeting on 28 Oct to approve Q2 FY27 results"],
+    ["9 Oct", "Credit rating", "Rating reaffirmed at AA− (Stable), short-term A1+"], ["29 Sep", "Insider trading", "Disclosure under SEBI (PIT) Regulations: sale by CFO"],
+    ["18 Sep", "Clarification", "Clarification on overdue receivables from a state utility"], ["12 Aug", "Results", "Financial results for Q1 FY27"], ["12 Aug", "Dividend", "Final dividend of ₹7.50 per share, record date 21 Aug"]];
+  var DEALS = [["7 Oct", "Block deal", "Global Growth Fund (FII)", "Bought", "4,20,000", "₹1,198", "₹50.3 Cr"],
+    ["29 Sep", "Insider", "Chief Financial Officer", "Sold", "12,000", "₹1,176", "₹1.4 Cr"],
+    ["22 Sep", "Bulk deal", "Bharat Value Mutual Fund", "Bought", "2,85,000", "₹1,166", "₹33.2 Cr"]];
+  var PX = [["2026-09-18", 1168.0], ["2026-09-21", 1172.5], ["2026-09-22", 1165.0], ["2026-09-23", 1170.2], ["2026-09-24", 1190.6], ["2026-09-25", 1186.0],
+    ["2026-09-28", 1181.3], ["2026-09-29", 1176.0], ["2026-09-30", 1183.4], ["2026-10-01", 1189.9], ["2026-10-05", 1195.2], ["2026-10-06", 1201.0],
+    ["2026-10-07", 1212.4], ["2026-10-08", 1207.0], ["2026-10-09", 1219.1], ["2026-10-12", 1208.1], ["2026-10-13", 1201.3], ["2026-10-14", 1193.4],
+    ["2026-10-15", 1226.5], ["2026-10-16", 1248.6]];
+  var TERMS = {
+    mood: { s: "News mood", p: "Sentiment score", d: "A reading of whether recent news about the company is good or bad for its business. Each story is marked good, bad or neutral, and bigger stories count more.", g: "A quick way to see if the news flow is helping or hurting the company. Pro shows the score from −1 (all bad) to +1 (all good)." },
+    decision: { s: "How news changes the signals", p: "News effect on signals", d: "Each signal on the Fundamentals tab looks at different things. Recent news counts most for the next few weeks, a little for the next few months, and for the long term we only check it for serious warning signs.", g: "Shows whether the news gives a reason to act now, or whether it's just noise for someone investing for years." },
+    impact: { s: "Importance", p: "Impact", d: "How much a story could change the company's profits or share price. High is something like results or a big order. Low is routine news.", g: "Lets you focus on the few stories that really move the business." },
+    deals: { s: "Big trades", p: "Bulk deals, block deals and insider trades", d: "A bulk deal is one buyer or seller trading more than 0.5% of the company's shares in a day. A block deal is a large trade of at least ₹10 crore done in a special window. Insider trades are purchases or sales by directors and senior staff, which they must report.", g: "When big funds buy, they usually have done deep research. Heavy selling by founders or insiders can be a warning sign." }
+  };
+
+  // ---------- helpers ----------
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function css(n) { return getComputedStyle(root).getPropertyValue(n).trim(); }
+  function daysAgo(d) { return Math.round((TODAY - new Date(d + "T12:00:00")) / 86400000); }
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function niceDate(d) { var x = new Date(d + "T12:00:00"); return x.getDate() + " " + MON[x.getMonth()]; }
+  function catLabel(c, simple) { for (var i = 0; i < CATS.length; i++) if (CATS[i][0] === c) return CATS[i][simple ? 1 : 2]; return c; }
+  var TONE_S = { g: "Good news", r: "Bad news", n: "Neutral" }, TONE_P = { g: "Positive", r: "Negative", n: "Neutral" };
+  var HZ_S = { short: "next few weeks", medium: "next few months", long: "next few years" }, HZ_P = { short: "short term", medium: "medium term", long: "long term" };
+  var EF_SYM = { "+": "▲", "-": "▼", wait: "wait", "0": "–" }, EF_CLS = { "+": "g", "-": "r", wait: "w", "0": "n" };
+  var EF_WORD = { "+": "helps", "-": "hurts", wait: "wait for results", "0": "no effect" };
+  var HZN = ["Short", "Medium", "Long"];
+  function effectHtml(x, simple) {
+    return '<span class="effs"><span class="effs-l">' + (simple ? "Effect on buying:" : "Signal effect:") + '</span>' + x.ef.map(function (e, i) {
+      return '<span class="hzx ' + EF_CLS[e] + '" title="' + HZN[i] + ' term: ' + EF_WORD[e] + '">' + HZN[i] + ' ' + EF_SYM[e] + '</span>';
+    }).join("") + '</span>';
+  }
+  function effectText(x) { return x.ef.map(function (e, i) { return HZN[i] + " term: " + EF_WORD[e]; }).join("; "); }
+  var W8 = { High: 3, Medium: 2, Low: 1 };
+  function within(n) { return NEWS.filter(function (x) { return daysAgo(x.d) <= n; }); }
+  function score(items) {
+    var num = 0, den = 0;
+    items.forEach(function (x) { var w = W8[x.imp]; den += w; num += w * (x.tone === "g" ? 1 : x.tone === "r" ? -1 : 0); });
+    return den ? num / den : 0;
+  }
+  function moodWord(sc) { return sc >= 0.5 ? "Very good" : sc >= 0.2 ? "Mostly good" : sc > -0.2 ? "Mixed" : sc > -0.5 ? "Mostly bad" : "Very bad"; }
+
+  // ---------- mood ----------
+  var moodDays = 30;
+  function drawMood() {
+    var items = within(moodDays), sc = score(items), simple = root.dataset.mode === "simple";
+    var c = { g: 0, n: 0, r: 0 }; items.forEach(function (x) { c[x.tone]++; });
+    document.getElementById("cnt-g").textContent = c.g; document.getElementById("cnt-n").textContent = c.n; document.getElementById("cnt-r").textContent = c.r;
+    var w = document.getElementById("mood-word");
+    w.textContent = simple ? moodWord(sc) + " news" : (sc >= 0.2 ? "Positive" : sc > -0.2 ? "Neutral" : "Negative") + " (" + (sc >= 0 ? "+" : "−") + Math.abs(sc).toFixed(2) + ")";
+    w.className = "mood-word " + (sc >= 0.2 ? "g" : sc > -0.2 ? "n" : "r");
+    document.getElementById("mood-mark").style.left = ((sc + 1) / 2 * 100).toFixed(1) + "%";
+    document.getElementById("mood-meter-label").setAttribute("aria-label", "News mood: " + moodWord(sc));
+    document.getElementById("mood-score").textContent = (sc >= 0 ? "+" : "−") + Math.abs(sc).toFixed(2);
+    document.getElementById("mood-vol").textContent = items.length + " stories";
+  }
+
+  // ---------- news effect tiles ----------
+  document.querySelectorAll(".ndc").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var open = b.getAttribute("aria-expanded") !== "true";
+      document.querySelectorAll(".ndc").forEach(function (x) { x.setAttribute("aria-expanded", "false"); document.getElementById("ndd-" + x.dataset.nd).hidden = true; });
+      if (open) { b.setAttribute("aria-expanded", "true"); document.getElementById("ndd-" + b.dataset.nd).hidden = false; }
+    });
+  });
+
+  // ---------- feed ----------
+  var fCat = "all", fTone = "all", fDays = 30;
+  function drawCats() {
+    var simple = root.dataset.mode === "simple", inRange = within(fDays);
+    document.getElementById("f-cat").innerHTML = CATS.map(function (c) {
+      var n = c[0] === "all" ? inRange.length : inRange.filter(function (x) { return x.cat === c[0]; }).length;
+      if (c[0] !== "all" && n === 0 && fCat !== c[0]) return "";
+      return '<button class="fchip" data-cat="' + c[0] + '" aria-pressed="' + (fCat === c[0]) + '">' + esc(simple ? c[1] : c[2]) + '<small>' + n + '</small></button>';
+    }).join("");
+  }
+  function drawFeed() {
+    var simple = root.dataset.mode === "simple";
+    var items = within(fDays).filter(function (x) { return (fCat === "all" || x.cat === fCat) && (fTone === "all" || x.tone === fTone); });
+    document.getElementById("feed-count").textContent = items.length + (items.length === 1 ? " story" : " stories");
+    if (!items.length) { document.getElementById("feed-list").innerHTML = '<p class="empty">No stories match these filters. Try a longer time period or "All news".</p>'; return; }
+    document.getElementById("feed-list").innerHTML = items.map(function (x, i) {
+      var rx = x.rx == null ? "" : '<span class="rx ' + (x.rx >= 0 ? "up" : "dn") + '">' + (simple ? "Share price " + (x.rx >= 0 ? "went up " : "went down ") + Math.abs(x.rx).toFixed(1) + "%" : (x.next ? "Next session " : "Same day ") + (x.rx >= 0 ? "▲" : "▼") + Math.abs(x.rx).toFixed(1) + "%") + '</span>';
+      return '<article class="news ' + x.tone + '">' +
+        '<div class="n-meta"><span class="src">' + esc(x.src) + '</span><span>' + niceDate(x.d) + ', ' + x.t + '</span><span class="n-cat">' + esc(catLabel(x.cat, simple)) + '</span></div>' +
+        '<h3>' + esc(x.h) + '</h3>' +
+        '<p class="n-sum">' + (simple ? '<b>What it means:</b> ' + esc(x.s) : esc(x.p)) + '</p>' +
+        '<div class="n-foot"><span class="tone ' + x.tone + '">● ' + (simple ? TONE_S : TONE_P)[x.tone] + '</span>' +
+        '<span class="imp">' + (simple ? (x.imp === "High" ? "Big story" : x.imp === "Medium" ? "Medium story" : "Small story") : 'Impact: ' + x.imp) + '</span>' + rx +
+        '<button class="n-open" data-open="' + i + '">Read full story ↗</button></div>' + effectHtml(x, simple) + '</article>';
+    }).join("");
+  }
+  document.addEventListener("click", function (e) {
+    var c = e.target.closest("[data-cat]"); if (c) { fCat = c.dataset.cat; drawCats(); drawFeed(); return; }
+    var o = e.target.closest("[data-open]"); if (o) { toast("In the real app this opens the original story"); return; }
+  });
+  document.querySelectorAll("[data-tone]").forEach(function (b) { b.addEventListener("click", function () { fTone = b.dataset.tone; document.querySelectorAll("[data-tone]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); drawFeed(); }); });
+  document.querySelectorAll("[data-days]").forEach(function (b) { b.addEventListener("click", function () { fDays = +b.dataset.days; document.querySelectorAll("[data-days]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); if (fCat !== "all" && !within(fDays).some(function (x) { return x.cat === fCat; })) fCat = "all"; drawCats(); drawFeed(); }); });
+  document.querySelectorAll("[data-mperiod]").forEach(function (b) { b.addEventListener("click", function () { moodDays = +b.dataset.mperiod; document.querySelectorAll("[data-mperiod]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); drawMood(); }); });
+
+  // ---------- themes ----------
+  function drawThemes() {
+    var max = Math.max.apply(null, THEMES.map(function (t) { return t[1]; }));
+    document.getElementById("themes-list").innerHTML = THEMES.map(function (t) {
+      var size = 0.85 + 0.55 * t[1] / max;
+      return '<span class="th ' + t[2] + '" style="font-size:' + size.toFixed(2) + 'em">' + esc(t[0]) + '<small>' + t[1] + '</small></span>';
+    }).join("");
+  }
+
+  // ---------- tables ----------
+  function drawTables() {
+    document.getElementById("filings-table").innerHTML = '<thead><tr><th>Date</th><th style="text-align:left">Type</th><th style="text-align:left">Subject</th><th>Document</th></tr></thead><tbody>' +
+      FILINGS.map(function (f) { return '<tr><th scope="row">' + f[0] + '</th><td style="text-align:left;font-family:var(--f-body)">' + f[1] + '</td><td style="text-align:left;font-family:var(--f-body);white-space:normal;min-width:240px">' + esc(f[2]) + '</td><td><button class="n-open" data-open="f">PDF ↗</button></td></tr>'; }).join("") + '</tbody>';
+    document.getElementById("deals-table").innerHTML = '<thead><tr><th>Date</th><th style="text-align:left">Type</th><th style="text-align:left">Who</th><th>Side</th><th>Shares</th><th>Price</th><th class="now">Value</th></tr></thead><tbody>' +
+      DEALS.map(function (d) { return '<tr><th scope="row">' + d[0] + '</th><td style="text-align:left;font-family:var(--f-body)">' + d[1] + '</td><td style="text-align:left;font-family:var(--f-body)">' + esc(d[2]) + '</td><td><span class="status ' + (d[3] === "Bought" ? "g" : "r") + '"><i></i>' + d[3] + '</span></td><td>' + d[4] + '</td><td>' + d[5] + '</td><td class="now">' + d[6] + '</td></tr>'; }).join("") + '</tbody>';
+  }
+
+  // ---------- news vs price chart ----------
+  function tradeIndex(d, next) {
+    for (var i = 0; i < PX.length; i++) { if (PX[i][0] === d) return i; if (next && PX[i][0] > d) return i; }
+    return -1;
+  }
+  function drawReaction() {
+    var W = 680, H = 250, L = 52, R = 12, T = 14, B = 28, n = PX.length, cw = (W - L - R) / (n - 1);
+    var lo = 1150, hi = 1270, y = function (v) { return T + (H - T - B) * (1 - (v - lo) / (hi - lo)); }, s = "";
+    for (var g = 0; g <= 4; g++) { var v = lo + (hi - lo) * g / 4, yy = y(v); s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '" stroke="' + css("--line") + '"/><text x="' + (L - 6) + '" y="' + (yy + 4) + '" text-anchor="end">' + Math.round(v).toLocaleString("en-IN") + '</text>'; }
+    PX.forEach(function (p, i) { if ((i % 3 === 0 && i < n - 2) || i === n - 1) s += '<text x="' + (L + cw * i) + '" y="' + (H - 8) + '" text-anchor="middle">' + niceDate(p[0]) + '</text>'; });
+    var pts = PX.map(function (p, i) { return (L + cw * i).toFixed(1) + "," + y(p[1]).toFixed(1); });
+    s += '<polygon points="' + L + ',' + y(lo) + ' ' + pts.join(" ") + ' ' + (L + cw * (n - 1)) + ',' + y(lo) + '" fill="' + css("--accent") + '" fill-opacity="0.07"/>';
+    s += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + css("--accent") + '" stroke-width="2.2"/>';
+    var col = { g: css("--good"), r: css("--bad"), n: css("--ink-2") };
+    within(30).forEach(function (x) {
+      var i = tradeIndex(x.d, true); if (i < 0) return;
+      var cx = L + cw * i, cy = y(PX[i][1]);
+      s += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="' + (x.imp === "High" ? 7 : x.imp === "Medium" ? 5.5 : 4.5) + '" fill="' + col[x.tone] + '" stroke="' + css("--surface") + '" stroke-width="2"><title>' + niceDate(x.d) + ': ' + esc(x.h) + '</title></circle>';
+    });
+    document.getElementById("rx-chart").innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Closing price with news markers">' + s + '</svg>';
+  }
+
+  // ---------- index ----------
+  function drawIndex() {
+    var simple = root.dataset.mode === "simple";
+    var cards = Array.prototype.filter.call(document.querySelectorAll(".card[id]"), function (c) { return getComputedStyle(c).display !== "none"; });
+    document.getElementById("index").innerHTML = cards.map(function (c) {
+      return '<a href="#' + c.id + '"><span>' + esc(simple ? c.dataset.titleS : c.dataset.titleP) + '</span><i class="' + c.dataset.v + '"></i></a>';
+    }).join("");
+  }
+
+  // ---------- popover ----------
+  var pop = document.getElementById("pop"), lastBtn = null;
+  function openPop(btn) {
+    var m = TERMS[btn.dataset.term]; if (!m) return;
+    lastBtn = btn;
+    document.getElementById("pop-title").textContent = m.s;
+    document.getElementById("pop-pro").textContent = "Also called: " + m.p;
+    document.getElementById("pop-d").textContent = m.d;
+    document.getElementById("pop-g").textContent = m.g;
+    pop.hidden = false;
+    var b = btn.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+    pop.style.left = Math.min(Math.max(16, b.left - pw / 2), window.innerWidth - pw - 16) + "px";
+    pop.style.top = (b.bottom + 8 + ph > window.innerHeight ? Math.max(16, b.top - ph - 8) : b.bottom + 8) + "px";
+    document.getElementById("pop-x").focus();
+  }
+  function closePop() { if (!pop.hidden) { pop.hidden = true; if (lastBtn) lastBtn.focus(); } }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest(".info[data-term]");
+    if (b) { e.stopPropagation(); openPop(b); return; }
+    if (!pop.contains(e.target)) closePop();
+  });
+  document.getElementById("pop-x").addEventListener("click", closePop);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closePop(); closeMenu(); } });
+
+  // ---------- alerts (prototype) ----------
+  var alertBtn = document.getElementById("alert-btn");
+  alertBtn.addEventListener("click", function () {
+    var on = alertBtn.getAttribute("aria-pressed") !== "true";
+    alertBtn.setAttribute("aria-pressed", String(on));
+    alertBtn.textContent = on ? "✓ News alerts on" : "Get news alerts";
+    toast(on ? "Prototype only: the real app will send these alerts" : "News alerts off");
+  });
+
+  // ---------- mode ----------
+  function setMode(mode) {
+    root.dataset.mode = mode;
+    document.querySelectorAll("button[data-mode]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === mode)); });
+    document.getElementById("mode-hint").textContent = mode === "simple" ? "Plain-English explanations" : "Full detail";
+    try { localStorage.setItem("stockai-mode", mode); } catch (e) {}
+    drawMood(); drawCats(); drawFeed(); drawIndex(); closePop();
+  }
+  document.querySelectorAll("button[data-mode]").forEach(function (b) { b.addEventListener("click", function () { setMode(b.dataset.mode); }); });
+
+  // ---------- downloads ----------
+  var menu = document.getElementById("dl-menu"), dlBtn = document.getElementById("dl-btn"), downloadsP = null;
+  function closeMenu() { if (!menu.hidden) { menu.hidden = true; dlBtn.setAttribute("aria-expanded", "false"); } }
+  function getDownloads() {
+    if (!downloadsP) {
+      downloadsP = window.claude && window.claude.use ? window.claude.use("downloads").catch(function () { return null; }) : Promise.resolve(null);
+      downloadsP.then(function (d) { if (!d) { downloadsP = null; document.getElementById("dl-unavail").hidden = false; } });
+    }
+    return downloadsP;
+  }
+  dlBtn.addEventListener("click", function (e) { e.stopPropagation(); menu.hidden = !menu.hidden; dlBtn.setAttribute("aria-expanded", String(!menu.hidden)); if (!menu.hidden) getDownloads(); });
+  document.addEventListener("click", function (e) { if (!menu.contains(e.target) && e.target !== dlBtn) closeMenu(); });
+  var toastTimer;
+  function toast(msg) { var t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200); }
+  function loadScript(src) { return new Promise(function (ok, fail) { var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = function () { fail(new Error("load")); }; document.head.appendChild(s); }); }
+  function csvOf(rows) { return rows.map(function (r) { return r.map(function (c) { c = c == null ? "" : String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(","); }).join("\n"); }
+  function newsRows() {
+    return [["Date", "Time", "Source", "Type", "Tone", "Impact", "Effect on decision", "Price move %", "Headline", "What it means", "Detail"]].concat(NEWS.map(function (x) {
+      return [x.d, x.t, x.src, catLabel(x.cat, false), TONE_P[x.tone], x.imp, effectText(x), x.rx == null ? "" : x.rx, x.h, x.s, x.p];
+    }));
+  }
+  function pdfText(s) { return String(s).replace(/₹/g, "Rs ").replace(/[−–]/g, "-").replace(/×/g, "x").replace(/·/g, "|").replace(/▲/g, "+").replace(/▼/g, "-").replace(/●/g, ""); }
+  function buildPdf() {
+    var doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" }), accent = [86, 54, 211], y = 50;
+    var sc = score(within(30)), c = { g: 0, n: 0, r: 0 }; within(30).forEach(function (x) { c[x.tone]++; });
+    doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.text("ACME Industries Ltd: news digest", 40, y);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(94, 90, 122);
+    doc.text("News up to 18 Oct 2026 | SAMPLE DATA, NOT A REAL COMPANY OR REAL NEWS", 40, y += 16);
+    doc.setTextColor(28, 24, 56); doc.setFontSize(12); doc.setFont("helvetica", "bold");
+    doc.text(pdfText(moodWord(sc) + " news, last 30 days (score " + (sc >= 0 ? "+" : "-") + Math.abs(sc).toFixed(2) + "). " + c.g + " positive, " + c.n + " neutral, " + c.r + " negative."), 40, y += 26);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    var story = ["Rs 640 Cr transformer order (16 Oct). Order book about Rs 10,400 Cr.", "Higher government grid spending lifted the sector on 15 Oct.", "Watch: copper at a 6-month high may squeeze margins.", "Watch: Rs 85 Cr overdue from a state utility."];
+    story.forEach(function (t) { doc.text("- " + t, 48, y += 15); });
+    doc.autoTable({ startY: y + 14, head: [["Effect on buy/sell", "Before news", "After news", "Why"]], body: [
+      ["Short term (2-6 wks)", "Neutral", "Neutral", "Positive news, but results in 10 days and stock up 6.9% in 20 days"],
+      ["Medium term (1-6 mo)", "Buy", "Buy (stronger)", "Rs 640 Cr order and grid spending; copper and overdue payment partly offset"],
+      ["Long term (1-3 yrs)", "Buy", "Buy", "No change to quality or fair value; no red flags in the news"]],
+      theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 9 } });
+    y = doc.lastAutoTable.finalY;
+    doc.autoTable({ startY: y + 14, head: [["Upcoming", "Event"]], body: [["28 Oct (Wed)", "Q2 FY27 results"], ["29 Oct (Thu)", "Earnings call, 4:00 pm IST"], ["Jan to Mar 2027", "Gujarat plant start"]], theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 9 } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 16, head: [["Date", "Source", "Tone", "Impact", "Headline, meaning and effect"]],
+      body: NEWS.map(function (x) { return [niceDate(x.d), x.src, TONE_P[x.tone], x.imp, pdfText(x.h + "\n" + x.p + "\n" + effectText(x))]; }),
+      theme: "striped", headStyles: { fillColor: accent }, styles: { fontSize: 8, cellPadding: 4 }, columnStyles: { 0: { cellWidth: 44 }, 1: { cellWidth: 80 }, 2: { cellWidth: 52 }, 3: { cellWidth: 46 } } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 16, head: [["Date", "Type", "Who", "Side", "Shares", "Price", "Value"]], body: DEALS.map(function (d) { return d.map(pdfText); }), theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 8 } });
+    var pages = doc.getNumberOfPages();
+    for (var p = 1; p <= pages; p++) { doc.setPage(p); doc.setFontSize(7); doc.setTextColor(120); doc.text("Stock AI | Sample data for layout review | Not investment advice | Page " + p + " of " + pages, 40, 820); }
+    return doc.output("arraybuffer");
+  }
+  menu.querySelectorAll("[data-dl]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var kind = b.dataset.dl, downloads = null; closeMenu(); toast("Preparing your file…");
+      getDownloads().then(function (d) { if (!d) throw { code: "unavailable" }; downloads = d; })
+        .then(function () {
+          return kind === "csv" ? { filename: "ACME_news.csv", data: csvOf(newsRows()) }
+            : loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js").then(function () { return loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"); })
+              .then(function () { return { filename: "ACME_news_digest.pdf", data: buildPdf() }; });
+        })
+        .then(function (file) { return downloads.save(file); })
+        .then(function () { toast("Saved"); })
+        .catch(function (err) {
+          var c = err && err.code;
+          toast(c === "declined" ? "Download cancelled" : c === "rate_limited" ? "A download is already waiting for you to confirm" : c === "unavailable" || c === "not_granted" ? "Downloads aren't available in this view" : "Couldn't create the file. Try again.");
+        });
+    });
+  });
+
+  // ---------- boot ----------
+  var mode = "simple";
+  try { mode = localStorage.getItem("stockai-mode") || "simple"; } catch (e) {}
+  drawThemes(); drawTables(); drawReaction();
+  setMode(mode === "pro" ? "pro" : "simple");
+})();
+</script>

@@ -1,0 +1,967 @@
+<title>AI Verdict Tab Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Shared with the Fundamentals tab. Layout: style C "Friendly & bold". Sticky top bar with the app-wide Simple/Pro switch, a section index on the left
+   (chips on phones), and rounded cards per question. Single light look by design. */
+:root {
+  --bg: #F6F5FC; --surface: #FFFFFF; --surface-2: #EFEDF9; --ink: #1C1838; --ink-2: #5E5A7A; --line: #E4E1F2;
+  --accent: #5636D3; --accent-soft: #ECE8FD; --good: #12875A; --good-soft: #DDF4EA; --warn: #B86E06; --warn-soft: #FCEEDA;
+  --bad: #D2433A; --bad-soft: #FBE4E2; --chart-1: #5636D3; --chart-2: #F2A541; --chart-3: #12875A; --chart-4: #C9C3E6;
+  --zebra: #FAF9FE; --now-bg: #F1EDFD; --deep-good: #0B6A45; --deep-bad: #A3241B;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-num: "DM Mono", ui-monospace, Menlo, monospace;
+  --radius: 20px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--f-body); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { margin: 0; font-family: var(--f-display); text-wrap: balance; line-height: 1.2; }
+p { margin: 0; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+/* mode visibility */
+:root[data-mode="simple"] .p-only { display: none !important; }
+:root[data-mode="pro"] .s-only { display: none !important; }
+
+/* prototype strip */
+.proto { background: var(--ink); color: #E9E6FA; padding-inline: 16px; padding-block: 7px; font-size: 12.5px; display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center; }
+.proto b { background: var(--chart-2); color: var(--ink); padding: 1px 7px; border-radius: 4px; font-size: 11px; letter-spacing: 0.04em; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.topbar-in { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 10px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { font: 800 1.1rem var(--f-display); display: flex; align-items: center; gap: 8px; }
+.brand i { width: 24px; height: 24px; border-radius: 8px; background: var(--accent); display: inline-block; }
+.search { flex: 1 1 200px; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); font-size: 0.9em; }
+.search kbd { margin-left: auto; font: 500 11px var(--f-num); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+.mode { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; }
+.mode-lbl { font-size: 0.8em; color: var(--ink-2); }
+.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 999px; }
+.seg button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-size: 0.86em; color: var(--ink-2); font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; font-weight: 700; }
+
+/* page */
+.page { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 70px; display: grid; gap: 16px; }
+.stock { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.stock h1 { font-size: 1.9em; font-weight: 800; letter-spacing: -0.01em; }
+.stock .meta { color: var(--ink-2); font-size: 0.9em; }
+.stock .px { font: 500 1.5em var(--f-num); }
+.stock .chg { font: 500 0.95em var(--f-num); color: var(--good); }
+.stock .actions { margin-left: auto; display: flex; gap: 8px; position: relative; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 16px; font-weight: 600; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px; }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 18px 40px -18px rgba(28, 24, 56, 0.35); padding: 6px; width: 290px; z-index: 40; display: grid; gap: 2px; }
+.menu button { border: 0; background: transparent; text-align: left; padding: 10px 12px; border-radius: 10px; display: grid; gap: 1px; }
+.menu button:hover, .menu button:focus-visible { background: var(--surface-2); }
+.menu b { font-size: 0.92em; }
+.menu small { color: var(--ink-2); font-size: 0.78em; }
+.menu .unavail { font-size: 0.78em; color: var(--warn); padding: 6px 12px; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 0.9em; z-index: 60; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.4); }
+.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.tabs span { flex: none; padding: 7px 16px; border-radius: 999px; color: var(--ink-2); font-weight: 500; font-size: 0.94em; }
+.tabs span.on { background: var(--ink); color: #fff; font-weight: 700; }
+.asof { font-size: 0.8em; color: var(--ink-2); }
+
+.layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 22px; align-items: start; }
+.index { position: sticky; top: 76px; display: grid; gap: 2px; font-size: 0.88em; }
+.index a { color: var(--ink-2); text-decoration: none; padding: 6px 12px; border-radius: 10px; display: flex; justify-content: space-between; gap: 8px; }
+.index a:hover { background: var(--surface); color: var(--ink); }
+.index a i { width: 8px; height: 8px; border-radius: 50%; align-self: center; flex: none; }
+.index a i.g { background: var(--good); } .index a i.w { background: var(--warn); } .index a i.n { background: var(--chart-4); }
+.main { display: grid; gap: 18px; min-width: 0; }
+
+.card { background: var(--surface); border-radius: var(--radius); padding: 22px; display: grid; gap: 16px; align-content: start; min-width: 0; scroll-margin-top: 80px;
+  box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); }
+/* Grid children default to min-width:auto, which lets a wide table stretch the card past the screen. */
+.card > *, .metrics, .two > *, .biz > * { min-width: 0; }
+.sh { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sh h2 { font-size: 1.35em; font-weight: 800; }
+:root[data-mode="pro"] .sh h2 { font-size: 1.15em; }
+.sh .sub { color: var(--ink-2); font-size: 0.85em; }
+.verdict { font: 600 0.78em var(--f-num); padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
+.verdict.g, .chip.g { background: var(--good-soft); color: var(--good); }
+.verdict.w, .chip.w { background: var(--warn-soft); color: var(--warn); }
+.verdict.r, .chip.r { background: var(--bad-soft); color: var(--bad); }
+.verdict.n, .chip.n { background: var(--surface-2); color: var(--ink-2); }
+.chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.means { color: var(--ink); background: var(--accent-soft); border-radius: 14px; padding: 12px 16px; display: flex; gap: 10px; font-size: 0.93em; }
+.means::before { content: "i"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 12px/20px var(--f-num); text-align: center; }
+:root[data-mode="pro"] .means { background: transparent; padding: 0; color: var(--ink-2); font-size: 0.88em; }
+:root[data-mode="pro"] .means::before { content: "Takeaway"; width: auto; height: auto; border-radius: 4px; padding: 1px 6px; font: 600 10px/16px var(--f-num); text-transform: uppercase; letter-spacing: 0.05em; background: var(--surface-2); color: var(--ink-2); align-self: flex-start; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.two > * { min-width: 0; }
+.note { font-size: 0.8em; color: var(--ink-2); }
+
+/* summary */
+.summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+.ring { position: relative; width: 128px; height: 128px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.05; }
+.ring .lbl b { font: 600 2.2em var(--f-num); display: block; }
+.ring .lbl small { font-size: 0.72em; color: var(--ink-2); }
+.sum-body { display: grid; gap: 12px; min-width: 0; }
+.sum-body h2 { font-size: 1.85em; font-weight: 800; letter-spacing: -0.01em; }
+.grades { display: flex; flex-wrap: wrap; gap: 8px; }
+.grade { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; font-size: 0.86em; font-weight: 500; text-decoration: none; color: var(--ink); }
+.grade b { font: 600 0.9em var(--f-num); min-width: 32px; text-align: center; padding: 2px 4px; border-radius: 999px; background: var(--surface); }
+.grade.g { background: var(--good-soft); } .grade.g b { color: var(--good); }
+.grade.w { background: var(--warn-soft); } .grade.w b { color: var(--warn); }
+.pc { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pc ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.92em; }
+.pc li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
+.pc .pros li::before { content: "▲"; color: var(--good); font-size: 0.7em; padding-top: 4px; }
+.pc .cons li::before { content: "▼"; color: var(--bad); font-size: 0.7em; padding-top: 4px; }
+.pc h3 { font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); margin-bottom: 6px; font-family: var(--f-body); }
+.breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.breakdown div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.82em; }
+.breakdown b { font: 600 1.25em var(--f-num); }
+
+/* metric tiles (simple) */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tile { border-radius: 16px; background: var(--surface-2); padding: 14px; display: grid; gap: 4px; align-content: start; }
+.tile.g { background: var(--good-soft); } .tile.w { background: var(--warn-soft); } .tile.r { background: var(--bad-soft); }
+.t-top { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.t-name { font-size: 0.86em; font-weight: 500; }
+.t-val { font: 500 1.5em var(--f-num); font-variant-numeric: tabular-nums; }
+.t-pro { font-size: 0.74em; color: var(--ink-2); }
+.t-cmp { font-size: 0.78em; color: var(--ink-2); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tile .chip { background: var(--surface); }
+.more { justify-self: start; border: 0; background: transparent; color: var(--accent); font-weight: 600; font-size: 0.88em; padding: 4px 0; }
+.info { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--ink-2); background: transparent; color: var(--ink-2); font: 700 11px/1 var(--f-num); padding: 0; display: inline-grid; place-items: center; }
+.info:hover { border-color: var(--accent); color: var(--accent); }
+
+/* tables: units live in the row label so cells hold clean numbers; zebra rows; the current column is tinted */
+.tw { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 0.9em; }
+th, td { padding: 11px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+th:first-child, td:first-child { text-align: left; }
+thead th { background: var(--surface-2); color: var(--ink-2); font: 600 0.74em/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.05em; padding-block: 10px; }
+thead th.old { color: color-mix(in srgb, var(--ink-2) 70%, transparent); }
+tbody tr:nth-child(even) > * { background: var(--zebra); }
+tbody tr:hover > * { background: var(--accent-soft); }
+tbody tr:last-child > * { border-bottom: 0; }
+tbody th { font-weight: 600; }
+td { font-family: var(--f-num); font-variant-numeric: tabular-nums; color: var(--ink); }
+td.dim { color: var(--ink-2); }
+tbody th.now, tbody td.now, thead th.now { background: var(--now-bg); }
+tbody tr:hover > .now { background: var(--accent-soft); }
+td.now { font-weight: 700; }
+thead th.now { color: var(--accent); }
+/* Metric names stay visible while numbers scroll sideways on small screens */
+.tw th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: 1px 0 0 var(--line); }
+.tw thead th:first-child { background: var(--surface-2); }
+.tw tbody tr:nth-child(even) > th:first-child { background: var(--zebra); }
+.tw tbody tr:hover > th:first-child { background: var(--accent-soft); }
+.mname { display: grid; gap: 2px; min-width: 190px; max-width: 250px; white-space: normal; }
+.mname .cell { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mname small { font-weight: 400; color: var(--ink-2); font-size: 0.82em; line-height: 1.3; }
+.unit { font: 500 0.78em var(--f-num); color: var(--ink-2); background: var(--surface-2); border-radius: 4px; padding: 0 5px; }
+tr.me > *, .tw tr.me > th:first-child { background: var(--accent-soft); font-weight: 700; }
+tr.med > *, .tw tr.med > th:first-child { color: var(--ink-2); font-style: italic; }
+tr.sum > * { font-weight: 700; }
+tr.sum > *:not(.now) { background: var(--zebra); }
+td .up { color: var(--good); } td .dn { color: var(--bad); }
+.status { display: inline-flex; align-items: center; gap: 6px; font: 600 0.82em var(--f-body); }
+.status i { width: 8px; height: 8px; border-radius: 50%; }
+.status.g { color: var(--good); } .status.g i { background: var(--good); }
+.status.w { color: var(--warn); } .status.w i { background: var(--warn); }
+.status.r { color: var(--bad); } .status.r i { background: var(--bad); }
+.status.n { color: var(--ink-2); } .status.n i { background: var(--chart-4); }
+.spark { display: inline-block; vertical-align: middle; }
+
+/* charts */
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-2); font: 400 11px var(--f-num); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82em; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* business */
+.biz { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.facts div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 0.8em; color: var(--ink-2); display: grid; gap: 2px; }
+.facts b { color: var(--ink); font: 600 1.1em var(--f-num); }
+.donut-wrap { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; align-items: center; }
+.seglist { display: grid; gap: 8px; font-size: 0.86em; }
+.seglist div { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; }
+.seglist i { width: 12px; height: 12px; border-radius: 4px; }
+.geo { height: 14px; border-radius: 7px; overflow: hidden; display: flex; }
+
+/* valuation */
+.band { display: grid; gap: 8px; }
+.band-track { position: relative; height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--good-soft), var(--surface-2) 50%, var(--bad-soft)); border: 1px solid var(--line); }
+.band-mark { position: absolute; top: -6px; width: 4px; height: 24px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); }
+.band-mid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink-2); opacity: 0.6; }
+.band-scale { display: flex; justify-content: space-between; font: 400 0.78em var(--f-num); color: var(--ink-2); }
+.dcf { display: grid; gap: 10px; background: var(--surface-2); border-radius: 16px; padding: 16px; }
+.sl { display: grid; grid-template-columns: minmax(0, 1fr) 62px; gap: 2px 10px; align-items: center; font-size: 0.86em; }
+.sl label { color: var(--ink-2); }
+.sl output { font: 500 0.95em var(--f-num); text-align: right; }
+.sl input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.fv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fv div { display: grid; gap: 2px; }
+.fv small { font-size: 0.76em; color: var(--ink-2); }
+.fv b { font: 600 1.25em var(--f-num); }
+.fv b.good { color: var(--good); } .fv b.bad { color: var(--bad); }
+
+/* dupont */
+.dupont { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dupont div { background: var(--surface-2); border-radius: 12px; padding: 10px 14px; display: grid; gap: 1px; font-size: 0.8em; color: var(--ink-2); }
+.dupont div b { font: 600 1.25em var(--f-num); color: var(--ink); }
+.dupont div.res { background: var(--good-soft); }
+.dupont span { font: 600 1.2em var(--f-num); color: var(--ink-2); }
+
+/* results */
+.qcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.qcards div { background: var(--surface-2); border-radius: 16px; padding: 14px; display: grid; gap: 2px; }
+.qcards small { color: var(--ink-2); font-size: 0.8em; }
+.qcards b { font: 500 1.4em var(--f-num); }
+.qcards em { font-style: normal; font: 500 0.85em var(--f-num); color: var(--good); }
+.ai-box { display: grid; gap: 8px; border: 1.5px dashed var(--accent); border-radius: 16px; padding: 14px 16px; }
+.ai-box ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 0.92em; }
+.ai-box .src { font-size: 0.78em; color: var(--ink-2); }
+.ai-chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+
+/* red flags */
+.flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; }
+.flag { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.flag .ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--f-num); background: var(--good-soft); color: var(--good); }
+.flag.w .ic { background: var(--warn-soft); color: var(--warn); }
+.flag.w { background: var(--warn-soft); }
+.flag b { display: block; }
+.flag span { color: var(--ink-2); font-size: 0.92em; }
+.qs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.q { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto 44px auto auto 1fr; gap: 8px; align-content: start; }
+.q-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92em; }
+.q-val { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.q-val .big { font: 600 1.9em/1 var(--f-num); }
+.q-val .big small { font-size: 0.5em; color: var(--ink-2); }
+.zbar { position: relative; height: 10px; }
+.zbar .segs { display: flex; height: 100%; border-radius: 5px; overflow: hidden; }
+.zbar .segs span { height: 100%; }
+.zbar i { position: absolute; top: -5px; width: 4px; height: 20px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface-2); }
+.zlbl { display: flex; font-size: 0.72em; color: var(--ink-2); }
+.zlbl span { text-align: center; }
+.q .why { color: var(--ink-2); font-size: 0.84em; }
+.flags { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; }
+
+.signal { gap: 16px; border: 2px solid var(--good-soft); }
+.signal { gap: 12px; padding: 18px 20px; }
+.sig-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.hzc { border: 1.5px solid transparent; background: var(--surface-2); border-radius: 14px; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; min-width: 0; }
+.hzc:hover { border-color: var(--line); }
+.hzc[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.hzc .t { display: grid; line-height: 1.2; min-width: 0; }
+.hzc .t b { font-size: 0.86em; }
+.hzc .t small { font-size: 0.72em; color: var(--ink-2); }
+.hzc .sp { font: 800 0.74em/1 var(--f-body); letter-spacing: 0.04em; padding: 6px 10px; border-radius: 999px; color: #fff; white-space: nowrap; flex: none; }
+.sp.buy { background: var(--good); } .sp.sbuy { background: var(--deep-good); } .sp.neutral { background: var(--ink-2); } .sp.sell { background: var(--bad); } .sp.ssell { background: var(--deep-bad); }
+.hz-detail { background: var(--surface-2); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; font-size: 0.92em; }
+.hz-detail .drivers { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); column-gap: 24px; }
+.sig-line { font-size: 0.95em; font-weight: 600; }
+.sig-hint { font-size: 0.76em; color: var(--ink-2); }
+@media (max-width: 560px) {
+  .hzc { flex-direction: column; align-items: flex-start; padding: 8px 10px; }
+  .hzc .sp { font-size: 0.68em; padding: 5px 8px; }
+  .hzc .wt { display: none; }
+}
+.hz-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.hz { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto auto auto auto 1fr; gap: 10px; align-content: start; border-top: 4px solid var(--ink-2); }
+.hz.buy { border-top-color: var(--good); } .hz.sbuy { border-top-color: var(--deep-good); } .hz.neutral { border-top-color: var(--chart-4); }
+.hz.sell { border-top-color: var(--bad); } .hz.ssell { border-top-color: var(--deep-bad); }
+.hz-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+.hz-head b { display: block; font-size: 0.98em; }
+.hz-head small { color: var(--ink-2); font-size: 0.8em; }
+.hz-pill { justify-self: start; font: 800 1.25em/1 var(--f-display); padding: 8px 18px; border-radius: 999px; color: #fff; letter-spacing: 0.03em; }
+.hz.buy .hz-pill { background: var(--good); } .hz.sbuy .hz-pill { background: var(--deep-good); } .hz.neutral .hz-pill { background: var(--ink-2); }
+.hz.sell .hz-pill { background: var(--bad); } .hz.ssell .hz-pill { background: var(--deep-bad); }
+.mini { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+.mini span { height: 8px; border-radius: 4px; background: var(--surface); }
+.mini span.on { height: 12px; margin-top: -2px; }
+.mini span.on.c0 { background: var(--deep-bad); } .mini span.on.c1 { background: var(--bad); } .mini span.on.c2 { background: var(--ink-2); }
+.mini span.on.c3 { background: var(--good); } .mini span.on.c4 { background: var(--deep-good); }
+.mini-lbl { display: flex; justify-content: space-between; font-size: 0.7em; color: var(--ink-2); margin-top: -4px; }
+.hz p { font-size: 0.88em; }
+.drivers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.82em; }
+.drivers li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 5px; }
+.drivers li span { color: var(--ink-2); }
+.drivers li b { font-family: var(--f-num); font-weight: 500; text-align: right; }
+.drivers li.rule { border: 0; color: var(--ink); font-style: italic; }
+.sig-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.sig-head h2 { font-size: 1.35em; font-weight: 800; }
+@media (max-width: 760px) { .hz-grid { grid-template-columns: 1fr; } }
+.sig-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.sig-lbl { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.sig-pill { font: 800 1.7em/1 var(--f-display); padding: 10px 26px; border-radius: 999px; color: #fff; background: var(--good); letter-spacing: 0.03em; }
+.sig-h { font-size: 0.86em; color: var(--ink-2); }
+.sig-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.ss { text-align: center; font: 600 0.78em/1.2 var(--f-body); padding: 9px 4px; background: var(--surface-2); color: var(--ink-2); border-radius: 6px; }
+.ss:first-child { border-radius: 999px 6px 6px 999px; } .ss:last-child { border-radius: 6px 999px 999px 6px; }
+.ss.sb, .ss.s { color: var(--bad); } .ss.b, .ss.stb { color: var(--good); }
+.ss.on { color: #fff; font-weight: 800; box-shadow: 0 6px 16px -8px rgba(28, 24, 56, 0.5); }
+.ss.on.sb { background: var(--deep-bad); } .ss.on.s { background: var(--bad); } .ss.on.n { background: var(--ink-2); }
+.ss.on.b { background: var(--good); } .ss.on.stb { background: var(--deep-good); }
+.sig-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.sig-stats div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.8em; color: var(--ink-2); }
+.sig-stats b { font: 600 1.3em var(--f-num); color: var(--ink); }
+.sig-stats em { font-style: normal; font-weight: 600; }
+.matrix td { text-align: center; font-family: var(--f-body); }
+.matrix th:first-child { min-width: 150px; }
+.matrix td.hit { outline: 2.5px solid var(--accent); outline-offset: -3px; border-radius: 10px; font-weight: 800; }
+
+.docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+.doc { display: grid; grid-template-columns: 38px 1fr; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.doc .ft { width: 38px; height: 44px; border-radius: 8px; background: var(--surface); display: grid; place-items: center; font: 600 10px var(--f-num); color: var(--bad); border: 1px solid var(--line); }
+.doc small { color: var(--ink-2); display: block; }
+
+.ca { display: grid; gap: 6px; font-size: 0.88em; }
+.ca div { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding: 8px 12px; background: var(--surface-2); border-radius: 10px; }
+.ca span { font-family: var(--f-num); color: var(--ink-2); }
+
+/* popover */
+.pop { position: fixed; z-index: 70; width: min(360px, calc(100vw - 32px)); background: var(--surface); border-radius: 18px; padding: 18px; box-shadow: 0 24px 60px -20px rgba(28, 24, 56, 0.45); border: 1px solid var(--line); display: grid; gap: 10px; font-size: 0.9em; }
+.pop h3 { font-size: 1.15em; font-weight: 800; padding-right: 26px; }
+.pop .pro-name { font: 500 0.8em var(--f-num); color: var(--ink-2); }
+.pop dl { margin: 0; display: grid; gap: 8px; }
+.pop dt { font-size: 0.74em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+.pop dd { margin: 0; }
+.pop .x { position: absolute; top: 12px; right: 12px; border: 0; background: var(--surface-2); width: 28px; height: 28px; border-radius: 50%; font-weight: 700; }
+.pop .reading { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; }
+
+.foot { font-size: 0.8em; color: var(--ink-2); text-align: center; padding-top: 6px; }
+
+@media (max-width: 1200px) {
+  .layout { grid-template-columns: 1fr; }
+  .index { position: sticky; top: 64px; z-index: 20; display: flex; overflow-x: auto; gap: 6px; padding-block: 6px; background: var(--bg); scrollbar-width: none; }
+  .index a { flex: none; background: var(--surface); border-radius: 999px; padding: 6px 12px; }
+  .biz, .two { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .topbar-in, .page { padding-inline: 16px; }
+  .mode { margin-left: 0; width: 100%; justify-content: space-between; }
+  .summary { grid-template-columns: 1fr; justify-items: start; }
+  .pc { grid-template-columns: 1fr; }
+  .stock .actions { margin-left: 0; }
+  .fv { grid-template-columns: 1fr 1fr; }
+  .donut-wrap { grid-template-columns: 100px minmax(0, 1fr); }
+  .pop { left: 16px !important; right: 16px; top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: auto; }
+  .card { padding: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .q .bar i { transition: width 0.5s ease; }
+}
+.mode-note { font-size: 0.82em; color: var(--ink-2); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 8px 12px; }
+/* ---------- AI Verdict tab ---------- */
+.final { border: 2px solid var(--accent-soft); }
+.ai-tag { font: 700 0.7em var(--f-body); letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 999px; }
+.hzc .t small.cv { color: var(--ink-2); }
+.plan-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.plan-strip div { background: var(--surface-2); border-radius: 12px; padding: 9px 12px; display: grid; gap: 1px; font-size: 0.8em; color: var(--ink-2); }
+.plan-strip b { font: 600 1.15em var(--f-num); color: var(--ink); }
+.plan-strip .buyz { background: var(--good-soft); } .plan-strip .buyz b { color: var(--good); }
+.plan-strip .stop { background: var(--bad-soft); } .plan-strip .stop b { color: var(--bad); }
+.hz-detail .pp { display: grid; gap: 6px; }
+.pp-r { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; font-size: 0.92em; }
+.pp-r small { grid-column: 1 / -1; color: var(--ink-2); }
+.sp.sp-mini { font: 800 0.72em/1 var(--f-body); padding: 4px 8px; border-radius: 999px; color: #fff; flex: none; letter-spacing: 0.03em; }
+.conv { display: inline-flex; align-items: center; gap: 6px; font-size: 0.86em; }
+.conv i { display: inline-flex; gap: 2px; } .conv i span { width: 7px; height: 12px; border-radius: 2px; background: var(--line); } .conv i span.on { background: var(--accent); }
+/* build */
+.bh-top h2 { font-size: 1.35em; font-weight: 800; }
+:root[data-mode="pro"] .bh-top h2 { font-size: 1.15em; }
+.bh-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pl { display: grid; gap: 8px; }
+.pl-r { display: grid; grid-template-columns: minmax(130px, 0.9fr) auto minmax(0, 2fr) 92px; gap: 6px 14px; align-items: center; padding: 10px 14px; border-radius: 14px; background: var(--surface-2); }
+.pl-r .nm b { display: block; } .pl-r .nm small { color: var(--ink-2); font-size: 0.78em; }
+.pl-r .rs { font-size: 0.88em; color: var(--ink); }
+.pl-r .wt { display: grid; gap: 3px; font-size: 0.74em; color: var(--ink-2); text-align: right; }
+.wbar { height: 6px; border-radius: 3px; background: var(--surface); overflow: hidden; } .wbar span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.pl-r.adj { background: transparent; border: 1px dashed var(--line); }
+.pl-r.fin { background: var(--accent-soft); }
+.pl-r .pts { font: 600 0.95em var(--f-num); text-align: right; }
+.contrib { display: grid; gap: 6px; }
+.cb { display: grid; grid-template-columns: 110px minmax(0, 1fr) 64px; gap: 10px; align-items: center; font-size: 0.86em; }
+.cb-track { position: relative; height: 14px; border-radius: 4px; background: var(--surface-2); }
+.cb-track span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 0 4px 4px 0; }
+.cb-track span.neg { background: var(--bad); }
+.cb b { font: 600 0.95em var(--f-num); text-align: right; }
+.wsl { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 16px; background: var(--surface-2); border-radius: 14px; padding: 12px 14px; }
+.wsl label { display: grid; gap: 2px; font-size: 0.8em; color: var(--ink-2); }
+.wsl label span { display: flex; justify-content: space-between; } .wsl label b { font-family: var(--f-num); color: var(--ink); }
+.wsl input { accent-color: var(--accent); width: 100%; }
+.wsl .acts { display: flex; align-items: end; gap: 8px; }
+/* mood */
+.mood-top { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 18px; align-items: center; }
+.gauge svg { display: block; width: 100%; height: auto; }
+.g-zone { stroke: none; } .g-lbl { fill: var(--ink-2); font: 500 9.5px var(--f-body); }
+.g-needle { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; } .g-hub { fill: var(--ink); }
+.g-val { fill: var(--ink); font: 600 28px var(--f-num); } .g-zn { fill: var(--ink-2); font: 700 12px var(--f-body); letter-spacing: 0.04em; text-transform: uppercase; }
+.mood-say { display: grid; gap: 8px; }
+.mood-say .adj { display: flex; flex-wrap: wrap; gap: 6px; }
+.adjc { font: 600 0.8em var(--f-num); padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); }
+.adjc.r { background: var(--bad-soft); color: var(--bad); } .adjc.g { background: var(--good-soft); color: var(--good); }
+.mtiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.mt { border-radius: 14px; background: var(--surface-2); padding: 12px 14px; display: grid; gap: 5px; align-content: start; }
+.mt-h { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font-size: 0.84em; font-weight: 600; }
+.mt-v { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 4px 8px; }
+.mt-v b { font: 600 1.3em var(--f-num); white-space: nowrap; }
+.mt svg { display: block; }
+.sk-line { fill: none; stroke: var(--ink-2); stroke-width: 1.5; stroke-linejoin: round; } .sk-dot { fill: var(--accent); stroke: var(--surface-2); stroke-width: 2; }
+.mt p { font-size: 0.8em; color: var(--ink-2); }
+.eff { font: 700 0.74em var(--f-body); padding: 2px 8px; border-radius: 999px; white-space: nowrap; justify-self: start; }
+.eff.g { background: var(--good-soft); color: var(--good); } .eff.r { background: var(--bad-soft); color: var(--bad); } .eff.n { background: var(--surface); color: var(--ink-2); }
+.zone { font: 600 0.72em var(--f-body); color: var(--ink-2); }
+.comp { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.comp-c { display: grid; gap: 6px; align-content: start; }
+.comp-r { display: grid; grid-template-columns: minmax(0, 1fr) 90px 30px; gap: 8px; align-items: center; font-size: 0.82em; }
+.comp-r small { display: block; color: var(--ink-2); font-size: 0.9em; }
+.comp-r .cb-track { height: 8px; } .comp-r b { font: 600 0.95em var(--f-num); text-align: right; }
+/* flows */
+.flow-wrap { position: relative; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+#flow-svg { display: block; width: 100%; height: auto; }
+.fl-ax { fill: var(--ink-2); font: 400 10.5px var(--f-num); } .fl-grid { stroke: var(--surface-2); } .fl-zero { stroke: var(--line); stroke-width: 1.5; }
+.fl-fii { fill: var(--chart-1); } .fl-dii { fill: var(--chart-2); } .fl-hit { fill: transparent; cursor: crosshair; } .fl-hit:hover { fill: color-mix(in srgb, var(--accent) 7%, transparent); }
+.fl-tip { position: absolute; z-index: 3; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font: 500 11.5px/1.5 var(--f-num); box-shadow: 0 12px 30px -14px rgba(28, 24, 56, 0.45); display: grid; }
+.fl-leg { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.84em; color: var(--ink-2); }
+.fl-leg span { display: inline-flex; align-items: center; gap: 6px; } .fl-leg i { width: 12px; height: 12px; border-radius: 3px; }
+.fl-leg b { color: var(--ink); font-family: var(--f-num); font-weight: 600; }
+.flow-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.flow-facts div { background: var(--surface-2); border-radius: 12px; padding: 9px 12px; font-size: 0.8em; color: var(--ink-2); display: grid; gap: 1px; }
+.flow-facts b { font: 600 1.15em var(--f-num); color: var(--ink); }
+/* cases */
+.cases { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.case { border-radius: 16px; padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+.case.g { background: var(--good-soft); } .case.r { background: var(--bad-soft); }
+.case h3 { font-size: 1em; }
+.case ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 0.9em; }
+.case li small { display: block; color: var(--ink-2); font-size: 0.86em; }
+/* your view */
+.yv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+.yv-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--surface-2); border-radius: 16px; padding: 14px; }
+.yv-form label { display: grid; gap: 4px; font-size: 0.8em; color: var(--ink-2); }
+.yv-form input, .yv-form select, .yv-form textarea { font: 500 0.95rem var(--f-body); padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); width: 100%; }
+.yv-form input[type="number"] { font-family: var(--f-num); }
+.yv-form .full { grid-column: 1 / -1; }
+.yv-form .ex { grid-column: 1 / -1; font-size: 0.78em; color: var(--warn); }
+.yv-form input:disabled { opacity: 0.45; }
+.yv-out { display: grid; gap: 10px; }
+.vs { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; text-align: center; }
+.vs > div { background: var(--surface-2); border-radius: 14px; padding: 12px; display: grid; gap: 6px; justify-items: center; }
+.vs > div small { color: var(--ink-2); font-size: 0.78em; }
+.vs .mid { font: 700 0.8em var(--f-body); color: var(--ink-2); background: none; padding: 0; }
+.vs .you .sp-mini { background: var(--chart-2); color: var(--ink); }
+.flags { display: grid; gap: 6px; }
+.flag { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; padding: 9px 12px; border-radius: 12px; background: var(--surface-2); font-size: 0.88em; }
+.flag .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 800 12px var(--f-body); background: var(--good-soft); color: var(--good); }
+.flag.w .ic { background: var(--warn-soft); color: var(--warn); } .flag.r .ic { background: var(--bad-soft); color: var(--bad); }
+.flag b { display: block; } .flag span { color: var(--ink-2); }
+.score { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.score div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.8em; color: var(--ink-2); }
+.score b { font: 600 1.4em var(--f-num); color: var(--ink); }
+.score .you b { color: var(--warn); } .score .ai b { color: var(--accent); }
+/* changes */
+.trg { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+.tg-i { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 0.88em; }
+.tg-i b { display: block; } .tg-i span { color: var(--ink-2); }
+.tg-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; }
+.tg-i.g .tg-dot { background: var(--good); } .tg-i.w .tg-dot { background: var(--warn); } .tg-i.r .tg-dot { background: var(--bad); }
+.evs { display: grid; gap: 6px; }
+.ev { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); font-size: 0.88em; }
+.ev .d { font: 600 0.9em var(--f-num); text-align: center; background: var(--surface); border-radius: 8px; padding: 4px 0; }
+.ev small { display: block; color: var(--ink-2); }
+.tb-l { font: 600 0.72em var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+.btn.small { padding: 5px 12px; font-size: 0.8em; }
+@media (max-width: 760px) {
+  .mood-top, .cases, .yv { grid-template-columns: 1fr; }
+  .pl-r { grid-template-columns: minmax(0, 1fr) auto; } .pl-r .rs { grid-column: 1 / -1; } .pl-r .wt { grid-column: 1 / -1; grid-template-columns: auto minmax(0, 1fr); align-items: center; text-align: left; }
+  .cb { grid-template-columns: 84px minmax(0, 1fr) 52px; }
+}
+@media (max-width: 600px) { .yv-form { grid-template-columns: 1fr; } .vs { grid-template-columns: 1fr; } .vs .mid { display: none; } }
+</style>
+
+<div class="proto"><b>PROTOTYPE</b><span>ACME Industries is a made-up company. Its verdicts come from the sample Fundamentals, Technicals, Sector and News tabs. Market mood figures are samples too, so the layout can be judged with realistic numbers.</span></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="brand"><i aria-hidden="true"></i>Stock AI</span>
+    <div class="search" aria-hidden="true">Search any NSE stock <kbd>⌘K</kbd></div>
+    <div class="mode">
+      <span class="mode-lbl" id="mode-hint">Plain-English explanations</span>
+      <div class="seg" role="group" aria-label="Detail level for every tab">
+        <button id="mode-simple" data-mode="simple" aria-pressed="true">Simple</button>
+        <button id="mode-pro" data-mode="pro" aria-pressed="false">Pro</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="stock">
+    <h1>ACME Industries Ltd</h1>
+    <span class="meta">NSE: ACME · Capital Goods · Mid cap</span>
+    <span class="px">₹1,248.60</span>
+    <span class="chg">▲ 22.10 (1.80%)</span>
+    <div class="actions">
+      <button class="btn primary" id="dl-btn" aria-haspopup="true" aria-expanded="false">Download ▾</button>
+      <div class="menu" id="dl-menu" role="menu" hidden>
+        <button role="menuitem" id="dl-pdf" data-dl="pdf"><b>Verdict report (PDF)</b><small>Final verdict, how it was built, market mood and both cases</small></button>
+        <button role="menuitem" id="dl-csv" data-dl="csv"><b>Scores and market data (CSV)</b><small>Every pillar score, weight and market mood reading</small></button>
+        <p class="unavail" id="dl-unavail" hidden>Downloads work when this page is opened on claude.ai.</p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabs" aria-label="Stock sections">
+    <span>Overview</span><span>Fundamentals</span><span>Technicals</span><span class="on">AI Verdict</span><span>Sector</span><span>News</span>
+  </nav>
+  <p class="mode-note"><span class="s-only">You're in <b>Simple</b> mode: one clear answer, what each part says, and the market mood in plain words. Switch to <b>Pro</b> for the scores, weights you can change, and every market reading.</span><span class="p-only">You're in <b>Pro</b> mode: pillar scores, weights you can tune, the market-mood adjustment and the rules applied. Switch to <b>Simple</b> for the plain-English view.</span></p>
+  <p class="asof">Verdict as of 16 Oct 2026 close · Sample data</p>
+
+  <div class="layout">
+    <nav class="index" aria-label="AI Verdict sections" id="index"></nav>
+
+    <main class="main">
+
+      <!-- FINAL VERDICT -->
+      <section class="card signal final" id="final" data-title-s="The answer" data-title-p="Final verdict" data-v="g">
+        <div class="sig-head">
+          <span class="sig-lbl"><span class="s-only">Should I buy ACME?</span><span class="p-only">Final verdict: all four pillars plus market mood</span> <button class="info" data-term="verdict" aria-label="How is the final verdict worked out?">i</button></span>
+          <span class="sig-hint">Tap a time frame for the reason</span>
+        </div>
+        <div class="sig-row" role="group" aria-label="Final verdict by time frame">
+          <button class="hzc" id="hz-short" data-hz="short" aria-expanded="false" aria-controls="hzd-short"><span class="t"><b>Short<span class="wt"> term</span></b><small id="cv-short" class="cv"></small></span><span class="sp" id="sp-short"></span></button>
+          <button class="hzc" id="hz-medium" data-hz="medium" aria-expanded="false" aria-controls="hzd-medium"><span class="t"><b>Medium<span class="wt"> term</span></b><small id="cv-medium" class="cv"></small></span><span class="sp" id="sp-medium"></span></button>
+          <button class="hzc" id="hz-long" data-hz="long" aria-expanded="false" aria-controls="hzd-long"><span class="t"><b>Long<span class="wt"> term</span></b><small id="cv-long" class="cv"></small></span><span class="sp" id="sp-long"></span></button>
+        </div>
+        <p class="sig-line" id="sig-line"></p>
+        <div class="hz-detail" id="hzd-short" hidden></div>
+        <div class="hz-detail" id="hzd-medium" hidden></div>
+        <div class="hz-detail" id="hzd-long" hidden></div>
+        <div class="plan-strip" id="plan-strip"></div>
+        <p class="note" id="final-note"></p>
+      </section>
+
+      <!-- HOW IT'S BUILT -->
+      <section class="card" id="build" data-title-s="What each part says" data-title-p="How it's built" data-v="g">
+        <div class="bh-top"><h2><span class="s-only">What does each part of the research say?</span><span class="p-only">How the verdict is built</span></h2><div class="seg" role="group" aria-label="Time frame" id="bh-seg"></div></div>
+        <div class="pl" id="pl"></div>
+        <div class="p-only" id="build-pro">
+          <span class="tb-l">Points each part adds to the score</span>
+          <div class="contrib" id="contrib"></div>
+        </div>
+        <div class="wsl p-only" id="wsl"></div>
+        <div class="tw p-only"><table id="mx"></table></div>
+        <p class="note"><span class="s-only">Each part of the research has more say for some time frames than others. The chart matters most for the next few weeks; the company's health matters most for the next few years.</span><span class="p-only">Pillar score 0 to 100 from each tab. Final = Σ weight × score + market-mood points × horizon factor (short 1, medium 0.5, long 0), then caps. Bands: 85+ Strong buy, 70 Buy, 40 Neutral, 25 Sell, below 25 Strong sell. Changing weights here affects only your view.</span></p>
+      </section>
+
+      <!-- MARKET MOOD -->
+      <section class="card" id="mood" data-title-s="Market mood" data-title-p="Market mood" data-v="w">
+        <div class="sh"><h2><span class="s-only">What's the mood of the whole market?</span><span class="p-only">Market mood and macro readings</span></h2><span class="sub">NSE and global markets · sample values</span></div>
+        <div class="mood-top">
+          <div class="gauge" id="gauge"></div>
+          <div class="mood-say" id="mood-say"></div>
+        </div>
+        <div class="mtiles" id="mtiles"></div>
+        <div class="comp p-only" id="comp"></div>
+        <div class="tw p-only"><table id="mood-table"></table></div>
+        <p class="note"><span class="s-only">These readings are about the whole market, not ACME alone. They matter most for quick trades and hardly at all for long-term investing.</span><span class="p-only">Fear &amp; Greed and FOMO are our own composites of the readings listed, each scaled 0 to 100. Points are applied to the short-term score in full and the medium-term score at half; long term ignores market mood.</span></p>
+      </section>
+
+      <!-- FLOWS -->
+      <section class="card" id="flows" data-title-s="Big investors" data-title-p="FII and DII flows" data-v="w">
+        <div class="sh"><h2><span class="s-only">Are big investors buying or selling Indian shares?</span><span class="p-only">FII and DII net flows, last 10 sessions</span></h2></div>
+        <div class="fl-leg" id="fl-leg"></div>
+        <div class="flow-wrap" id="flow-wrap"><svg id="flow-svg" role="img" aria-label="Daily net buying and selling by foreign and domestic institutions"></svg><div class="fl-tip" id="fl-tip" hidden></div></div>
+        <div class="flow-facts" id="flow-facts"></div>
+        <p class="note"><span class="s-only">Foreign investors (FIIs) are big overseas funds. Domestic investors (DIIs) are Indian mutual funds, insurers and pension funds. When foreigners sell and Indian funds buy, the market usually holds up.</span><span class="p-only">Cash market, ₹ crore, provisional exchange data. Positive = net buying.</span></p>
+      </section>
+
+      <!-- CASES -->
+      <section class="card" id="cases" data-title-s="For and against" data-title-p="Bull and bear case" data-v="g">
+        <div class="sh"><h2><span class="s-only">Reasons to buy, and reasons to be careful</span><span class="p-only">Bull case vs bear case</span></h2><span class="ai-tag">Written by AI</span></div>
+        <div class="cases" id="case-list"></div>
+        <p class="note">The AI writes these points from the numbers on the four tabs and this page. Every price and figure is checked against that data before it is shown.</p>
+      </section>
+
+      <!-- YOUR VIEW -->
+      <section class="card" id="yours" data-title-s="Your view vs AI" data-title-p="Your thesis vs AI" data-v="n">
+        <div class="sh"><h2><span class="s-only">What do you think? Compare it with the AI</span><span class="p-only">Your thesis vs the AI verdict</span></h2></div>
+        <div class="yv">
+          <form class="yv-form" id="yv-form">
+            <label for="yv-h">Time frame<select id="yv-h"><option value="short">Short term (2 to 6 weeks)</option><option value="medium">Medium term (1 to 6 months)</option><option value="long">Long term (1 to 3 years)</option></select></label>
+            <label for="yv-call">Your call<select id="yv-call"><option>Strong buy</option><option>Buy</option><option>Neutral</option><option>Sell</option><option>Strong sell</option></select></label>
+            <label for="yv-entry">Buy at (₹)<input type="number" id="yv-entry" step="0.5" min="0"></label>
+            <label for="yv-stop">Stop loss (₹)<input type="number" id="yv-stop" step="0.5" min="0"></label>
+            <label for="yv-tgt">Target (₹)<input type="number" id="yv-tgt" step="0.5" min="0"></label>
+            <label for="yv-note" class="full">Why (optional)<textarea id="yv-note" rows="2" maxlength="240"></textarea></label>
+            <p class="ex" id="yv-ex">This is an example view. Change any field to enter your own.</p>
+          </form>
+          <div class="yv-out" id="yv-out"></div>
+        </div>
+      </section>
+
+      <!-- CHANGE -->
+      <section class="card" id="change" data-title-s="What could change it" data-title-p="Triggers and events" data-v="w">
+        <div class="sh"><h2><span class="s-only">What would change this verdict?</span><span class="p-only">Verdict triggers and event calendar</span></h2></div>
+        <div class="trg" id="trg"></div>
+        <span class="tb-l">Coming up</span>
+        <div class="evs" id="evs"></div>
+      </section>
+
+      <p class="foot">ACME Industries and every figure on this page are made up to show the layout. Nothing here is investment advice.</p>
+    </main>
+  </div>
+</div>
+
+<div class="pop" id="pop" role="dialog" aria-modal="false" aria-labelledby="pop-title" hidden>
+  <button class="x" id="pop-x" aria-label="Close">×</button>
+  <h3 id="pop-title"></h3>
+  <span class="pro-name" id="pop-pro"></span>
+  <dl>
+    <div><dt>What it means</dt><dd id="pop-d"></dd></div>
+    <div><dt>Why it's useful</dt><dd id="pop-g"></dd></div>
+  </dl>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function fmt(x, dp) { return Number(x).toLocaleString("en-IN", { minimumFractionDigits: dp || 0, maximumFractionDigits: dp || 0 }); }
+  function simple() { return root.dataset.mode === "simple"; }
+  function signed(x, dp) { return (x > 0 ? "+" : x < 0 ? "−" : "") + fmt(Math.abs(x), dp); }
+
+  // ---------- inputs: each tab's verdict for ACME (same numbers as those tabs) ----------
+  var H = ["short", "medium", "long"];
+  var HZ = { short: { s: "Next few weeks", p: "Short term", sub: "2 to 6 weeks" }, medium: { s: "Next few months", p: "Medium term", sub: "1 to 6 months" }, long: { s: "Next few years", p: "Long term", sub: "1 to 3 years" } };
+  var LABEL_S = { "Strong buy": "STRONG BUY", "Buy": "BUY", "Neutral": "WAIT", "Sell": "SELL", "Strong sell": "STRONG SELL" };
+  var LABEL_P = { "Strong buy": "STRONG BUY", "Buy": "BUY", "Neutral": "NEUTRAL", "Sell": "SELL", "Strong sell": "STRONG SELL" };
+  var CLS = { "Strong buy": "sbuy", "Buy": "buy", "Neutral": "neutral", "Sell": "sell", "Strong sell": "ssell" };
+  function band(sc) { return sc >= 85 ? "Strong buy" : sc >= 70 ? "Buy" : sc >= 40 ? "Neutral" : sc >= 25 ? "Sell" : "Strong sell"; }
+  function side(lab) { return /buy/i.test(lab) ? 1 : /sell/i.test(lab) ? -1 : 0; }
+  function pill(lab, mini) { return '<span class="sp ' + (mini ? "sp-mini " : "") + CLS[lab] + '">' + (simple() ? LABEL_S : LABEL_P)[lab] + '</span>'; }
+  var PX = 1248.6, ATR = 23.4, FAIR = 1347, CHEAP = 1145, PLAN = { lo: 1225, hi: 1240, stop: 1182, t1: 1295, t2: 1345 };
+  var PILLARS = [
+    { id: "fund", s: "Company health", p: "Fundamentals", sc: { short: 53, medium: 70, long: 76 },
+      why: { short: ["Results come out on 28 October, in 10 days, so the company view for a quick trade is to wait.", "Catalyst score 53: last quarter beat estimates, forecasts +1.2% in 30 days. Results within 15 days cap it at Neutral."],
+        medium: ["Profit is growing about 20% a year and 1.6 years of orders are already booked.", "Momentum score 70: next-4-quarter EPS growth +20%, order cover 1.6×, FII + MF holding +1.1 pts."],
+        long: ["A high-quality business (78 out of 100) priced about 7% below its fair value of ₹1,347.", "Quality 78 (High) × price 7.3% below fair value ₹1,347 (Fair band) = Buy. Strong buy below ₹1,145."] } },
+    { id: "tech", s: "Price chart", p: "Technicals", sc: { short: 86, medium: 90, long: 88 },
+      why: { short: ["The price just broke above ₹1,225 on heavy buying. It's a little stretched, so a small dip is a better time to buy.", "Breakout above 1,225 (3 prior rejections) on 1.65× volume. RSI 67.5, %B 1.15: stretched."],
+        medium: ["The price is above its 50- and 200-day averages and momentum is rising.", "Close above SMA 50 (1,188) and SMA 200 (1,059); MACD above signal."],
+        long: ["The long-term trend is up: the 50-day average is well above the 200-day average.", "Golden cross in force, SMA 50 / SMA 200 spread +12.2%."] } },
+    { id: "sector", s: "Its industry", p: "Sector", sc: { short: 76, medium: 76, long: 48 },
+      why: { short: ["Money is flowing into capital goods: it beat the market this month (+3.8% vs +2.0%).", "Rotation quadrant Leading; 68% of stocks above their 50-day average; sector FII flow +₹4,850 Cr in a month."],
+        medium: ["The industry has about 3 years of orders waiting and government spending keeps rising.", "Earnings momentum 76: order book 3.0× sales, FY27 profit growth +22%, government capex +11% YoY."],
+        long: ["Good future, but the whole industry already costs a lot compared with its past.", "Sector P/E 33.5 vs 5-year median 26 (83rd percentile) caps long term at Neutral."] } },
+    { id: "news", s: "News", p: "News", sc: { short: 61, medium: 74, long: 70 },
+      why: { short: ["The news is mostly good, but the price already rose ahead of results.", "Sentiment +0.42 (Mostly good). Catalyst score 53 → 61 after news, below 70; results cap applies."],
+        medium: ["A ₹640 crore order and more government spending on power grids line up more sales.", "Momentum score 70 → 74 after the order win; copper costs and one late payment partly offset it."],
+        long: ["No warning signs in the news: no fraud, governance or rating worries.", "Red-flag screen clear (fraud, governance, promoter selling, ratings). Long term unchanged."] } }
+  ];
+  var DEFAULT_W = { short: { tech: 40, news: 25, sector: 20, fund: 15 }, medium: { fund: 30, tech: 25, sector: 25, news: 20 }, long: { fund: 55, sector: 20, tech: 15, news: 10 } };
+  var MOOD_MULT = { short: 1, medium: 0.5, long: 0 };
+  var CAP = { short: { max: 69, s: "Results come out on 28 October. Until then a quick trade is a gamble on the numbers, so the short-term answer can't be better than Wait.", p: "Results within 15 days: short term capped at Neutral (max 69)." } };
+  var W = JSON.parse(JSON.stringify(DEFAULT_W));
+  try { var sw = JSON.parse(localStorage.getItem("stockai-aiv-weights") || "null"); if (sw && sw.short && sw.medium && sw.long) W = sw; } catch (e) {}
+  function saveW() { try { localStorage.setItem("stockai-aiv-weights", JSON.stringify(W)); } catch (e) {} }
+  function custom() { return JSON.stringify(W) !== JSON.stringify(DEFAULT_W); }
+
+  // ---------- market mood readings (sample values) ----------
+  function spark(seed, start, end, n) { var s = seed, o = []; function r() { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; } for (var i = 0; i < n; i++) { var t = i / (n - 1); o.push(start + (end - start) * t + (r() - 0.5) * Math.abs(end - start || end * 0.05) * 0.6 * Math.sin(Math.PI * t)); } o[n - 1] = end; return o; }
+  var FG_PARTS = [["Market momentum", "NIFTY 50 4.1% above its 125-day average", 80], ["Stocks rising vs falling", "64% of NIFTY 500 above their 200-day average", 72], ["Volatility", "India VIX 13.8 vs 50-day average 14.9", 70], ["Options bets", "Put-call ratio 1.12", 62], ["Shares vs gold", "NIFTY +2.0% vs gold +0.4% over 20 days", 68], ["Foreign money", "FII −₹21,300 Cr this month", 35], ["New highs vs new lows", "71 stocks at 52-week highs, 18 at lows", 86]];
+  var FOMO_PARTS = [["IPO frenzy", "Last 10 IPOs subscribed 52× on average", 82], ["Small caps vs NIFTY", "NIFTY Smallcap 250 +5.1% vs NIFTY 50 +2.0% in a month", 74], ["Stocks at 52-week highs", "17% of NIFTY 500", 70], ["Retail share of F&O trading", "41% of options turnover", 66], ["New demat accounts", "3.9 million opened in September", 68]];
+  function avg(parts) { return Math.round(parts.reduce(function (a, p) { return a + p[2]; }, 0) / parts.length); }
+  var FG = avg(FG_PARTS), FOMO = avg(FOMO_PARTS);
+  function fgZone(v) { return v < 25 ? "Extreme fear" : v < 45 ? "Fear" : v <= 55 ? "Neutral" : v <= 75 ? "Greed" : "Extreme greed"; }
+  var MOOD = [
+    { id: "fg", s: "Fear & greed", p: "Fear & Greed index", v: String(FG), zone: fgZone(FG), pts: -2, c1w: "+4", c1m: "+13", pct: "82nd", sp: spark(11, 55, FG, 30),
+      ms: "Investors are feeling greedy. When most people are excited, prices can run ahead of themselves.", mp: "Composite of 7 readings (below). Greed zone: contrarian caution for new short-term entries.", es: "Don't chase: wait for dips", ep: "−2 pts short term" },
+    { id: "fomo", s: "Crowd excitement (FOMO)", p: "FOMO meter", v: String(FOMO), zone: FOMO >= 70 ? "High" : FOMO >= 50 ? "Moderate" : "Low", pts: -1, c1w: "+3", c1m: "+9", pct: "88th", sp: spark(23, 60, FOMO, 30),
+      ms: "Lots of new investors are rushing in: IPOs are hugely oversubscribed and small shares are racing ahead.", mp: "Composite of 5 retail-froth readings (below). High FOMO historically precedes sharper pullbacks in small and mid caps.", es: "Higher risk of a sharp dip", ep: "−1 pt short term" },
+    { id: "fii", s: "Foreign investors", p: "FII net flow, 5 sessions", v: "−₹8,420 Cr", zone: "Selling", pts: -2, c1w: "−8,420", c1m: "−21,300", pct: "14th", sp: spark(31, 300, -8420, 30),
+      ms: "Foreign funds sold Indian shares worth ₹8,420 crore in a week, partly because the rupee is weak. But they bought ₹4,850 crore of capital goods shares this month.", mp: "5-session net −₹8,420 Cr, MTD −₹21,300 Cr. Sector exception: capital goods +₹4,850 Cr in 1M.", es: "Pressure on the market", ep: "−2 pts short term" },
+    { id: "dii", s: "Indian funds", p: "DII net flow, 5 sessions", v: "+₹12,910 Cr", zone: "Buying", pts: 1, c1w: "+12,910", c1m: "+29,800", pct: "91st", sp: spark(41, 900, 12910, 30),
+      ms: "Indian mutual funds and insurers bought more than the foreigners sold, which is holding the market up.", mp: "5-session net +₹12,910 Cr, MTD +₹29,800 Cr: absorbing FII supply 1.5×. SIP inflows steady.", es: "Supports the market", ep: "+1 pt short term" },
+    { id: "vix", s: "Market nervousness (VIX)", p: "India VIX", v: "13.8", zone: "Calm", pts: 0, c1w: "−0.6", c1m: "−2.1", pct: "31st", sp: spark(53, 15.9, 13.8, 30),
+      ms: "Traders expect calm days ahead. Calm is good, but very low nervousness can mean people aren't expecting any bad news.", mp: "1-year range 10.2 to 22.5. Below 15: calm regime, cheap option hedges.", es: "No effect", ep: "0 pts" },
+    { id: "pcr", s: "Options bets (put/call)", p: "NIFTY put-call ratio", v: "1.12", zone: "Balanced", pts: 0, c1w: "+0.05", c1m: "+0.08", pct: "58th", sp: spark(67, 1.04, 1.12, 30),
+      ms: "Bets on the market rising and falling are roughly balanced.", mp: "Open-interest PCR 1.12 (0.8 to 1.3 is neutral). Max put OI at 25,500.", es: "No effect", ep: "0 pts" },
+    { id: "breadth", s: "How many stocks are rising", p: "Breadth: NIFTY 500 above 200-DMA", v: "64%", zone: "Healthy", pts: 1, c1w: "+2%", c1m: "+6%", pct: "70th", sp: spark(71, 58, 64, 30),
+      ms: "Most stocks are in uptrends, not just a few big ones. A broad rise is healthier.", mp: "64% above 200-DMA; 5-day advance/decline 1.4.", es: "Supports buying", ep: "+1 pt short term" },
+    { id: "nifty", s: "Overall market trend", p: "NIFTY 50 trend", v: "25,840", zone: "Uptrend", pts: 1, c1w: "+0.9%", c1m: "+2.0%", pct: "93rd", sp: spark(83, 25330, 25840, 30),
+      ms: "The overall market is in an uptrend, though shares are a little pricier than usual.", mp: "Above 50- and 200-DMA. P/E 22.4 vs 5-year average 21.0.", es: "Supports buying", ep: "+1 pt short term" },
+    { id: "global", s: "World markets", p: "Global cues: S&P 500, 1 month", v: "+1.8%", zone: "Positive", pts: 1, c1w: "+0.6%", c1m: "+1.8%", pct: "72nd", sp: spark(97, 0, 1.8, 30),
+      ms: "US and Asian markets are rising, which usually helps Indian markets open well.", mp: "S&P 500 +1.8% 1M, Nasdaq +2.4%, GIFT Nifty +0.3% pre-open.", es: "Supports buying", ep: "+1 pt short term" },
+    { id: "inr", s: "Rupee vs dollar", p: "USD/INR", v: "84.62", zone: "Rupee weak", pts: -1, c1w: "+0.18", c1m: "+0.71", pct: "97th", sp: spark(103, 83.91, 84.62, 30),
+      ms: "The rupee is near its weakest. That makes Indian shares worth less to foreign investors, so some sell.", mp: "INR −0.8% in 1M; DXY 103.2. Rupee weakness has driven FII outflows.", es: "Pressure on the market", ep: "−1 pt short term" },
+    { id: "crude", s: "Oil price", p: "Brent crude ($/bbl)", v: "$78.4", zone: "Steady", pts: 0, c1w: "−1.2%", c1m: "+0.8%", pct: "45th", sp: spark(109, 77.8, 78.4, 30),
+      ms: "Oil prices are steady. India imports most of its oil, so stable oil is good news for prices and the rupee.", mp: "Brent $78.4. LME copper +6% in 1M matters more for ACME (already in the News tab).", es: "No effect", ep: "0 pts" },
+    { id: "rates", s: "Interest rates", p: "RBI repo / India 10-year yield", v: "6.25% / 6.71%", zone: "Steady", pts: 0, c1w: "0 / −0.02", c1m: "0 / −0.06", pct: "40th", sp: spark(113, 6.77, 6.71, 30),
+      ms: "Interest rates are steady. The next RBI decision is on 5 December.", mp: "Repo 6.25% (on hold), 10Y G-sec 6.71%, US 10Y 4.10%.", es: "No effect", ep: "0 pts" }
+  ];
+  var MOOD_PTS = MOOD.reduce(function (a, m) { return a + m.pts; }, 0);
+  var FLOWS = { d: ["5 Oct", "6 Oct", "7 Oct", "8 Oct", "9 Oct", "12 Oct", "13 Oct", "14 Oct", "15 Oct", "16 Oct"], fii: [1240, -860, 2110, -1530, 640, -2310, -1180, -2650, 890, -3170], dii: [-620, 1580, -940, 2230, 1170, 2860, 1940, 3420, 480, 4210] };
+
+  // ---------- the verdict ----------
+  function compute() {
+    var R = {};
+    H.forEach(function (h) {
+      var w = W[h], tw = PILLARS.reduce(function (a, p) { return a + (w[p.id] || 0); }, 0) || 1, parts = [], base = 0;
+      PILLARS.forEach(function (p) { var share = (w[p.id] || 0) / tw, pts = share * p.sc[h]; base += pts; parts.push({ p: p, share: share, pts: pts, lab: band(p.sc[h]) }); });
+      var mood = MOOD_PTS * MOOD_MULT[h], raw = base + mood, cap = CAP[h] && raw > CAP[h].max ? CAP[h] : null, sc = cap ? CAP[h].max : raw, lab = band(sc);
+      var dir = side(lab), agree = parts.filter(function (x) { return side(x.lab) === dir; }).length;
+      var conv = agree >= 4 ? 3 : agree === 3 ? 2 : 1;
+      if (Math.abs(sc - 70) < 3 || Math.abs(sc - 40) < 3 || Math.abs(sc - 85) < 3) conv = Math.max(1, conv - 1);
+      var edge = [85, 70, 40, 25].filter(function (b) { return Math.abs(sc - b) < 3; })[0];
+      R[h] = { parts: parts, base: base, mood: mood, raw: raw, cap: cap, sc: sc, lab: lab, agree: agree, conv: conv, edge: cap ? null : edge };
+    });
+    return R;
+  }
+  var R = null, bh = "short";
+  var CONV = ["", "Low", "Medium", "High"];
+  function convHtml(c) { return '<span class="conv"><i aria-hidden="true">' + [1, 2, 3].map(function (k) { return '<span class="' + (k <= c ? "on" : "") + '"></span>'; }).join("") + '</i>' + (simple() ? ["", "Not sure", "Fairly sure", "Sure"][c] : CONV[c] + " conviction") + '</span>'; }
+  function drawFinal() {
+    var sim = simple();
+    H.forEach(function (h) {
+      var r = R[h]; $("sp-" + h).className = "sp " + CLS[r.lab]; $("sp-" + h).textContent = (sim ? LABEL_S : LABEL_P)[r.lab];
+      $("cv-" + h).textContent = sim ? ["", "Not sure", "Fairly sure", "Sure"][r.conv] : "Score " + Math.round(r.sc) + " · " + CONV[r.conv];
+      $("hzd-" + h).innerHTML = '<strong>' + (sim ? HZ[h].s : HZ[h].p + " (" + HZ[h].sub + ")") + ': ' + (sim ? LABEL_S : LABEL_P)[r.lab] + '</strong>' +
+        '<span class="note">' + (sim ? r.agree + " of 4 parts of the research agree. " : "Score " + r.sc.toFixed(1) + (r.cap ? " (capped from " + r.raw.toFixed(1) + ")" : "") + " · " + r.agree + "/4 pillars on the same side · ") + convHtml(r.conv) + '</span>' +
+        (r.edge ? '<span class="note">' + (sim ? "Only just " + (r.sc >= r.edge ? "over" : "under") + " the line: a small change in any part could change this answer." : "Within 3 points of the " + r.edge + " band line, so conviction is lowered one step.") + '</span>' : "") +
+        '<div class="pp">' + r.parts.map(function (x) { return '<div class="pp-r"><b>' + esc(sim ? x.p.s : x.p.p) + '</b>' + pill(x.lab, true) + '<small>' + esc(x.p.why[h][sim ? 0 : 1]) + (sim ? "" : " · weight " + Math.round(x.share * 100) + "%, " + x.pts.toFixed(1) + " pts") + '</small></div>'; }).join("") +
+        (r.mood ? '<div class="pp-r"><b>' + (sim ? "Market mood" : "Market mood adjustment") + '</b><span class="adjc ' + (r.mood < 0 ? "r" : "g") + '">' + signed(r.mood, 1) + (sim ? "" : " pts") + '</span><small>' + (sim ? "The whole market is in a greedy mood and foreign funds are selling, so it's a little less safe to buy right now." : MOOD_PTS + " mood points × " + MOOD_MULT[h] + " for this horizon.") + '</small></div>' : "") +
+        (r.cap ? '<div class="pp-r"><b>' + (sim ? "Rule applied" : "Cap") + '</b><span class="adjc r">' + (sim ? "Wait" : "≤ " + r.cap.max) + '</span><small>' + esc(sim ? r.cap.s : r.cap.p) + '</small></div>' : "") + '</div>';
+    });
+    var s = R.short.lab, m = R.medium.lab, l = R.long.lab;
+    $("sig-line").textContent = sim
+      ? (side(m) > 0 && side(l) > 0 ? "Buy for the next few months and years." : side(m) > 0 ? "Buy for the next few months." : side(l) > 0 ? "Buy for the long run." : "No clear buy right now.") + (side(s) > 0 ? " The short-term picture is good too." : " For a quick trade, wait until results on 28 October.")
+      : "Short " + s + " · Medium " + m + " · Long " + l + ". All four pillars plus market mood (" + signed(MOOD_PTS) + " pts). " + (R.short.cap ? "Short term capped by results on 28 Oct." : "");
+    $("plan-strip").innerHTML = '<div class="buyz">' + (sim ? "Good price to buy" : "Entry zone") + '<b>₹' + fmt(PLAN.lo) + ' to ₹' + fmt(PLAN.hi) + '</b></div><div class="stop">' + (sim ? "Exit if it falls to" : "Stop loss") + '<b>₹' + fmt(PLAN.stop) + '</b></div><div>' + (sim ? "Targets" : "Targets T1 / T2") + '<b>₹' + fmt(PLAN.t1) + ' / ₹' + fmt(PLAN.t2) + '</b></div><div>' + (sim ? "Fair value (long term)" : "Fair value · strong buy below") + '<b>₹' + fmt(FAIR) + (sim ? "" : ' · ₹' + fmt(CHEAP)) + '</b></div>';
+    $("final-note").textContent = sim ? "Buy zone, exit and targets come from the price chart; the fair value comes from the company's numbers. Not investment advice." : "Entry, stop and targets from the Technicals trade plan; fair value from Fundamentals (DCF + peer P/E). T2 ₹1,345 sits at fair value ₹1,347. " + (custom() ? "Using your custom weights. " : "") + "Not investment advice.";
+    $("final").dataset.v = side(m) > 0 ? "g" : side(m) < 0 ? "r" : "w";
+  }
+  function drawBuild() {
+    var sim = simple(), r = R[bh];
+    $("bh-seg").innerHTML = H.map(function (h) { return '<button data-bh="' + h + '" aria-pressed="' + (h === bh) + '">' + (sim ? { short: "Weeks", medium: "Months", long: "Years" }[h] : HZ[h].p.replace(" term", "")) + '</button>'; }).join("");
+    $("pl").innerHTML = r.parts.slice().sort(function (a, b) { return b.share - a.share; }).map(function (x) {
+      return '<div class="pl-r"><div class="nm"><b>' + esc(sim ? x.p.s : x.p.p) + '</b><small>' + (sim ? x.p.p + " tab" : "Score " + x.p.sc[bh]) + '</small></div>' + pill(x.lab, true) + '<div class="rs">' + esc(x.p.why[bh][sim ? 0 : 1]) + '</div><div class="wt"><span>' + (sim ? "Counts for " : "Weight ") + Math.round(x.share * 100) + '%</span><div class="wbar"><span style="width:' + Math.round(x.share * 100) + '%"></span></div></div></div>';
+    }).join("") +
+      '<div class="pl-r adj"><div class="nm"><b>' + (sim ? "Market mood" : "Market mood") + '</b><small>' + (sim ? "Whole market" : MOOD_PTS + " pts × " + MOOD_MULT[bh]) + '</small></div><span class="adjc ' + (r.mood < 0 ? "r" : r.mood > 0 ? "g" : "") + '">' + (r.mood ? signed(r.mood, 1) : "0") + '</span><div class="rs">' + (MOOD_MULT[bh] ? (sim ? "Greedy market and foreign selling make it slightly riskier to buy now." : "Fear & Greed 68, FII selling and a weak rupee outweigh breadth, trend and global cues.") : (sim ? "The market's mood doesn't matter much for long-term investing." : "Not applied to the long term.")) + '</div><div class="wt"></div></div>' +
+      (r.cap ? '<div class="pl-r adj"><div class="nm"><b>' + (sim ? "Rule applied" : "Cap") + '</b><small>' + (sim ? "Results soon" : "Results within 15 days") + '</small></div><span class="adjc r">' + (sim ? "Wait" : "≤ 69") + '</span><div class="rs">' + esc(sim ? r.cap.s : r.cap.p) + '</div><div class="wt"></div></div>' : "") +
+      '<div class="pl-r fin"><div class="nm"><b>' + (sim ? "The answer" : "Final") + '</b><small>' + (sim ? r.agree + " of 4 agree" : "Score " + r.sc.toFixed(1)) + '</small></div>' + pill(r.lab, true) + '<div class="rs">' + convHtml(r.conv) + '</div><div class="wt"></div></div>';
+    if (sim) return;
+    var mx = Math.max(100, r.base);
+    $("contrib").innerHTML = r.parts.map(function (x) { return '<div class="cb"><span>' + esc(x.p.p) + '</span><div class="cb-track" title="' + x.pts.toFixed(1) + ' points"><span style="width:' + (x.pts / mx * 100) + '%"></span></div><b>' + x.pts.toFixed(1) + '</b></div>'; }).join("") +
+      (r.mood ? '<div class="cb"><span>Market mood</span><div class="cb-track"><span class="neg" style="width:' + (Math.abs(r.mood) / mx * 100) + '%"></span></div><b>' + signed(r.mood, 1) + '</b></div>' : "") +
+      '<div class="cb"><span><b>Total</b></span><div class="cb-track"><span style="width:' + (r.raw / mx * 100) + '%"></span></div><b>' + r.raw.toFixed(1) + '</b></div>';
+    $("wsl").innerHTML = PILLARS.map(function (p) { return '<label for="w-' + p.id + '"><span>' + p.p + ' <b id="wv-' + p.id + '">' + W[bh][p.id] + '</b></span><input type="range" id="w-' + p.id + '" data-w="' + p.id + '" min="0" max="100" step="5" value="' + W[bh][p.id] + '"></label>'; }).join("") +
+      '<div class="acts"><button class="btn small" type="button" id="w-reset">Reset weights</button></div>';
+    $("mx").innerHTML = '<thead><tr><th>Pillar</th>' + H.map(function (h) { return '<th>' + HZ[h].p + '</th><th>Weight</th><th>Points</th>'; }).join("") + '</tr></thead><tbody>' +
+      PILLARS.map(function (p) { return '<tr><th scope="row">' + p.p + '</th>' + H.map(function (h) { var x = R[h].parts.find(function (q) { return q.p === p; }); return '<td' + (h === bh ? ' class="now"' : "") + '>' + p.sc[h] + ' <span class="dim">' + LABEL_P[x.lab].toLowerCase() + '</span></td><td class="dim">' + Math.round(x.share * 100) + '%</td><td>' + x.pts.toFixed(1) + '</td>'; }).join("") + '</tr>'; }).join("") +
+      '<tr><th scope="row">Market mood</th>' + H.map(function (h) { return '<td' + (h === bh ? ' class="now"' : "") + '>' + signed(MOOD_PTS) + '</td><td class="dim">× ' + MOOD_MULT[h] + '</td><td>' + signed(R[h].mood, 1) + '</td>'; }).join("") + '</tr>' +
+      '<tr class="sum"><th scope="row">Final</th>' + H.map(function (h) { var r2 = R[h]; return '<td' + (h === bh ? ' class="now"' : "") + '>' + LABEL_P[r2.lab].toLowerCase() + '</td><td class="dim">' + (r2.cap ? "cap " + r2.cap.max : "") + '</td><td>' + r2.sc.toFixed(1) + '</td>'; }).join("") + '</tr></tbody>';
+  }
+  function gaugeSvg(v) {
+    var cx = 150, cy = 140, ro = 118, ri = 84, zones = [[0, 25, "var(--deep-bad)"], [25, 45, "var(--bad)"], [45, 55, "var(--chart-4)"], [55, 75, "var(--good)"], [75, 100, "var(--deep-good)"]];
+    function pt(val, r) { var a = Math.PI * (1 - val / 100); return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; }
+    function arc(a, b) { var p1 = pt(a, ro), p2 = pt(b, ro), p3 = pt(b, ri), p4 = pt(a, ri); return "M" + p1 + "A" + ro + "," + ro + " 0 0 1 " + p2 + "L" + p3 + "A" + ri + "," + ri + " 0 0 0 " + p4 + "Z"; }
+    var g = zones.map(function (z) { return '<path class="g-zone" d="' + arc(z[0] + 0.6, z[1] - 0.6) + '" fill="' + z[2] + '"/>'; }).join("");
+    var lbl = [[12.5, "Extreme fear"], [35, "Fear"], [50, "Neutral"], [65, "Greed"], [87.5, "Extreme greed"]].map(function (l) { var p = pt(l[0], ro + 12); return '<text class="g-lbl" x="' + p[0] + '" y="' + (p[1] + 3) + '" text-anchor="' + (l[0] < 40 ? "end" : l[0] > 60 ? "start" : "middle") + '">' + l[1] + '</text>'; }).join("");
+    var n = pt(v, ro - 6);
+    return '<svg viewBox="-62 0 424 178" role="img" aria-label="Fear and greed index ' + v + ', ' + fgZone(v) + '"><g transform="translate(0,8)">' + g + lbl + '<line class="g-needle" x1="' + cx + '" y1="' + cy + '" x2="' + n[0] + '" y2="' + n[1] + '"/><circle class="g-hub" cx="' + cx + '" cy="' + cy + '" r="6"/><text class="g-val" x="' + cx + '" y="' + (cy - 24) + '" text-anchor="middle">' + v + '</text><text class="g-zn" x="' + cx + '" y="' + (cy + 22) + '" text-anchor="middle">' + fgZone(v) + '</text></g></svg>';
+  }
+  function sparkSvg(arr) {
+    var w = 96, h = 30, mn = Math.min.apply(null, arr), mx = Math.max.apply(null, arr), rg = mx - mn || 1;
+    var pts = arr.map(function (v, i) { return [(i / (arr.length - 1)) * (w - 6) + 3, h - 4 - (v - mn) / rg * (h - 8)]; });
+    var last = pts[pts.length - 1];
+    return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true"><polyline class="sk-line" points="' + pts.map(function (p) { return p[0].toFixed(1) + "," + p[1].toFixed(1); }).join(" ") + '"/><circle class="sk-dot" cx="' + last[0] + '" cy="' + last[1] + '" r="4"/></svg>';
+  }
+  function effCls(p) { return p > 0 ? "g" : p < 0 ? "r" : "n"; }
+  function drawMood() {
+    var sim = simple(), neg = MOOD.filter(function (m) { return m.pts < 0; }), pos = MOOD.filter(function (m) { return m.pts > 0; });
+    $("gauge").innerHTML = gaugeSvg(FG);
+    $("mood-say").innerHTML = '<b>' + (sim ? "The market is in a greedy mood." : "Fear & Greed " + FG + " (" + fgZone(FG) + "), up from 55 a month ago.") + '</b><p>' + (sim ? "People are optimistic and new investors are piling in, while foreign funds are selling. That doesn't make ACME a bad company, but it makes chasing the price riskier. Buying on dips is safer." : "Breadth, trend and global cues are supportive; FII selling, a weak rupee and retail froth (FOMO " + FOMO + ") argue against fresh short-term entries.") + '</p>' +
+      '<div class="adj"><span class="adjc ' + (MOOD_PTS < 0 ? "r" : "g") + '">' + (sim ? "Short term: " : "Short ") + signed(MOOD_PTS * MOOD_MULT.short, 1) + (sim ? " points" : " pts") + '</span><span class="adjc ' + (MOOD_PTS < 0 ? "r" : "g") + '">' + (sim ? "Medium term: " : "Medium ") + signed(MOOD_PTS * MOOD_MULT.medium, 1) + (sim ? " points" : " pts") + '</span><span class="adjc">' + (sim ? "Long term: no effect" : "Long 0") + '</span></div>' +
+      '<p class="note">' + (sim ? pos.length + " readings help, " + neg.length + " hurt, " + (MOOD.length - pos.length - neg.length) + " make no difference." : "Positive: " + pos.map(function (m) { return m.p; }).join(", ") + ". Negative: " + neg.map(function (m) { return m.p; }).join(", ") + ".") + '</p>';
+    $("mtiles").innerHTML = MOOD.map(function (m) {
+      return '<div class="mt"><div class="mt-h"><span>' + esc(sim ? m.s : m.p) + '</span><span class="zone">' + esc(m.zone) + '</span></div><div class="mt-v"><b>' + esc(m.v) + '</b>' + sparkSvg(m.sp) + '</div><p>' + esc(sim ? m.ms : m.mp) + '</p><span class="eff ' + effCls(m.pts) + '">' + (m.pts > 0 ? "▲ " : m.pts < 0 ? "▼ " : "– ") + esc(sim ? m.es : "ACME: " + m.ep) + '</span></div>';
+    }).join("");
+    if (sim) return;
+    function compCol(title, parts, total) { return '<div class="comp-c"><span class="tb-l">' + title + ' = ' + total + '</span>' + parts.map(function (p) { return '<div class="comp-r"><span>' + esc(p[0]) + '<small>' + esc(p[1]) + '</small></span><div class="cb-track"><span style="width:' + p[2] + '%"></span></div><b>' + p[2] + '</b></div>'; }).join("") + '</div>'; }
+    $("comp").innerHTML = compCol("Fear & Greed: average of 7", FG_PARTS, FG) + compCol("FOMO: average of 5", FOMO_PARTS, FOMO);
+    $("mood-table").innerHTML = '<thead><tr><th>Reading</th><th class="now">Value</th><th>1 week</th><th>1 month</th><th>1-yr percentile</th><th style="text-align:left">Zone</th><th>Points</th></tr></thead><tbody>' +
+      MOOD.map(function (m) { return '<tr><th scope="row"><div class="mname"><span class="cell">' + esc(m.p) + '</span><small>' + esc(m.mp) + '</small></div></th><td class="now">' + esc(m.v) + '</td><td>' + esc(m.c1w) + '</td><td>' + esc(m.c1m) + '</td><td class="dim">' + m.pct + '</td><td style="text-align:left;font-family:var(--f-body)"><span class="status ' + effCls(m.pts) + '"><i></i>' + esc(m.zone) + '</span></td><td>' + signed(m.pts) + '</td></tr>'; }).join("") +
+      '<tr class="sum"><th scope="row">Total market-mood points</th><td class="now"></td><td></td><td></td><td></td><td></td><td>' + signed(MOOD_PTS) + '</td></tr></tbody>';
+  }
+  function drawFlows() {
+    var sim = simple(), sum = function (a) { return a.reduce(function (x, y) { return x + y; }, 0); }, f5 = sum(FLOWS.fii.slice(5)), d5 = sum(FLOWS.dii.slice(5));
+    $("fl-leg").innerHTML = '<span><i style="background:var(--chart-1)"></i>' + (sim ? "Foreign investors (FII)" : "FII") + ' <b>' + signed(f5) + ' Cr</b> in 5 days</span><span><i style="background:var(--chart-2)"></i>' + (sim ? "Indian funds (DII)" : "DII") + ' <b>' + signed(d5) + ' Cr</b> in 5 days</span>';
+    var Wd = Math.max(320, Math.round($("flow-wrap").clientWidth || 700)), Ht = 230, pL = 10, pR = 58, pT = 14, pB = 28, pw = Wd - pL - pR, ph = Ht - pT - pB, all = FLOWS.fii.concat(FLOWS.dii), mx = Math.max.apply(null, all.map(Math.abs)) * 1.12;
+    function y(v) { return pT + (mx - v) / (2 * mx) * ph; }
+    var slot = pw / FLOWS.d.length, bw = Math.max(4, Math.min(18, slot * 0.3)), g = [];
+    [-4000, -2000, 0, 2000, 4000].forEach(function (t) { if (Math.abs(t) > mx) return; g.push('<line class="' + (t ? "fl-grid" : "fl-zero") + '" x1="' + pL + '" x2="' + (Wd - pR) + '" y1="' + y(t) + '" y2="' + y(t) + '"/><text class="fl-ax" x="' + (Wd - pR + 6) + '" y="' + (y(t) + 4) + '">' + signed(t) + '</text>'); });
+    var every = slot < 44 ? 2 : 1;
+    FLOWS.d.forEach(function (d, i) {
+      var cx = pL + (i + 0.5) * slot;
+      [[FLOWS.fii[i], "fl-fii", cx - bw - 1], [FLOWS.dii[i], "fl-dii", cx + 1]].forEach(function (b) { var y0 = y(0), y1 = y(b[0]); g.push('<rect class="' + b[1] + '" x="' + b[2] + '" y="' + Math.min(y0, y1) + '" width="' + bw + '" height="' + Math.max(1, Math.abs(y1 - y0)) + '" rx="2"/>'); });
+      if ((FLOWS.d.length - 1 - i) % every === 0) g.push('<text class="fl-ax" x="' + cx + '" y="' + (Ht - 9) + '" text-anchor="middle">' + d + '</text>');
+      g.push('<rect class="fl-hit" data-i="' + i + '" x="' + (pL + i * slot) + '" y="' + pT + '" width="' + slot + '" height="' + ph + '"/>');
+    });
+    var svg = $("flow-svg"); svg.setAttribute("viewBox", "0 0 " + Wd + " " + Ht); svg.innerHTML = g.join("");
+    $("flow-facts").innerHTML = '<div>' + (sim ? "Foreigners this month" : "FII, month to date") + '<b>−₹21,300 Cr</b></div><div>' + (sim ? "Indian funds this month" : "DII, month to date") + '<b>+₹29,800 Cr</b></div><div>' + (sim ? "Foreigners into ACME's industry" : "FII into capital goods, 1M") + '<b>+₹4,850 Cr</b></div><div>' + (sim ? "Foreign ownership of ACME" : "FII holding in ACME, QoQ") + '<b>+0.6 pts</b></div>';
+  }
+  function flowTip(i, e) {
+    var tip = $("fl-tip"), f = FLOWS.fii[i], d = FLOWS.dii[i];
+    tip.innerHTML = '<b style="font-family:var(--f-body)">' + FLOWS.d[i] + ' 2026</b><span>FII ' + signed(f) + ' Cr</span><span>DII ' + signed(d) + ' Cr</span><span>Net ' + signed(f + d) + ' Cr</span>';
+    tip.hidden = false; var r = $("flow-wrap").getBoundingClientRect(), x = e.clientX - r.left, w = tip.offsetWidth;
+    tip.style.left = Math.max(4, Math.min(x + 14 + w > r.width ? x - w - 14 : x + 14, r.width - w - 4)) + "px"; tip.style.top = "10px";
+  }
+  $("flow-svg").addEventListener("mousemove", function (e) { var t = e.target.closest("[data-i]"); if (t) flowTip(+t.dataset.i, e); else $("fl-tip").hidden = true; });
+  $("flow-svg").addEventListener("click", function (e) { var t = e.target.closest("[data-i]"); if (t) flowTip(+t.dataset.i, e); });
+  $("flow-svg").addEventListener("mouseleave", function () { $("fl-tip").hidden = true; });
+
+  var CASES = {
+    bull: [["The price broke through ₹1,225 after failing three times, on 1.6× normal volume.", "Technicals: ascending-triangle breakout, measured target ₹1,295 to ₹1,345."],
+      ["About 1.6 years of orders are already booked, plus a new ₹640 crore order.", "Fundamentals + News: order cover 1.6×, momentum score 74."],
+      ["A high-quality business (78/100) trading about 7% below its fair value of ₹1,347.", "Fundamentals: quality × price grid = Buy."],
+      ["Its industry is leading the market, helped by government spending (+11% a year).", "Sector: Leading quadrant, earnings momentum 76."],
+      ["Indian funds are buying heavily, and foreigners are still buying this industry.", "Flows: DII +₹12,910 Cr in 5 days; FII +₹4,850 Cr into capital goods in a month."]],
+    bear: [["Results on 28 October could move the price sharply either way.", "Short term capped at Neutral until results."],
+      ["The price has jumped and looks stretched in the short run.", "RSI 67.5, close above the upper Bollinger Band (%B 1.15)."],
+      ["The whole industry is expensive compared with its past.", "Sector P/E 33.5 vs 5-year median 26 (83rd percentile)."],
+      ["Copper, a key raw material, is up about 6% in a month.", "News: margin pressure flagged for the next two quarters."],
+      ["The market mood is greedy while foreign funds sell and the rupee is weak.", "Fear & Greed " + FG + ", FOMO " + FOMO + ", FII −₹8,420 Cr in 5 days, USD/INR 84.62."]]
+  };
+  function drawCases() {
+    var sim = simple();
+    function list(arr) { return '<ul>' + arr.map(function (x) { return '<li>' + esc(x[0]) + (sim ? "" : '<small>' + esc(x[1]) + '</small>') + '</li>'; }).join("") + '</ul>'; }
+    $("case-list").innerHTML = '<div class="case g"><h3>' + (sim ? "Reasons to buy" : "Bull case") + '</h3>' + list(CASES.bull) + '</div><div class="case r"><h3>' + (sim ? "Reasons to be careful" : "Bear case") + '</h3>' + list(CASES.bear) + '</div>';
+  }
+
+  // ---------- your view vs the AI ----------
+  var EX = { h: "short", call: "Buy", entry: 1250, stop: 1235, tgt: 1400, note: "Breakout looks strong, results should be good.", example: true };
+  var YV = EX;
+  try { var sy = JSON.parse(localStorage.getItem("stockai-aiv-view") || "null"); if (sy && sy.h) YV = sy; } catch (e) {}
+  function fillForm() { $("yv-h").value = YV.h; $("yv-call").value = YV.call; $("yv-entry").value = YV.entry; $("yv-stop").value = YV.stop; $("yv-tgt").value = YV.tgt; $("yv-note").value = YV.note || ""; $("yv-ex").hidden = !YV.example; }
+  function readForm() { YV = { h: $("yv-h").value, call: $("yv-call").value, entry: +$("yv-entry").value || 0, stop: +$("yv-stop").value || 0, tgt: +$("yv-tgt").value || 0, note: $("yv-note").value.slice(0, 240), example: false }; try { localStorage.setItem("stockai-aiv-view", JSON.stringify(YV)); } catch (e) {} $("yv-ex").hidden = true; drawYours(); }
+  $("yv-form").addEventListener("input", readForm); $("yv-form").addEventListener("change", readForm); $("yv-form").addEventListener("submit", function (e) { e.preventDefault(); });
+  function drawYours() {
+    var sim = simple(), ai = R[YV.h], you = YV.call, diff = Math.abs(["Strong sell", "Sell", "Neutral", "Buy", "Strong buy"].indexOf(you) - ["Strong sell", "Sell", "Neutral", "Buy", "Strong buy"].indexOf(ai.lab));
+    var verdict = diff === 0 ? (sim ? "You agree with the AI" : "Same call") : diff === 1 ? (sim ? "Close to the AI" : "One step apart") : (sim ? "You disagree with the AI" : "Different call");
+    var flags = [], long = side(you) > 0, e = long ? YV.entry : 0, s = YV.stop, t = YV.tgt;
+    ["yv-entry", "yv-stop", "yv-tgt"].forEach(function (id) { $(id).disabled = !long; });
+    if (e && s && t) {
+      var risk = long ? e - s : s - e, reward = long ? t - e : e - t, rr = risk > 0 ? reward / risk : null;
+      if (risk <= 0) flags.push(["r", "!", sim ? "Your exit price is on the wrong side" : "Stop on the wrong side of entry", sim ? "For a buy, the exit (stop loss) must be below the buy price." : "For a long, the stop must be below entry."]);
+      else {
+        if (risk < ATR) flags.push(["w", "!", sim ? "Your exit is very close to the buy price" : "Stop tighter than one day's normal swing", (sim ? "ACME usually moves about ₹" + fmt(ATR, 0) + " in a day. An exit only ₹" + fmt(risk, 0) + " away could be hit by ordinary wobbles." : "Risk ₹" + fmt(risk, 1) + " vs ATR(14) ₹" + fmt(ATR, 1) + ". The AI plan uses ₹" + fmt(PLAN.stop) + ", below support.")]);
+        var rrAi = long && e > PLAN.stop ? reward / (e - PLAN.stop) : null;
+        if (risk < ATR && rr != null && rr >= 1.5) flags.push(["w", "!", sim ? "The reward only looks big because the exit is so close" : "R:R " + rr.toFixed(1) + " is inflated by the tight stop", (sim ? "With the AI's exit at ₹" + fmt(PLAN.stop) + ", you'd make about ₹" + (rrAi || 0).toFixed(1) + " for every ₹1 you risk." : "With the support-based stop ₹" + fmt(PLAN.stop) + ", R:R would be " + (rrAi || 0).toFixed(2) + ".")]);
+        else if (rr != null && rr < 1.5) flags.push(["w", "!", sim ? "Small reward for the risk" : "Reward to risk below 1.5", (sim ? "You could make ₹" + rr.toFixed(1) + " for every ₹1 you risk. Most traders want at least ₹1.50." : "R:R " + rr.toFixed(2) + ".")]);
+        else if (rr != null) flags.push(["g", "✓", sim ? "Good reward for the risk" : "Reward to risk " + rr.toFixed(1), sim ? "You could make ₹" + rr.toFixed(1) + " for every ₹1 you risk." : "Target " + signed((t / e - 1) * 100, 1) + "%, stop " + signed((s / e - 1) * 100, 1) + "%."]);
+      }
+      if (long && t > FAIR) flags.push(["w", "!", sim ? "Your target is above the fair value" : "Target above fair value and all past ceilings", (sim ? "₹" + fmt(t) + " is above our fair value of ₹" + fmt(FAIR) + " and above any price it has reached before. Possible, but a stretch." : "Fair value ₹" + fmt(FAIR) + "; projected R3 ₹1,343. Consider scaling out at T1/T2.")]);
+      if (long && e > PLAN.hi) flags.push(["w", "!", sim ? "You're buying above the AI's buy zone" : "Entry above the AI entry zone", (sim ? "The AI suggests waiting for a dip to ₹" + fmt(PLAN.lo) + " to ₹" + fmt(PLAN.hi) + "." : "Entry zone ₹" + fmt(PLAN.lo) + "–" + fmt(PLAN.hi) + " (breakout retest).")]);
+    }
+    if (YV.h === "short" && side(you) !== 0) flags.push(["w", "!", sim ? "Results come out on 28 October" : "Earnings in 10 days", sim ? "A quick trade now is partly a bet on the results." : "Event risk inside your holding period; consider sizing down."]);
+    if (side(you) > 0 && side(ai.lab) < 0 || side(you) < 0 && side(ai.lab) > 0) flags.push(["r", "!", sim ? "You and the AI point opposite ways" : "Opposite direction to the AI", sim ? "Check the 'reasons to be careful' list before acting." : "Review the bear/bull case items that support the AI view."]);
+    $("yv-out").innerHTML = '<div class="vs"><div class="you"><small>' + (YV.example ? "Example view" : "You") + '</small><span class="sp sp-mini">' + (sim ? LABEL_S : LABEL_P)[you] + '</span><small>' + (e ? "Buy ₹" + fmt(e) + " · stop ₹" + fmt(s) + " · target ₹" + fmt(t) : long ? "Add your prices" : (sim ? "Not buying now" : "No new position")) + '</small></div><span class="mid">vs</span><div><small>AI, ' + HZ[YV.h].p.toLowerCase() + '</small>' + pill(ai.lab, true) + '<small>Buy ₹' + fmt(PLAN.lo) + '–' + fmt(PLAN.hi) + ' · stop ₹' + fmt(PLAN.stop) + ' · target ₹' + fmt(PLAN.t2) + '</small></div></div>' +
+      '<b>' + verdict + '</b><div class="flags">' + flags.map(function (f) { return '<div class="flag ' + f[0] + '"><span class="ic">' + f[1] + '</span><div><b>' + esc(f[2]) + '</b><span>' + esc(f[3]) + '</span></div></div>'; }).join("") + '</div>' +
+      '<span class="tb-l">Track record on ACME (sample)</span><div class="score"><div class="ai">AI calls right<b>6 of 9</b>67% over the last 12 months</div><div class="you">Your calls right<b>4 of 7</b>57% over the last 12 months</div></div>';
+  }
+  function drawChange() {
+    var sim = simple();
+    var items = [["g", sim ? "Results beat expectations on 28 Oct" : "Q2 results beat (EPS ≥ estimate)", sim ? "The short-term answer could turn into Buy." : "Short-term cap lifts; catalyst score likely 70+ → Buy."],
+      ["r", sim ? "Results disappoint" : "Q2 miss or margin guidance cut", sim ? "The short and medium-term answers could drop to Wait." : "Catalyst and momentum scores fall; medium term likely Neutral."],
+      ["r", sim ? "Price closes below ₹1,182" : "Close below stop ₹1,182", sim ? "The breakout would have failed: the chart turns negative." : "Technicals short term flips to Sell; final short term Sell."],
+      ["w", sim ? "Market fear jumps (VIX above 18)" : "India VIX > 18 or Fear & Greed < 40", sim ? "A nervous market would make buying now riskier." : "Mood points turn more negative; short term −3 to −5."],
+      ["w", sim ? "Foreign selling keeps growing" : "FII outflow > ₹40,000 Cr MTD", sim ? "Heavy foreign selling could drag the whole market down." : "Flow reading −3; watch DII absorption."],
+      ["g", sim ? "Industry gets cheaper" : "Sector P/E back below 75th percentile", sim ? "The long-term answer could become a stronger Buy." : "Sector long-term cap lifts → final long term Buy to Strong buy."]];
+    $("trg").innerHTML = items.map(function (t) { return '<div class="tg-i ' + t[0] + '"><span class="tg-dot"></span><div><b>' + esc(t[1]) + '</b><span>' + esc(t[2]) + '</span></div></div>'; }).join("");
+    var evs = [["28 Oct", sim ? "ACME results (July to September)" : "ACME Q2 FY27 results", sim ? "The biggest event for the short term" : "Post-market; consensus EPS ₹9.8", "Big"], ["29 Oct", sim ? "ACME managers' call with investors" : "Earnings call", sim ? "Guidance for the rest of the year" : "Order inflow and margin guidance", "Medium"], ["5 Nov", sim ? "US interest rate decision" : "US FOMC decision", sim ? "Can move foreign money in and out of India" : "Rate path drives DXY and FII flows", "Medium"], ["12 Nov", sim ? "India inflation figures" : "India CPI (October)", sim ? "Affects interest rates" : "Feeds the RBI decision", "Low"], ["5 Dec", sim ? "RBI interest rate decision" : "RBI MPC policy", sim ? "Lower rates usually help companies like ACME" : "Repo 6.25%, market prices a hold", "Medium"]];
+    $("evs").innerHTML = evs.map(function (e) { return '<div class="ev"><span class="d">' + e[0] + '</span><div><b>' + esc(e[1]) + '</b><small>' + esc(e[2]) + '</small></div><span class="eff ' + (e[3] === "Big" ? "r" : "n") + '">' + (sim ? { Big: "Big", Medium: "Some", Low: "Small" }[e[3]] + " effect" : e[3] + " impact") + '</span></div>'; }).join("");
+  }
+
+  // ---------- index, popover, toast, tiles ----------
+  function drawIndex() { var cards = Array.prototype.filter.call(document.querySelectorAll(".card[id]"), function (c) { return !c.hidden; }); $("index").innerHTML = cards.map(function (c) { return '<a href="#' + c.id + '"><span>' + esc(simple() ? c.dataset.titleS : c.dataset.titleP) + '</span><i class="' + c.dataset.v + '"></i></a>'; }).join(""); }
+  document.querySelectorAll(".hzc").forEach(function (b) { b.addEventListener("click", function () { var open = b.getAttribute("aria-expanded") !== "true"; document.querySelectorAll(".hzc").forEach(function (x) { x.setAttribute("aria-expanded", "false"); $("hzd-" + x.dataset.hz).hidden = true; }); if (open) { b.setAttribute("aria-expanded", "true"); $("hzd-" + b.dataset.hz).hidden = false; } }); });
+  var TERMS = { verdict: { s: "How the final verdict works", p: "Weighted pillar score with market overlay", d: "Each tab (company health, price chart, industry, news) gives a score from 0 to 100 for each time frame. The verdict adds them up with different weights: the chart counts most for the next few weeks, the company's health counts most for the next few years. Then the market mood adds or takes away a few points, and safety rules (like results coming soon) can cap the answer.", g: "No single view decides. When all four agree you can be more confident; when they disagree, the verdict says so." } };
+  var pop = $("pop");
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest(".info[data-term]");
+    if (b) { e.stopPropagation(); var m = TERMS[b.dataset.term]; $("pop-title").textContent = m.s; $("pop-pro").textContent = "Also called: " + m.p; $("pop-d").textContent = m.d; $("pop-g").textContent = m.g; pop.hidden = false; var r = b.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight; pop.style.left = Math.min(Math.max(16, r.left - pw / 2), window.innerWidth - pw - 16) + "px"; pop.style.top = (r.bottom + 8 + ph > window.innerHeight ? Math.max(16, r.top - ph - 8) : r.bottom + 8) + "px"; $("pop-x").focus(); return; }
+    if (!pop.contains(e.target)) pop.hidden = true;
+    var h = e.target.closest("[data-bh]"); if (h) { bh = h.dataset.bh; drawBuild(); return; }
+    if (e.target.id === "w-reset") { W[bh] = JSON.parse(JSON.stringify(DEFAULT_W[bh])); saveW(); redraw(); toast("Weights reset for " + HZ[bh].p.toLowerCase()); }
+  });
+  document.addEventListener("input", function (e) { var w = e.target.dataset && e.target.dataset.w; if (!w) return; W[bh][w] = +e.target.value; saveW(); $("wv-" + w).textContent = e.target.value; R = compute(); drawFinal(); drawYours(); drawIndex(); drawBuildPartial(); });
+  function drawBuildPartial() { var sim = simple(); if (sim) return; var r = R[bh], mx = Math.max(100, r.base); $("contrib").innerHTML = r.parts.map(function (x) { return '<div class="cb"><span>' + esc(x.p.p) + '</span><div class="cb-track"><span style="width:' + (x.pts / mx * 100) + '%"></span></div><b>' + x.pts.toFixed(1) + '</b></div>'; }).join("") + (r.mood ? '<div class="cb"><span>Market mood</span><div class="cb-track"><span class="neg" style="width:' + (Math.abs(r.mood) / mx * 100) + '%"></span></div><b>' + signed(r.mood, 1) + '</b></div>' : "") + '<div class="cb"><span><b>Total</b></span><div class="cb-track"><span style="width:' + (r.raw / mx * 100) + '%"></span></div><b>' + r.raw.toFixed(1) + '</b></div>'; }
+  $("wsl").addEventListener("change", function () { drawBuild(); });
+  $("pop-x").addEventListener("click", function () { pop.hidden = true; });
+  var toastTimer; function toast(msg) { var t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200); }
+
+  function redraw() { R = compute(); drawFinal(); drawBuild(); drawMood(); drawFlows(); drawCases(); drawYours(); drawChange(); drawIndex(); }
+  function setMode(mode) {
+    root.dataset.mode = mode;
+    document.querySelectorAll("button[data-mode]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === mode)); });
+    $("mode-hint").textContent = mode === "simple" ? "Plain-English explanations" : "Full detail";
+    try { localStorage.setItem("stockai-mode", mode); } catch (e) {}
+    redraw();
+  }
+  document.querySelectorAll("button[data-mode]").forEach(function (b) { b.addEventListener("click", function () { setMode(b.dataset.mode); }); });
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(drawFlows, 200); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeMenu(); pop.hidden = true; } });
+
+  // ---------- downloads ----------
+  var menu = $("dl-menu"), dlBtn = $("dl-btn"), downloadsP = null;
+  function closeMenu() { if (!menu.hidden) { menu.hidden = true; dlBtn.setAttribute("aria-expanded", "false"); } }
+  function getDownloads() { if (!downloadsP) { downloadsP = window.claude && window.claude.use ? window.claude.use("downloads").catch(function () { return null; }) : Promise.resolve(null); downloadsP.then(function (d) { if (!d) { downloadsP = null; $("dl-unavail").hidden = false; } }); } return downloadsP; }
+  dlBtn.addEventListener("click", function (e) { e.stopPropagation(); menu.hidden = !menu.hidden; dlBtn.setAttribute("aria-expanded", String(!menu.hidden)); if (!menu.hidden) getDownloads(); });
+  document.addEventListener("click", function (e) { if (!menu.contains(e.target) && e.target !== dlBtn) closeMenu(); });
+  function loadScript(u) { return new Promise(function (ok, fail) { var s = document.createElement("script"); s.src = u; s.onload = ok; s.onerror = function () { fail(new Error("load")); }; document.head.appendChild(s); }); }
+  function q(v) { var s = String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function csvData() {
+    var rows = [["Section", "Item", "Horizon", "Score or value", "Signal or zone", "Weight %", "Points"]];
+    H.forEach(function (h) { R[h].parts.forEach(function (x) { rows.push(["Pillar", x.p.p, HZ[h].p, x.p.sc[h], x.lab, Math.round(x.share * 100), x.pts.toFixed(1)]); }); rows.push(["Market mood", "Adjustment", HZ[h].p, MOOD_PTS, "", "", R[h].mood.toFixed(1)]); rows.push(["Final", "Verdict", HZ[h].p, R[h].sc.toFixed(1), R[h].lab, "", CONV[R[h].conv] + " conviction"]); });
+    MOOD.forEach(function (m) { rows.push(["Market reading", m.p, "", m.v, m.zone, "", m.pts]); });
+    FLOWS.d.forEach(function (d, i) { rows.push(["Flows", "FII / DII " + d, "", FLOWS.fii[i] + " / " + FLOWS.dii[i], "Rs crore", "", ""]); });
+    return rows.map(function (r) { return r.map(q).join(","); }).join("\n");
+  }
+  function pdfText(s) { return String(s).replace(/₹/g, "Rs ").replace(/[−–]/g, "-").replace(/×/g, "x").replace(/·/g, "|").replace(/▲/g, "+").replace(/▼/g, "-").replace(/Σ/g, "sum").replace(/≤/g, "<=").replace(/&amp;/g, "&"); }
+  function buildPdf() {
+    var doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" }), accent = [86, 54, 211], y = 50;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.text("ACME Industries Ltd: AI verdict", 40, y);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(94, 90, 122); doc.text(pdfText("As of 16 Oct 2026 close | Price Rs 1,248.60 | " + (custom() ? "custom weights" : "standard weights") + " | SAMPLE DATA"), 40, y += 16);
+    doc.setTextColor(28, 24, 56);
+    doc.autoTable({ startY: y + 12, head: [["Final verdict", "Short term", "Medium term", "Long term"]], body: [["Signal", R.short.lab, R.medium.lab, R.long.lab], ["Score", R.short.sc.toFixed(1), R.medium.sc.toFixed(1), R.long.sc.toFixed(1)], ["Conviction", CONV[R.short.conv], CONV[R.medium.conv], CONV[R.long.conv]]], theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 9 } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 12, head: [["Pillar", "Short", "Medium", "Long"]], body: PILLARS.map(function (p) { return [p.p].concat(H.map(function (h) { var x = R[h].parts.find(function (z) { return z.p === p; }); return p.sc[h] + " " + x.lab + " (" + Math.round(x.share * 100) + "%)"; })); }).concat([["Market mood", signed(R.short.mood, 1), signed(R.medium.mood, 1), "0"]].map(function (r) { return r.map(pdfText); })), theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 9 } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 12, head: [["Trade plan", "Price"]], body: [["Entry zone", "Rs 1,225 to 1,240"], ["Stop loss", "Rs 1,182"], ["Targets", "Rs 1,295 / 1,345"], ["Fair value / strong buy below", "Rs 1,347 / 1,145"]], theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 9 } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 12, head: [["Market reading", "Value", "Zone", "Points"]], body: MOOD.map(function (m) { return [pdfText(m.p), pdfText(m.v), m.zone, pdfText(signed(m.pts))]; }), theme: "striped", headStyles: { fillColor: accent }, styles: { fontSize: 8 } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 12, head: [["Bull case", "Bear case"]], body: CASES.bull.map(function (b, i) { return [pdfText(b[0]), pdfText(CASES.bear[i][0])]; }), theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 8 } });
+    var pages = doc.getNumberOfPages(); for (var p = 1; p <= pages; p++) { doc.setPage(p); doc.setFontSize(7); doc.setTextColor(120); doc.text("Stock AI | Sample data for layout review | Not investment advice | Page " + p + " of " + pages, 40, 820); }
+    return doc.output("arraybuffer");
+  }
+  menu.querySelectorAll("[data-dl]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var kind = b.dataset.dl, downloads = null; closeMenu(); toast("Preparing your file…");
+      getDownloads().then(function (d) { if (!d) throw { code: "unavailable" }; downloads = d; })
+        .then(function () { return kind === "csv" ? { filename: "ACME_ai_verdict.csv", data: csvData() } : loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js").then(function () { return loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"); }).then(function () { return { filename: "ACME_ai_verdict.pdf", data: buildPdf() }; }); })
+        .then(function (file) { return downloads.save(file); }).then(function () { toast("Saved"); })
+        .catch(function (err) { var c = err && err.code; toast(c === "declined" ? "Download cancelled" : c === "rate_limited" ? "A download is already waiting for you to confirm" : c === "unavailable" || c === "not_granted" ? "Downloads aren't available in this view" : "Couldn't create the file. Try again."); });
+    });
+  });
+
+  // ---------- boot ----------
+  fillForm();
+  var mode = "simple"; try { mode = localStorage.getItem("stockai-mode") || "simple"; } catch (e) {}
+  setMode(mode === "pro" ? "pro" : "simple");
+})();
+</script>

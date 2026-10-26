@@ -1,0 +1,563 @@
+<title>Fundamentals Tab Styles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one Fundamentals tab rendered three ways. The review bar on top switches the style on <html data-style>.
+   Each style is a deliberate single look with its own palette, type and grid, so no light/dark split. */
+:root, :root[data-style="a"] {
+  --bg: #F4F7F7; --surface: #FFFFFF; --surface-2: #EDF2F2; --ink: #13202B; --ink-2: #5A6773; --line: #DCE3E6;
+  --accent: #0F6E6A; --accent-soft: #E0EFED; --good: #1B7F46; --good-soft: #E2F3E8; --warn: #A3660A; --warn-soft: #FAEFD9;
+  --bad: #B83A2E; --bad-soft: #F8E3E0; --chart-1: #0F6E6A; --chart-2: #9CC3BE; --chart-3: #C98A2B; --chart-4: #B9C4CC;
+  --f-display: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --radius: 12px; --fs: 15px; --gap: 28px; --pad: 22px;
+  color-scheme: light;
+}
+:root[data-style="b"] {
+  --bg: #0A0F15; --surface: #111821; --surface-2: #17212C; --ink: #DCE4EC; --ink-2: #8696A8; --line: #223040;
+  --accent: #F0A04B; --accent-soft: #2E2416; --good: #3FC27A; --good-soft: #12261B; --warn: #E6B44C; --warn-soft: #2B2414;
+  --bad: #F0675B; --bad-soft: #2E1819; --chart-1: #F0A04B; --chart-2: #4F7FD9; --chart-3: #3FC27A; --chart-4: #4A5868;
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-num: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --radius: 4px; --fs: 13px; --gap: 8px; --pad: 12px;
+  color-scheme: dark;
+}
+:root[data-style="c"] {
+  --bg: #F6F5FC; --surface: #FFFFFF; --surface-2: #EFEDF9; --ink: #1C1838; --ink-2: #5E5A7A; --line: #E4E1F2;
+  --accent: #5636D3; --accent-soft: #ECE8FD; --good: #12875A; --good-soft: #DDF4EA; --warn: #B86E06; --warn-soft: #FCEEDA;
+  --bad: #D2433A; --bad-soft: #FBE4E2; --chart-1: #5636D3; --chart-2: #F2A541; --chart-3: #12875A; --chart-4: #C9C3E6;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-num: "DM Mono", ui-monospace, Menlo, monospace;
+  --radius: 20px; --fs: 15px; --gap: 18px; --pad: 22px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 var(--fs)/1.5 var(--f-body); transition: background 0.2s; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+h1, h2, h3 { margin: 0; font-family: var(--f-display); text-wrap: balance; line-height: 1.2; }
+p { margin: 0; }
+
+/* ---------- review bar (not part of the app) ---------- */
+.review { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: #1E2430; color: #F2F4F7; padding-inline: 16px; padding-block: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; font: 500 13px/1.3 "Figtree", system-ui, sans-serif; }
+.review strong { font-weight: 600; }
+.review .opts { display: flex; gap: 4px; background: #2C3442; padding: 3px; border-radius: 9px; flex-wrap: wrap; }
+.review .opt { border: 0; background: transparent; color: #C9D0DA; padding: 6px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+.review .opt[aria-pressed="true"] { background: #F2F4F7; color: #1E2430; font-weight: 600; }
+.review .note { color: #AAB3C0; font-size: 12px; }
+.review .tag { background: #F0A04B; color: #1E2430; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; }
+
+/* ---------- app chrome ---------- */
+.shell { max-width: 1200px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 60px; display: grid; gap: calc(var(--gap) * 0.8); }
+:root[data-style="b"] .shell { max-width: 1440px; padding-inline: 12px; }
+.topbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { font: 700 1.05rem var(--f-display); display: flex; align-items: center; gap: 8px; }
+.brand i { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); display: inline-block; }
+.search { flex: 1 1 220px; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--line); background: var(--surface); border-radius: calc(var(--radius) * 0.7); color: var(--ink-2); font-size: 0.9em; }
+.search kbd { margin-left: auto; font: 500 11px var(--f-num); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+.stock { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+.stock h1 { font-size: 1.7em; font-weight: 700; letter-spacing: -0.01em; }
+.stock .meta { color: var(--ink-2); font-size: 0.9em; }
+.stock .px { font: 500 1.45em var(--f-num); }
+.stock .chg { font: 500 0.95em var(--f-num); color: var(--good); }
+.tabs { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.tabs span { flex: none; padding: 9px 14px; color: var(--ink-2); border-bottom: 2px solid transparent; font-weight: 500; font-size: 0.94em; }
+.tabs span.on { color: var(--ink); border-color: var(--accent); font-weight: 600; }
+:root[data-style="c"] .tabs { border: 0; gap: 6px; }
+:root[data-style="c"] .tabs span { border: 0; border-radius: 999px; padding: 7px 16px; }
+:root[data-style="c"] .tabs span.on { background: var(--ink); color: var(--surface); }
+:root[data-style="b"] .stock h1 { font-size: 1.35em; }
+
+/* ---------- fundamentals grid ---------- */
+.fgrid { display: grid; gap: var(--gap); }
+:root[data-style="a"] .fgrid { grid-template-columns: 1fr 1fr; grid-template-areas:
+  "summary summary" "ratios ratios" "trends trends" "valuation quality" "peers peers" "holding ai" "statements statements"; }
+:root[data-style="b"] .fgrid { grid-template-columns: 300px minmax(0, 1.4fr) minmax(0, 1fr); grid-template-areas:
+  "summary summary summary" "ratios trends valuation" "ratios holding quality" "peers peers ai" "statements statements statements"; }
+:root[data-style="c"] .fgrid { grid-template-columns: 1fr 1fr; grid-template-areas:
+  "summary summary" "ratios ratios" "trends valuation" "quality holding" "ai ai" "peers peers" "statements statements"; }
+.fgrid > section { min-width: 0; display: grid; gap: 14px; align-content: start; }
+#s-summary { grid-area: summary; } #s-ratios { grid-area: ratios; } #s-trends { grid-area: trends; }
+#s-valuation { grid-area: valuation; } #s-quality { grid-area: quality; } #s-peers { grid-area: peers; }
+#s-holding { grid-area: holding; } #s-ai { grid-area: ai; } #s-statements { grid-area: statements; }
+
+/* section framing differs by style */
+:root[data-style="a"] .fgrid > section { padding-top: 22px; border-top: 1px solid var(--line); }
+:root[data-style="a"] #s-summary { border-top: 0; padding-top: 6px; }
+:root[data-style="b"] .fgrid > section { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--pad); gap: 10px; }
+:root[data-style="c"] .fgrid > section { background: var(--surface); border-radius: var(--radius); padding: var(--pad); box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); }
+
+.sh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sh h2 { font-size: 1.2em; font-weight: 700; }
+:root[data-style="b"] .sh h2 { font-size: 0.82em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }
+:root[data-style="c"] .sh h2 { font-size: 1.3em; font-weight: 800; }
+.sh .sub { color: var(--ink-2); font-size: 0.85em; }
+
+/* plain-language "what it means" lines */
+.means { font-size: 0.88em; color: var(--ink-2); }
+:root[data-style="b"] .means { display: none; }
+:root[data-style="c"] .means { color: var(--ink); background: var(--accent-soft); border-radius: 12px; padding: 10px 14px; display: flex; gap: 10px; }
+:root[data-style="c"] .means::before { content: "i"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 12px/20px var(--f-num); text-align: center; }
+
+/* ---------- summary ---------- */
+.summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: center; }
+.ring { position: relative; width: 124px; height: 124px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.05; }
+.ring .lbl b { font: 600 2.1em var(--f-num); display: block; }
+.ring .lbl small { font-size: 0.72em; color: var(--ink-2); }
+.sum-body { display: grid; gap: 12px; min-width: 0; }
+.sum-body h2 { font-size: 1.55em; font-weight: 700; }
+:root[data-style="c"] .sum-body h2 { font-size: 1.9em; font-weight: 800; letter-spacing: -0.01em; }
+:root[data-style="b"] .sum-body h2 { font-size: 1.15em; }
+:root[data-style="b"] .ring { width: 84px; height: 84px; }
+:root[data-style="b"] .ring .lbl b { font-size: 1.5em; }
+.grades { display: flex; flex-wrap: wrap; gap: 8px; }
+.grade { display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px 5px 6px; border-radius: 8px; background: var(--surface-2); font-size: 0.86em; font-weight: 500; }
+.grade b { font: 600 0.9em var(--f-num); min-width: 26px; text-align: center; padding: 2px 4px; border-radius: 5px; }
+.grade.g b { background: var(--good-soft); color: var(--good); }
+.grade.w b { background: var(--warn-soft); color: var(--warn); }
+.grade.r b { background: var(--bad-soft); color: var(--bad); }
+:root[data-style="c"] .grade { border-radius: 999px; padding: 6px 14px 6px 6px; background: var(--surface-2); }
+:root[data-style="c"] .grade b { border-radius: 999px; min-width: 32px; }
+:root[data-style="c"] .grade.g { background: var(--good-soft); }
+:root[data-style="c"] .grade.w { background: var(--warn-soft); }
+.takeaways { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.93em; }
+.takeaways li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
+.takeaways li::before { content: "▲"; color: var(--good); font-size: 0.7em; padding-top: 4px; }
+.takeaways li.dn::before { content: "▼"; color: var(--bad); }
+:root[data-style="b"] .takeaways { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 4px 18px; font-size: 0.9em; }
+
+/* ---------- ratio tiles ---------- */
+.ratios { display: grid; gap: 1px; }
+:root[data-style="a"] .ratios { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+:root[data-style="b"] .ratios { grid-template-columns: 1fr; gap: 0; }
+:root[data-style="c"] .ratios { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.rt { background: var(--surface); padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.rt .k { font-size: 0.82em; color: var(--ink-2); display: flex; align-items: center; gap: 6px; }
+.rt .k i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.rt.g .k i { background: var(--good); } .rt.w .k i { background: var(--warn); } .rt.r .k i { background: var(--bad); } .rt.n .k i { background: var(--ink-2); }
+.rt .v { font: 500 1.35em var(--f-num); font-variant-numeric: tabular-nums; }
+.rt .c { font-size: 0.78em; color: var(--ink-2); }
+:root[data-style="b"] .rt { grid-template-columns: 1fr auto; padding: 7px 2px; border-bottom: 1px solid var(--line); background: transparent; gap: 0 10px; }
+:root[data-style="b"] .rt .v { font-size: 1em; text-align: right; }
+:root[data-style="b"] .rt .c { grid-column: 1 / -1; font-size: 0.85em; }
+:root[data-style="c"] .rt { border-radius: 14px; background: var(--surface-2); padding: 14px; }
+:root[data-style="c"] .rt.g { background: var(--good-soft); } :root[data-style="c"] .rt.w { background: var(--warn-soft); }
+:root[data-style="c"] .rt .v { font-size: 1.5em; }
+
+/* ---------- toggles ---------- */
+.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 8px; }
+.seg button { border: 0; background: transparent; padding: 4px 11px; border-radius: 6px; cursor: pointer; font-size: 0.85em; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+:root[data-style="b"] .seg button[aria-pressed="true"] { background: var(--accent); color: #111; }
+:root[data-style="c"] .seg { border-radius: 999px; } :root[data-style="c"] .seg button { border-radius: 999px; }
+
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-2); font: 400 11px var(--f-num); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82em; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+/* ---------- valuation ---------- */
+.band { display: grid; gap: 8px; }
+.band-track { position: relative; height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--good-soft), var(--surface-2) 50%, var(--bad-soft)); border: 1px solid var(--line); }
+.band-mark { position: absolute; top: -6px; width: 3px; height: 22px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); }
+.band-mid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink-2); opacity: 0.6; }
+.band-scale { display: flex; justify-content: space-between; font: 400 0.78em var(--f-num); color: var(--ink-2); }
+.dcf { display: grid; gap: 10px; background: var(--surface-2); border-radius: calc(var(--radius) * 0.8); padding: 14px; }
+.sl { display: grid; grid-template-columns: minmax(0, 1fr) 62px; gap: 2px 10px; align-items: center; font-size: 0.86em; }
+.sl label { color: var(--ink-2); }
+.sl output { font: 500 0.95em var(--f-num); text-align: right; }
+.sl input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.fv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fv div { display: grid; gap: 2px; }
+.fv small { font-size: 0.76em; color: var(--ink-2); }
+.fv b { font: 600 1.25em var(--f-num); }
+.fv b.good { color: var(--good); } .fv b.bad { color: var(--bad); }
+
+/* ---------- quality ---------- */
+.qs { display: grid; gap: 12px; }
+.q { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: baseline; }
+.q .name { font-weight: 600; font-size: 0.92em; }
+.q .val { font: 600 1.05em var(--f-num); }
+.q .bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.q .bar i { display: block; height: 100%; background: var(--good); border-radius: 3px; }
+.q .why { grid-column: 1 / -1; font-size: 0.8em; color: var(--ink-2); }
+.pill { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.g { background: var(--good-soft); color: var(--good); } .pill.w { background: var(--warn-soft); color: var(--warn); }
+
+/* ---------- tables ---------- */
+.tw { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88em; }
+th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 600; color: var(--ink-2); font-size: 0.86em; }
+td { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+td:first-child { font-family: var(--f-body); }
+tr.me td { background: var(--accent-soft); font-weight: 600; }
+tr.med td { color: var(--ink-2); font-style: italic; }
+tr.sum td { font-weight: 600; }
+:root[data-style="b"] th, :root[data-style="b"] td { padding: 5px 8px; }
+td .up { color: var(--good); } td .dn { color: var(--bad); }
+
+.ai-box { display: grid; gap: 10px; }
+.ai-box .src { font-size: 0.78em; color: var(--ink-2); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ai-chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.ai-box ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 0.92em; }
+
+.foot { font-size: 0.8em; color: var(--ink-2); text-align: center; padding-top: 10px; }
+
+@media (max-width: 920px) {
+  .fgrid { display: flex !important; flex-direction: column; }
+}
+@media (max-width: 560px) {
+  .shell { padding-inline: 16px; }
+  .summary { grid-template-columns: 1fr; justify-items: start; }
+  .fv { grid-template-columns: 1fr 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .q .bar i, .ring circle { transition: stroke-dasharray 0.5s ease, width 0.5s ease; }
+}
+</style>
+
+<div class="review" role="region" aria-label="Style picker">
+  <strong>Fundamentals tab · pick a style</strong>
+  <div class="opts" role="group" aria-label="Styles">
+    <button class="opt" id="opt-a" data-style="a" aria-pressed="true">A · Calm &amp; clear</button>
+    <button class="opt" id="opt-b" data-style="b" aria-pressed="false">B · Trading desk</button>
+    <button class="opt" id="opt-c" data-style="c" aria-pressed="false">C · Friendly &amp; bold</button>
+  </div>
+  <span class="tag">SAMPLE</span>
+  <span class="note" id="style-note">Light, roomy, one calm accent colour. Reads like a well-made report.</span>
+</div>
+
+<div class="shell">
+  <div class="topbar">
+    <span class="brand"><i aria-hidden="true"></i>Stock AI</span>
+    <div class="search" aria-hidden="true">Search any NSE stock <kbd>⌘K</kbd></div>
+  </div>
+
+  <div class="stock">
+    <h1>ACME Industries Ltd</h1>
+    <span class="meta">NSE: ACME · Capital Goods · Mid cap</span>
+    <span class="px">₹1,248.60</span>
+    <span class="chg">▲ 22.10 (1.80%)</span>
+  </div>
+
+  <nav class="tabs" aria-label="Stock sections">
+    <span>Overview</span><span class="on">Fundamentals</span><span>Technicals</span><span>AI Verdict</span><span>Sector</span><span>News</span>
+  </nav>
+
+  <div class="fgrid">
+
+    <!-- SUMMARY -->
+    <section id="s-summary" aria-label="Fundamental summary">
+      <div class="summary">
+        <div class="ring" aria-label="Fundamental score 78 out of 100">
+          <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="var(--surface-2)" stroke-width="9"/><circle id="ring-arc" cx="50" cy="50" r="42" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="205.9 263.9"/></svg>
+          <div class="lbl"><div><b>78</b><small>of 100</small></div></div>
+        </div>
+        <div class="sum-body">
+          <h2>A strong, growing business, priced above its peers</h2>
+          <div class="grades">
+            <span class="grade g"><b>A</b>Growth</span>
+            <span class="grade g"><b>A−</b>Profitability</span>
+            <span class="grade g"><b>B+</b>Balance sheet</span>
+            <span class="grade g"><b>B+</b>Cash flow</span>
+            <span class="grade w"><b>C</b>Valuation</span>
+          </div>
+          <ul class="takeaways">
+            <li>Sales up 18% a year and profit up 26% a year over the last 3 years</li>
+            <li>Debt cut by more than half relative to equity since FY22</li>
+            <li>Foreign investors raised their stake 7 quarters in a row</li>
+            <li class="dn">P/E of 34 is above the sector's 27 and near the top of its 5-year range</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEY RATIOS -->
+    <section id="s-ratios" aria-label="Key ratios">
+      <div class="sh"><h2>Key numbers</h2><span class="sub">vs Capital Goods sector median</span></div>
+      <div class="ratios">
+        <div class="rt n"><span class="k"><i></i>Market cap</span><span class="v">₹21,350 Cr</span><span class="c">Mid cap · rank 182 on NSE</span></div>
+        <div class="rt w"><span class="k"><i></i>P/E</span><span class="v">34.0</span><span class="c">Sector 27.0 · 26% pricier</span></div>
+        <div class="rt w"><span class="k"><i></i>P/B</span><span class="v">6.2</span><span class="c">Sector 4.8</span></div>
+        <div class="rt w"><span class="k"><i></i>EV / EBITDA</span><span class="v">24.5</span><span class="c">Sector 19.8</span></div>
+        <div class="rt g"><span class="k"><i></i>ROE</span><span class="v">18.7%</span><span class="c">Sector 15.2%</span></div>
+        <div class="rt g"><span class="k"><i></i>ROCE</span><span class="v">18.1%</span><span class="c">Sector 15.8%</span></div>
+        <div class="rt g"><span class="k"><i></i>Debt / Equity</span><span class="v">0.40</span><span class="c">Sector 0.55 · was 0.90 in FY22</span></div>
+        <div class="rt n"><span class="k"><i></i>Dividend yield</span><span class="v">0.6%</span><span class="c">Sector 0.8%</span></div>
+        <div class="rt g"><span class="k"><i></i>Sales growth (3 yr)</span><span class="v">18.2%</span><span class="c">Sector 12.4% a year</span></div>
+        <div class="rt g"><span class="k"><i></i>Profit growth (3 yr)</span><span class="v">26.0%</span><span class="c">Sector 14.1% a year</span></div>
+        <div class="rt g"><span class="k"><i></i>Operating margin</span><span class="v">15.3%</span><span class="c">Sector 13.0% · rising 5 years</span></div>
+        <div class="rt g"><span class="k"><i></i>Promoter holding</span><span class="v">58.2%</span><span class="c">0% pledged</span></div>
+      </div>
+      <p class="means">Green means better than similar companies, amber means worth a second look. ACME earns well on its money and has little debt. The catch is price: you pay more for each rupee of profit than with its peers.</p>
+    </section>
+
+    <!-- TRENDS -->
+    <section id="s-trends" aria-label="Sales and profit trend">
+      <div class="sh"><h2>Sales &amp; profit</h2>
+        <div class="seg" role="group" aria-label="Period">
+          <button id="per-y" data-per="y" aria-pressed="true">10 years</button>
+          <button id="per-q" data-per="q" aria-pressed="false">8 quarters</button>
+        </div>
+      </div>
+      <div class="chart" id="trend-chart"></div>
+      <div class="legend"><span><i style="background:var(--chart-2)"></i>Sales (₹ Cr)</span><span><i style="background:var(--chart-1)"></i>Net profit (₹ Cr)</span><span><i style="background:var(--chart-3);height:3px"></i>Operating margin %</span></div>
+      <p class="means">Sales and profit have grown every year since the FY21 dip, and profit grows faster than sales because margins keep widening.</p>
+    </section>
+
+    <!-- VALUATION -->
+    <section id="s-valuation" aria-label="Valuation">
+      <div class="sh"><h2>Is the price fair?</h2><span class="sub">P/E over 5 years</span></div>
+      <div class="band">
+        <div class="band-track"><span class="band-mid" style="left:34.8%"></span><span class="band-mark" style="left:69.6%" title="Now: 34.0"></span></div>
+        <div class="band-scale"><span>Low 18</span><span>Median 26</span><span>Now 34</span><span>High 41</span></div>
+      </div>
+      <div class="dcf">
+        <div class="sl"><label for="dcf-g">Cash-flow growth, next 10 years</label><output id="o-g" for="dcf-g">17.5%</output><input type="range" id="dcf-g" min="8" max="25" step="0.5" value="17.5"></div>
+        <div class="sl"><label for="dcf-r">Return you expect (discount rate)</label><output id="o-r" for="dcf-r">11.0%</output><input type="range" id="dcf-r" min="9" max="15" step="0.25" value="11"></div>
+        <div class="sl"><label for="dcf-t">Growth after year 10</label><output id="o-t" for="dcf-t">6.0%</output><input type="range" id="dcf-t" min="3" max="7" step="0.25" value="6"></div>
+        <div class="sl"><label for="dcf-m">Safety margin</label><output id="o-m" for="dcf-m">15%</output><input type="range" id="dcf-m" min="0" max="30" step="5" value="15"></div>
+        <div class="fv">
+          <div><small>Fair value</small><b id="fv-val">₹0</b></div>
+          <div><small>Buy below</small><b id="fv-buy">₹0</b></div>
+          <div><small>Price vs fair value</small><b id="fv-gap">0%</b></div>
+        </div>
+      </div>
+      <p class="means">Move the sliders to test your own assumptions. Fair value is today's worth of all future cash the business should produce. "Buy below" leaves room for error.</p>
+    </section>
+
+    <!-- QUALITY -->
+    <section id="s-quality" aria-label="Quality checks">
+      <div class="sh"><h2>Health checks</h2><span class="sub">Standard accounting tests</span></div>
+      <div class="qs">
+        <div class="q"><span class="name">Piotroski F-score</span><span class="val">7 / 9 <span class="pill g">Strong</span></span><span class="bar"><i style="width:77.8%"></i></span><span class="why">9 yes/no tests on profit, debt and efficiency. 7 or more is strong.</span></div>
+        <div class="q"><span class="name">Altman Z-score</span><span class="val">4.6 <span class="pill g">Safe</span></span><span class="bar"><i style="width:76%"></i></span><span class="why">Bankruptcy risk. Above 3.0 is the safe zone.</span></div>
+        <div class="q"><span class="name">Beneish M-score</span><span class="val">−2.71 <span class="pill g">Clean</span></span><span class="bar"><i style="width:82%"></i></span><span class="why">Earnings manipulation check. Below −1.78 means unlikely.</span></div>
+      </div>
+      <p class="means">All three tests pass. The accounts look healthy, the company is far from financial stress, and nothing suggests the profits are dressed up.</p>
+    </section>
+
+    <!-- PEERS -->
+    <section id="s-peers" aria-label="Peer comparison">
+      <div class="sh"><h2>Against its peers</h2><span class="sub">Capital Goods · similar size</span></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Company</th><th>Mcap ₹ Cr</th><th>P/E</th><th>ROE %</th><th>ROCE %</th><th>Debt/Eq</th><th>Sales gr. 3y %</th><th>Op. margin %</th></tr></thead>
+          <tbody>
+            <tr class="me"><td>ACME Industries</td><td>21,350</td><td>34.0</td><td>18.7</td><td>18.1</td><td>0.40</td><td>18.2</td><td>15.3</td></tr>
+            <tr><td>Orbit Engineering</td><td>34,800</td><td>41.2</td><td>21.5</td><td>22.6</td><td>0.12</td><td>20.4</td><td>17.8</td></tr>
+            <tr><td>Nova Machines</td><td>18,900</td><td>27.0</td><td>16.4</td><td>17.2</td><td>0.32</td><td>14.8</td><td>13.9</td></tr>
+            <tr><td>Kestrel Power</td><td>12,600</td><td>19.8</td><td>13.1</td><td>13.4</td><td>0.85</td><td>9.6</td><td>11.2</td></tr>
+            <tr><td>Vertex Systems</td><td>9,750</td><td>23.5</td><td>12.2</td><td>12.9</td><td>0.61</td><td>11.3</td><td>10.6</td></tr>
+            <tr class="med"><td>Sector median</td><td>15,750</td><td>27.0</td><td>15.2</td><td>15.8</td><td>0.55</td><td>12.4</td><td>13.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="means">ACME ranks second on quality, behind Orbit, and costs less than Orbit. It is more expensive than the rest of the group.</p>
+    </section>
+
+    <!-- SHAREHOLDING -->
+    <section id="s-holding" aria-label="Shareholding">
+      <div class="sh"><h2>Who owns it</h2><span class="sub">% of shares, last 8 quarters</span></div>
+      <div class="chart" id="hold-chart"></div>
+      <div class="legend"><span><i style="background:var(--chart-1)"></i>Promoters</span><span><i style="background:var(--chart-2)"></i>Foreign (FII)</span><span><i style="background:var(--chart-3)"></i>Domestic funds (DII)</span><span><i style="background:var(--chart-4)"></i>Public</span></div>
+      <p class="means">Big institutions have been steadily buying (FII 11.8% to 14.6%), usually a sign of confidence. Promoters hold a steady 58% with nothing pledged.</p>
+    </section>
+
+    <!-- AI SUMMARY -->
+    <section id="s-ai" aria-label="Latest results summary">
+      <div class="sh"><h2>Latest results, summarised</h2><span class="ai-chip">AI</span></div>
+      <div class="ai-box">
+        <p><b>Q1 FY27 (Apr to Jun 2026):</b> sales ₹1,560 Cr, up 17% on last year. Profit ₹158 Cr, up 20%.</p>
+        <ul>
+          <li>Order book ₹9,800 Cr, about 1.6 years of sales, which gives visibility on future revenue</li>
+          <li>Management expects 15 to 18% growth this year</li>
+          <li>To watch: customers are taking longer to pay (working capital up from 62 to 71 days)</li>
+        </ul>
+        <span class="src">Written by AI from the company's results filing and earnings call · numbers checked against reported figures</span>
+      </div>
+    </section>
+
+    <!-- STATEMENTS -->
+    <section id="s-statements" aria-label="Financial statements">
+      <div class="sh"><h2>Financial statements</h2>
+        <div class="seg" role="group" aria-label="Statement">
+          <button id="st-pl" data-st="pl" aria-pressed="true">Profit &amp; loss</button>
+          <button id="st-bs" data-st="bs" aria-pressed="false">Balance sheet</button>
+          <button id="st-cf" data-st="cf" aria-pressed="false">Cash flow</button>
+        </div>
+      </div>
+      <div class="tw"><table id="st-table"></table></div>
+      <span class="sub" style="color:var(--ink-2);font-size:0.8em">₹ Crore, consolidated, financial years ending March</span>
+    </section>
+  </div>
+
+  <p class="foot">ACME Industries and every number on this page are made up to show the layout. Nothing here is investment advice.</p>
+</div>
+
+<script>
+(function () {
+  var NOTES = {
+    a: "Light, roomy, one calm accent colour. Reads like a well-made report.",
+    b: "Dark and dense. Everything on one screen, like a professional trading terminal.",
+    c: "Bright and rounded with plain-English explanations on every card. Easiest for beginners."
+  };
+  var root = document.documentElement;
+
+  var Y = { labels: ["FY17","FY18","FY19","FY20","FY21","FY22","FY23","FY24","FY25","FY26"],
+    sales: [2140,2390,2705,2560,2310,3020,3610,4280,5050,5960],
+    profit: [128,152,181,149,118,226,301,389,486,602],
+    margin: [11.2,11.8,12.1,10.9,10.4,12.6,13.4,14.1,14.8,15.3] };
+  var Q = { labels: ["Q2 25","Q3 25","Q4 25","Q1 26","Q2 26","Q3 26","Q4 26","Q1 27"],
+    sales: [1190,1270,1420,1330,1410,1520,1700,1560],
+    profit: [112,128,146,132,141,154,175,158],
+    margin: [14.2,14.9,15.6,14.8,15.0,15.4,16.0,15.7] };
+  var HOLD = { labels: Q.labels, promoter: [58.2,58.2,58.2,58.2,58.2,58.2,58.2,58.2],
+    fii: [11.8,12.1,12.3,12.6,13.2,13.7,14.1,14.6], dii: [11.2,11.4,11.6,11.9,12.1,12.4,12.7,12.9] };
+  HOLD.pub = HOLD.labels.map(function (_, i) { return +(100 - HOLD.promoter[i] - HOLD.fii[i] - HOLD.dii[i]).toFixed(1); });
+
+  var ST = {
+    pl: { cols: ["FY22","FY23","FY24","FY25","FY26"], rows: [
+      ["Sales", [3020,3610,4280,5050,5960]], ["Operating profit (EBITDA)", [381,484,603,747,912]],
+      ["Operating margin %", [12.6,13.4,14.1,14.8,15.3]], ["Other income", [14,18,22,28,32]],
+      ["Depreciation", [62,70,81,92,104]], ["Interest", [48,46,42,38,33]], ["Profit before tax", [285,386,502,645,807]],
+      ["Tax", [59,85,113,159,205]], ["Net profit", [226,301,389,486,602], "sum"], ["EPS (₹)", [13.2,17.6,22.7,28.4,35.2]] ] },
+    bs: { cols: ["FY22","FY23","FY24","FY25","FY26"], rows: [
+      ["Share capital", [34,34,34,34,34]], ["Reserves", [1946,2226,2576,2966,3416]], ["Borrowings", [1780,1690,1560,1470,1380]],
+      ["Other liabilities", [820,910,1040,1180,1320]], ["Total liabilities", [4580,4860,5210,5650,6150], "sum"],
+      ["Fixed assets", [2050,2140,2230,2330,2420]], ["Capital work in progress", [120,140,160,150,170]],
+      ["Investments", [180,200,230,260,300]], ["Cash", [210,260,310,360,420]], ["Other assets", [2020,2120,2280,2550,2840]],
+      ["Total assets", [4580,4860,5210,5650,6150], "sum"] ] },
+    cf: { cols: ["FY22","FY23","FY24","FY25","FY26"], rows: [
+      ["Cash from operations", [330,420,540,650,765]], ["Capital spending", [-190,-205,-220,-238,-245]],
+      ["Free cash flow", [140,215,320,412,520], "sum"], ["Cash from investing", [-215,-230,-255,-270,-290]],
+      ["Cash from financing", [-95,-140,-235,-330,-415]], ["Net change in cash", [20,50,50,50,60], "sum"] ] }
+  };
+
+  function css(name) { return getComputedStyle(root).getPropertyValue(name).trim(); }
+  function fmt(n, d) { return Number(n).toLocaleString("en-IN", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+  function niceMax(v) { var p = Math.pow(10, Math.floor(Math.log10(v))); var m = Math.ceil(v / p * 2) / 2 * p; return m; }
+
+  var period = "y";
+  function drawTrend() {
+    var d = period === "y" ? Y : Q, n = d.labels.length;
+    var W = 640, H = 250, L = 46, R = 40, T = 14, B = 26, cw = (W - L - R) / n;
+    var max = niceMax(Math.max.apply(null, d.sales)), mMax = 20;
+    var y = function (v) { return T + (H - T - B) * (1 - v / max); };
+    var ym = function (v) { return T + (H - T - B) * (1 - v / mMax); };
+    var s = "";
+    for (var g = 0; g <= 4; g++) {
+      var val = max * g / 4, yy = y(val);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '" stroke="' + css("--line") + '" stroke-width="1"/>';
+      s += '<text x="' + (L - 6) + '" y="' + (yy + 4) + '" text-anchor="end">' + fmt(val) + '</text>';
+      s += '<text x="' + (W - R + 6) + '" y="' + (ym(mMax * g / 4) + 4) + '">' + (mMax * g / 4) + '%</text>';
+    }
+    var bw = Math.min(16, cw * 0.32);
+    d.labels.forEach(function (lab, i) {
+      var cx = L + cw * i + cw / 2;
+      s += '<rect x="' + (cx - bw - 1) + '" y="' + y(d.sales[i]) + '" width="' + bw + '" height="' + (y(0) - y(d.sales[i])) + '" rx="2" fill="' + css("--chart-2") + '"><title>' + lab + ' sales ₹' + fmt(d.sales[i]) + ' Cr</title></rect>';
+      s += '<rect x="' + (cx + 1) + '" y="' + y(d.profit[i]) + '" width="' + bw + '" height="' + (y(0) - y(d.profit[i])) + '" rx="2" fill="' + css("--chart-1") + '"><title>' + lab + ' profit ₹' + fmt(d.profit[i]) + ' Cr</title></rect>';
+      s += '<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle">' + lab + '</text>';
+    });
+    var pts = d.margin.map(function (m, i) { return (L + cw * i + cw / 2).toFixed(1) + "," + ym(m).toFixed(1); });
+    s += '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + css("--chart-3") + '" stroke-width="2"/>';
+    var lx = L + cw * (n - 1) + cw / 2, ly = ym(d.margin[n - 1]);
+    s += '<circle cx="' + lx + '" cy="' + ly + '" r="3.5" fill="' + css("--chart-3") + '"/>';
+    s += '<text x="' + (lx - 6) + '" y="' + (ly - 8) + '" text-anchor="end" style="fill:' + css("--chart-3") + ';font-weight:500">' + d.margin[n - 1] + '%</text>';
+    document.getElementById("trend-chart").innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Sales, profit and margin trend">' + s + '</svg>';
+  }
+
+  function drawHold() {
+    var W = 520, H = 210, L = 30, R = 8, T = 8, B = 24, n = HOLD.labels.length, cw = (W - L - R) / n, bw = cw * 0.62;
+    var y = function (v) { return T + (H - T - B) * (1 - v / 100); };
+    var s = "";
+    [0, 50, 100].forEach(function (v) { s += '<text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + v + '%</text>'; });
+    var keys = [["promoter", "--chart-1"], ["fii", "--chart-2"], ["dii", "--chart-3"], ["pub", "--chart-4"]];
+    HOLD.labels.forEach(function (lab, i) {
+      var x = L + cw * i + (cw - bw) / 2, acc = 0;
+      keys.forEach(function (k) {
+        var v = HOLD[k[0]][i];
+        s += '<rect x="' + x.toFixed(1) + '" y="' + y(acc + v).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (y(acc) - y(acc + v) - 1).toFixed(1) + '" fill="' + css(k[1]) + '"><title>' + lab + ' ' + v + '%</title></rect>';
+        acc += v;
+      });
+      s += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (H - 7) + '" text-anchor="middle">' + lab + '</text>';
+    });
+    var last = n - 1, lx = L + cw * last + (cw + bw) / 2;
+    document.getElementById("hold-chart").innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Shareholding pattern over 8 quarters">' + s + '</svg>';
+  }
+
+  var stmt = "pl";
+  function drawStatement() {
+    var d = ST[stmt];
+    var h = '<thead><tr><th></th>' + d.cols.map(function (c) { return '<th>' + c + '</th>'; }).join("") + '<th>Trend</th></tr></thead><tbody>';
+    d.rows.forEach(function (r) {
+      var vals = r[1], dec = vals.some(function (v) { return v % 1 !== 0; }) ? 1 : 0;
+      var first = vals[0], lastv = vals[vals.length - 1];
+      var trend = first === 0 ? "" : (lastv >= first ? '<span class="up">▲</span>' : '<span class="dn">▼</span>');
+      h += '<tr' + (r[2] ? ' class="sum"' : '') + '><td>' + r[0] + '</td>' + vals.map(function (v) { return '<td>' + (v < 0 ? "(" + fmt(-v, dec) + ")" : fmt(v, dec)) + '</td>'; }).join("") + '<td>' + trend + '</td></tr>';
+    });
+    document.getElementById("st-table").innerHTML = h + '</tbody>';
+  }
+
+  function dcf() {
+    var g = +document.getElementById("dcf-g").value / 100, r = +document.getElementById("dcf-r").value / 100;
+    var t = +document.getElementById("dcf-t").value / 100, m = +document.getElementById("dcf-m").value / 100;
+    document.getElementById("o-g").textContent = (g * 100).toFixed(1) + "%";
+    document.getElementById("o-r").textContent = (r * 100).toFixed(1) + "%";
+    document.getElementById("o-t").textContent = (t * 100).toFixed(1) + "%";
+    document.getElementById("o-m").textContent = Math.round(m * 100) + "%";
+    var f = 520, pv = 0;
+    for (var yr = 1; yr <= 10; yr++) { f *= 1 + g; pv += f / Math.pow(1 + r, yr); }
+    var tv = r > t ? f * (1 + t) / (r - t) : 0;
+    pv += tv / Math.pow(1 + r, 10);
+    var fv = Math.max(0, (pv - 960) / 17.1), buy = fv * (1 - m), price = 1248.6;
+    var gap = fv > 0 ? (price / fv - 1) * 100 : 0;
+    document.getElementById("fv-val").textContent = "₹" + fmt(fv);
+    document.getElementById("fv-buy").textContent = "₹" + fmt(buy);
+    var el = document.getElementById("fv-gap");
+    el.textContent = (gap > 0 ? "+" : "") + gap.toFixed(0) + "%";
+    el.className = gap > 0 ? "bad" : "good";
+    el.title = gap > 0 ? "Price is above fair value" : "Price is below fair value";
+  }
+
+  function setStyle(st) {
+    root.setAttribute("data-style", st);
+    document.querySelectorAll(".opt").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.style === st)); });
+    document.getElementById("style-note").textContent = NOTES[st];
+    try { localStorage.setItem("fund-style", st); } catch (e) {}
+    drawTrend(); drawHold();
+  }
+
+  document.querySelectorAll(".opt").forEach(function (b) { b.addEventListener("click", function () { setStyle(b.dataset.style); }); });
+  document.querySelectorAll("[data-per]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      period = b.dataset.per;
+      document.querySelectorAll("[data-per]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      drawTrend();
+    });
+  });
+  document.querySelectorAll("[data-st]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      stmt = b.dataset.st;
+      document.querySelectorAll("[data-st]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      drawStatement();
+    });
+  });
+  ["dcf-g", "dcf-r", "dcf-t", "dcf-m"].forEach(function (id) { document.getElementById(id).addEventListener("input", dcf); });
+
+  var saved = "a";
+  try { saved = localStorage.getItem("fund-style") || "a"; } catch (e) {}
+  if (location.hash === "#b" || location.hash === "#c" || location.hash === "#a") saved = location.hash.slice(1);
+  drawStatement(); dcf(); setStyle(saved);
+})();
+</script>

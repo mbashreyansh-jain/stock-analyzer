@@ -1,0 +1,925 @@
+<title>Sector Tab Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Shared with the Fundamentals tab. Layout: style C "Friendly & bold". Sticky top bar with the app-wide Simple/Pro switch, a section index on the left
+   (chips on phones), and rounded cards per question. Single light look by design. */
+:root {
+  --bg: #F6F5FC; --surface: #FFFFFF; --surface-2: #EFEDF9; --ink: #1C1838; --ink-2: #5E5A7A; --line: #E4E1F2;
+  --accent: #5636D3; --accent-soft: #ECE8FD; --good: #12875A; --good-soft: #DDF4EA; --warn: #B86E06; --warn-soft: #FCEEDA;
+  --bad: #D2433A; --bad-soft: #FBE4E2; --chart-1: #5636D3; --chart-2: #F2A541; --chart-3: #12875A; --chart-4: #C9C3E6;
+  --zebra: #FAF9FE; --now-bg: #F1EDFD; --deep-good: #0B6A45; --deep-bad: #A3241B;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-num: "DM Mono", ui-monospace, Menlo, monospace;
+  --radius: 20px;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--f-body); }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { margin: 0; font-family: var(--f-display); text-wrap: balance; line-height: 1.2; }
+p { margin: 0; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+/* mode visibility */
+:root[data-mode="simple"] .p-only { display: none !important; }
+:root[data-mode="pro"] .s-only { display: none !important; }
+
+/* prototype strip */
+.proto { background: var(--ink); color: #E9E6FA; padding-inline: 16px; padding-block: 7px; font-size: 12.5px; display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center; }
+.proto b { background: var(--chart-2); color: var(--ink); padding: 1px 7px; border-radius: 4px; font-size: 11px; letter-spacing: 0.04em; }
+
+/* top bar */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.topbar-in { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 10px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { font: 800 1.1rem var(--f-display); display: flex; align-items: center; gap: 8px; }
+.brand i { width: 24px; height: 24px; border-radius: 8px; background: var(--accent); display: inline-block; }
+.search { flex: 1 1 200px; max-width: 420px; display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; color: var(--ink-2); font-size: 0.9em; }
+.search kbd { margin-left: auto; font: 500 11px var(--f-num); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+.mode { display: inline-flex; align-items: center; gap: 10px; margin-left: auto; }
+.mode-lbl { font-size: 0.8em; color: var(--ink-2); }
+.seg { display: inline-flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 999px; }
+.seg button { border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; font-size: 0.86em; color: var(--ink-2); font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; font-weight: 700; }
+
+/* page */
+.page { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 70px; display: grid; gap: 16px; }
+.stock { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.stock h1 { font-size: 1.9em; font-weight: 800; letter-spacing: -0.01em; }
+.stock .meta { color: var(--ink-2); font-size: 0.9em; }
+.stock .px { font: 500 1.5em var(--f-num); }
+.stock .chg { font: 500 0.95em var(--f-num); color: var(--good); }
+.stock .actions { margin-left: auto; display: flex; gap: 8px; position: relative; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 16px; font-weight: 600; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px; }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 18px 40px -18px rgba(28, 24, 56, 0.35); padding: 6px; width: 290px; z-index: 40; display: grid; gap: 2px; }
+.menu button { border: 0; background: transparent; text-align: left; padding: 10px 12px; border-radius: 10px; display: grid; gap: 1px; }
+.menu button:hover, .menu button:focus-visible { background: var(--surface-2); }
+.menu b { font-size: 0.92em; }
+.menu small { color: var(--ink-2); font-size: 0.78em; }
+.menu .unavail { font-size: 0.78em; color: var(--warn); padding: 6px 12px; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 0.9em; z-index: 60; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.4); }
+.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.tabs span { flex: none; padding: 7px 16px; border-radius: 999px; color: var(--ink-2); font-weight: 500; font-size: 0.94em; }
+.tabs span.on { background: var(--ink); color: #fff; font-weight: 700; }
+.asof { font-size: 0.8em; color: var(--ink-2); }
+
+.layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 22px; align-items: start; }
+.index { position: sticky; top: 76px; display: grid; gap: 2px; font-size: 0.88em; }
+.index a { color: var(--ink-2); text-decoration: none; padding: 6px 12px; border-radius: 10px; display: flex; justify-content: space-between; gap: 8px; }
+.index a:hover { background: var(--surface); color: var(--ink); }
+.index a i { width: 8px; height: 8px; border-radius: 50%; align-self: center; flex: none; }
+.index a i.g { background: var(--good); } .index a i.w { background: var(--warn); } .index a i.n { background: var(--chart-4); }
+.main { display: grid; gap: 18px; min-width: 0; }
+
+.card { background: var(--surface); border-radius: var(--radius); padding: 22px; display: grid; gap: 16px; align-content: start; min-width: 0; scroll-margin-top: 80px;
+  box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); }
+/* Grid children default to min-width:auto, which lets a wide table stretch the card past the screen. */
+.card > *, .metrics, .two > *, .biz > * { min-width: 0; }
+.sh { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sh h2 { font-size: 1.35em; font-weight: 800; }
+:root[data-mode="pro"] .sh h2 { font-size: 1.15em; }
+.sh .sub { color: var(--ink-2); font-size: 0.85em; }
+.verdict { font: 600 0.78em var(--f-num); padding: 4px 11px; border-radius: 999px; white-space: nowrap; }
+.verdict.g, .chip.g { background: var(--good-soft); color: var(--good); }
+.verdict.w, .chip.w { background: var(--warn-soft); color: var(--warn); }
+.verdict.r, .chip.r { background: var(--bad-soft); color: var(--bad); }
+.verdict.n, .chip.n { background: var(--surface-2); color: var(--ink-2); }
+.chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.means { color: var(--ink); background: var(--accent-soft); border-radius: 14px; padding: 12px 16px; display: flex; gap: 10px; font-size: 0.93em; }
+.means::before { content: "i"; flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; font: 700 12px/20px var(--f-num); text-align: center; }
+:root[data-mode="pro"] .means { background: transparent; padding: 0; color: var(--ink-2); font-size: 0.88em; }
+:root[data-mode="pro"] .means::before { content: "Takeaway"; width: auto; height: auto; border-radius: 4px; padding: 1px 6px; font: 600 10px/16px var(--f-num); text-transform: uppercase; letter-spacing: 0.05em; background: var(--surface-2); color: var(--ink-2); align-self: flex-start; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.two > * { min-width: 0; }
+.note { font-size: 0.8em; color: var(--ink-2); }
+
+/* summary */
+.summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+.ring { position: relative; width: 128px; height: 128px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; line-height: 1.05; }
+.ring .lbl b { font: 600 2.2em var(--f-num); display: block; }
+.ring .lbl small { font-size: 0.72em; color: var(--ink-2); }
+.sum-body { display: grid; gap: 12px; min-width: 0; }
+.sum-body h2 { font-size: 1.85em; font-weight: 800; letter-spacing: -0.01em; }
+.grades { display: flex; flex-wrap: wrap; gap: 8px; }
+.grade { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border-radius: 999px; font-size: 0.86em; font-weight: 500; text-decoration: none; color: var(--ink); }
+.grade b { font: 600 0.9em var(--f-num); min-width: 32px; text-align: center; padding: 2px 4px; border-radius: 999px; background: var(--surface); }
+.grade.g { background: var(--good-soft); } .grade.g b { color: var(--good); }
+.grade.w { background: var(--warn-soft); } .grade.w b { color: var(--warn); }
+.pc { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.pc ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.92em; }
+.pc li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; }
+.pc .pros li::before { content: "▲"; color: var(--good); font-size: 0.7em; padding-top: 4px; }
+.pc .cons li::before { content: "▼"; color: var(--bad); font-size: 0.7em; padding-top: 4px; }
+.pc h3 { font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); margin-bottom: 6px; font-family: var(--f-body); }
+.breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.breakdown div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.82em; }
+.breakdown b { font: 600 1.25em var(--f-num); }
+
+/* metric tiles (simple) */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tile { border-radius: 16px; background: var(--surface-2); padding: 14px; display: grid; gap: 4px; align-content: start; }
+.tile.g { background: var(--good-soft); } .tile.w { background: var(--warn-soft); } .tile.r { background: var(--bad-soft); }
+.t-top { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.t-name { font-size: 0.86em; font-weight: 500; }
+.t-val { font: 500 1.5em var(--f-num); font-variant-numeric: tabular-nums; }
+.t-pro { font-size: 0.74em; color: var(--ink-2); }
+.t-cmp { font-size: 0.78em; color: var(--ink-2); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tile .chip { background: var(--surface); }
+.more { justify-self: start; border: 0; background: transparent; color: var(--accent); font-weight: 600; font-size: 0.88em; padding: 4px 0; }
+.info { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--ink-2); background: transparent; color: var(--ink-2); font: 700 11px/1 var(--f-num); padding: 0; display: inline-grid; place-items: center; }
+.info:hover { border-color: var(--accent); color: var(--accent); }
+
+/* tables: units live in the row label so cells hold clean numbers; zebra rows; the current column is tinted */
+.tw { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 0.9em; }
+th, td { padding: 11px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+th:first-child, td:first-child { text-align: left; }
+thead th { background: var(--surface-2); color: var(--ink-2); font: 600 0.74em/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.05em; padding-block: 10px; }
+thead th.old { color: color-mix(in srgb, var(--ink-2) 70%, transparent); }
+tbody tr:nth-child(even) > * { background: var(--zebra); }
+tbody tr:hover > * { background: var(--accent-soft); }
+tbody tr:last-child > * { border-bottom: 0; }
+tbody th { font-weight: 600; }
+td { font-family: var(--f-num); font-variant-numeric: tabular-nums; color: var(--ink); }
+td.dim { color: var(--ink-2); }
+tbody th.now, tbody td.now, thead th.now { background: var(--now-bg); }
+tbody tr:hover > .now { background: var(--accent-soft); }
+td.now { font-weight: 700; }
+thead th.now { color: var(--accent); }
+/* Metric names stay visible while numbers scroll sideways on small screens */
+.tw th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); box-shadow: 1px 0 0 var(--line); }
+.tw thead th:first-child { background: var(--surface-2); }
+.tw tbody tr:nth-child(even) > th:first-child { background: var(--zebra); }
+.tw tbody tr:hover > th:first-child { background: var(--accent-soft); }
+.mname { display: grid; gap: 2px; min-width: 190px; max-width: 250px; white-space: normal; }
+.mname .cell { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mname small { font-weight: 400; color: var(--ink-2); font-size: 0.82em; line-height: 1.3; }
+.unit { font: 500 0.78em var(--f-num); color: var(--ink-2); background: var(--surface-2); border-radius: 4px; padding: 0 5px; }
+tr.me > *, .tw tr.me > th:first-child { background: var(--accent-soft); font-weight: 700; }
+tr.med > *, .tw tr.med > th:first-child { color: var(--ink-2); font-style: italic; }
+tr.sum > * { font-weight: 700; }
+tr.sum > *:not(.now) { background: var(--zebra); }
+td .up { color: var(--good); } td .dn { color: var(--bad); }
+.status { display: inline-flex; align-items: center; gap: 6px; font: 600 0.82em var(--f-body); }
+.status i { width: 8px; height: 8px; border-radius: 50%; }
+.status.g { color: var(--good); } .status.g i { background: var(--good); }
+.status.w { color: var(--warn); } .status.w i { background: var(--warn); }
+.status.r { color: var(--bad); } .status.r i { background: var(--bad); }
+.status.n { color: var(--ink-2); } .status.n i { background: var(--chart-4); }
+.spark { display: inline-block; vertical-align: middle; }
+
+/* charts */
+.chart svg { display: block; width: 100%; height: auto; }
+.chart text { fill: var(--ink-2); font: 400 11px var(--f-num); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82em; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* business */
+.biz { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.facts div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 0.8em; color: var(--ink-2); display: grid; gap: 2px; }
+.facts b { color: var(--ink); font: 600 1.1em var(--f-num); }
+.donut-wrap { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; align-items: center; }
+.seglist { display: grid; gap: 8px; font-size: 0.86em; }
+.seglist div { display: grid; grid-template-columns: 12px 1fr auto; gap: 8px; align-items: center; }
+.seglist i { width: 12px; height: 12px; border-radius: 4px; }
+.geo { height: 14px; border-radius: 7px; overflow: hidden; display: flex; }
+
+/* valuation */
+.band { display: grid; gap: 8px; }
+.band-track { position: relative; height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--good-soft), var(--surface-2) 50%, var(--bad-soft)); border: 1px solid var(--line); }
+.band-mark { position: absolute; top: -6px; width: 4px; height: 24px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); }
+.band-mid { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--ink-2); opacity: 0.6; }
+.band-scale { display: flex; justify-content: space-between; font: 400 0.78em var(--f-num); color: var(--ink-2); }
+.dcf { display: grid; gap: 10px; background: var(--surface-2); border-radius: 16px; padding: 16px; }
+.sl { display: grid; grid-template-columns: minmax(0, 1fr) 62px; gap: 2px 10px; align-items: center; font-size: 0.86em; }
+.sl label { color: var(--ink-2); }
+.sl output { font: 500 0.95em var(--f-num); text-align: right; }
+.sl input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.fv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.fv div { display: grid; gap: 2px; }
+.fv small { font-size: 0.76em; color: var(--ink-2); }
+.fv b { font: 600 1.25em var(--f-num); }
+.fv b.good { color: var(--good); } .fv b.bad { color: var(--bad); }
+
+/* dupont */
+.dupont { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dupont div { background: var(--surface-2); border-radius: 12px; padding: 10px 14px; display: grid; gap: 1px; font-size: 0.8em; color: var(--ink-2); }
+.dupont div b { font: 600 1.25em var(--f-num); color: var(--ink); }
+.dupont div.res { background: var(--good-soft); }
+.dupont span { font: 600 1.2em var(--f-num); color: var(--ink-2); }
+
+/* results */
+.qcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.qcards div { background: var(--surface-2); border-radius: 16px; padding: 14px; display: grid; gap: 2px; }
+.qcards small { color: var(--ink-2); font-size: 0.8em; }
+.qcards b { font: 500 1.4em var(--f-num); }
+.qcards em { font-style: normal; font: 500 0.85em var(--f-num); color: var(--good); }
+.ai-box { display: grid; gap: 8px; border: 1.5px dashed var(--accent); border-radius: 16px; padding: 14px 16px; }
+.ai-box ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 0.92em; }
+.ai-box .src { font-size: 0.78em; color: var(--ink-2); }
+.ai-chip { font: 600 0.72em var(--f-num); padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+
+/* red flags */
+.flags { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; }
+.flag { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.flag .ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--f-num); background: var(--good-soft); color: var(--good); }
+.flag.w .ic { background: var(--warn-soft); color: var(--warn); }
+.flag.w { background: var(--warn-soft); }
+.flag b { display: block; }
+.flag span { color: var(--ink-2); font-size: 0.92em; }
+.qs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.q { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto 44px auto auto 1fr; gap: 8px; align-content: start; }
+.q-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92em; }
+.q-val { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.q-val .big { font: 600 1.9em/1 var(--f-num); }
+.q-val .big small { font-size: 0.5em; color: var(--ink-2); }
+.zbar { position: relative; height: 10px; }
+.zbar .segs { display: flex; height: 100%; border-radius: 5px; overflow: hidden; }
+.zbar .segs span { height: 100%; }
+.zbar i { position: absolute; top: -5px; width: 4px; height: 20px; background: var(--ink); border-radius: 2px; transform: translateX(-50%); box-shadow: 0 0 0 2px var(--surface-2); }
+.zlbl { display: flex; font-size: 0.72em; color: var(--ink-2); }
+.zlbl span { text-align: center; }
+.q .why { color: var(--ink-2); font-size: 0.84em; }
+.flags { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; }
+
+.signal { gap: 16px; border: 2px solid var(--good-soft); }
+.signal { gap: 12px; padding: 18px 20px; }
+.sig-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.hzc { border: 1.5px solid transparent; background: var(--surface-2); border-radius: 14px; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; min-width: 0; }
+.hzc:hover { border-color: var(--line); }
+.hzc[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.hzc .t { display: grid; line-height: 1.2; min-width: 0; }
+.hzc .t b { font-size: 0.86em; }
+.hzc .t small { font-size: 0.72em; color: var(--ink-2); }
+.hzc .sp { font: 800 0.74em/1 var(--f-body); letter-spacing: 0.04em; padding: 6px 10px; border-radius: 999px; color: #fff; white-space: nowrap; flex: none; }
+.sp.buy { background: var(--good); } .sp.sbuy { background: var(--deep-good); } .sp.neutral { background: var(--ink-2); } .sp.sell { background: var(--bad); } .sp.ssell { background: var(--deep-bad); }
+.hz-detail { background: var(--surface-2); border-radius: 14px; padding: 14px 16px; display: grid; gap: 10px; font-size: 0.92em; }
+.hz-detail .drivers { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); column-gap: 24px; }
+.sig-line { font-size: 0.95em; font-weight: 600; }
+.sig-hint { font-size: 0.76em; color: var(--ink-2); }
+@media (max-width: 560px) {
+  .hzc { flex-direction: column; align-items: flex-start; padding: 8px 10px; }
+  .hzc .sp { font-size: 0.68em; padding: 5px 8px; }
+  .hzc .wt { display: none; }
+}
+.hz-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.hz { background: var(--surface-2); border-radius: 16px; padding: 16px; display: grid; grid-template-rows: auto auto auto auto 1fr; gap: 10px; align-content: start; border-top: 4px solid var(--ink-2); }
+.hz.buy { border-top-color: var(--good); } .hz.sbuy { border-top-color: var(--deep-good); } .hz.neutral { border-top-color: var(--chart-4); }
+.hz.sell { border-top-color: var(--bad); } .hz.ssell { border-top-color: var(--deep-bad); }
+.hz-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+.hz-head b { display: block; font-size: 0.98em; }
+.hz-head small { color: var(--ink-2); font-size: 0.8em; }
+.hz-pill { justify-self: start; font: 800 1.25em/1 var(--f-display); padding: 8px 18px; border-radius: 999px; color: #fff; letter-spacing: 0.03em; }
+.hz.buy .hz-pill { background: var(--good); } .hz.sbuy .hz-pill { background: var(--deep-good); } .hz.neutral .hz-pill { background: var(--ink-2); }
+.hz.sell .hz-pill { background: var(--bad); } .hz.ssell .hz-pill { background: var(--deep-bad); }
+.mini { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+.mini span { height: 8px; border-radius: 4px; background: var(--surface); }
+.mini span.on { height: 12px; margin-top: -2px; }
+.mini span.on.c0 { background: var(--deep-bad); } .mini span.on.c1 { background: var(--bad); } .mini span.on.c2 { background: var(--ink-2); }
+.mini span.on.c3 { background: var(--good); } .mini span.on.c4 { background: var(--deep-good); }
+.mini-lbl { display: flex; justify-content: space-between; font-size: 0.7em; color: var(--ink-2); margin-top: -4px; }
+.hz p { font-size: 0.88em; }
+.drivers { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.82em; }
+.drivers li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 5px; }
+.drivers li span { color: var(--ink-2); }
+.drivers li b { font-family: var(--f-num); font-weight: 500; text-align: right; }
+.drivers li.rule { border: 0; color: var(--ink); font-style: italic; }
+.sig-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.sig-head h2 { font-size: 1.35em; font-weight: 800; }
+@media (max-width: 760px) { .hz-grid { grid-template-columns: 1fr; } }
+.sig-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.sig-lbl { font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.sig-pill { font: 800 1.7em/1 var(--f-display); padding: 10px 26px; border-radius: 999px; color: #fff; background: var(--good); letter-spacing: 0.03em; }
+.sig-h { font-size: 0.86em; color: var(--ink-2); }
+.sig-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.ss { text-align: center; font: 600 0.78em/1.2 var(--f-body); padding: 9px 4px; background: var(--surface-2); color: var(--ink-2); border-radius: 6px; }
+.ss:first-child { border-radius: 999px 6px 6px 999px; } .ss:last-child { border-radius: 6px 999px 999px 6px; }
+.ss.sb, .ss.s { color: var(--bad); } .ss.b, .ss.stb { color: var(--good); }
+.ss.on { color: #fff; font-weight: 800; box-shadow: 0 6px 16px -8px rgba(28, 24, 56, 0.5); }
+.ss.on.sb { background: var(--deep-bad); } .ss.on.s { background: var(--bad); } .ss.on.n { background: var(--ink-2); }
+.ss.on.b { background: var(--good); } .ss.on.stb { background: var(--deep-good); }
+.sig-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.sig-stats div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; font-size: 0.8em; color: var(--ink-2); }
+.sig-stats b { font: 600 1.3em var(--f-num); color: var(--ink); }
+.sig-stats em { font-style: normal; font-weight: 600; }
+.matrix td { text-align: center; font-family: var(--f-body); }
+.matrix th:first-child { min-width: 150px; }
+.matrix td.hit { outline: 2.5px solid var(--accent); outline-offset: -3px; border-radius: 10px; font-weight: 800; }
+
+.docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+.doc { display: grid; grid-template-columns: 38px 1fr; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); font-size: 0.88em; }
+.doc .ft { width: 38px; height: 44px; border-radius: 8px; background: var(--surface); display: grid; place-items: center; font: 600 10px var(--f-num); color: var(--bad); border: 1px solid var(--line); }
+.doc small { color: var(--ink-2); display: block; }
+
+.ca { display: grid; gap: 6px; font-size: 0.88em; }
+.ca div { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding: 8px 12px; background: var(--surface-2); border-radius: 10px; }
+.ca span { font-family: var(--f-num); color: var(--ink-2); }
+
+/* popover */
+.pop { position: fixed; z-index: 70; width: min(360px, calc(100vw - 32px)); background: var(--surface); border-radius: 18px; padding: 18px; box-shadow: 0 24px 60px -20px rgba(28, 24, 56, 0.45); border: 1px solid var(--line); display: grid; gap: 10px; font-size: 0.9em; }
+.pop h3 { font-size: 1.15em; font-weight: 800; padding-right: 26px; }
+.pop .pro-name { font: 500 0.8em var(--f-num); color: var(--ink-2); }
+.pop dl { margin: 0; display: grid; gap: 8px; }
+.pop dt { font-size: 0.74em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+.pop dd { margin: 0; }
+.pop .x { position: absolute; top: 12px; right: 12px; border: 0; background: var(--surface-2); width: 28px; height: 28px; border-radius: 50%; font-weight: 700; }
+.pop .reading { background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; }
+
+.foot { font-size: 0.8em; color: var(--ink-2); text-align: center; padding-top: 6px; }
+
+@media (max-width: 1200px) {
+  .layout { grid-template-columns: 1fr; }
+  .index { position: sticky; top: 64px; z-index: 20; display: flex; overflow-x: auto; gap: 6px; padding-block: 6px; background: var(--bg); scrollbar-width: none; }
+  .index a { flex: none; background: var(--surface); border-radius: 999px; padding: 6px 12px; }
+  .biz, .two { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .topbar-in, .page { padding-inline: 16px; }
+  .mode { margin-left: 0; width: 100%; justify-content: space-between; }
+  .summary { grid-template-columns: 1fr; justify-items: start; }
+  .pc { grid-template-columns: 1fr; }
+  .stock .actions { margin-left: 0; }
+  .fv { grid-template-columns: 1fr 1fr; }
+  .donut-wrap { grid-template-columns: 100px minmax(0, 1fr); }
+  .pop { left: 16px !important; right: 16px; top: auto !important; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: auto; }
+  .card { padding: 16px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .q .bar i { transition: width 0.5s ease; }
+}
+
+/* ---------- Sector tab ---------- */
+.quick { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.quick li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; font-size: 0.98em; line-height: 1.45; }
+.quick .lt { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 800 16px var(--f-body); }
+.quick li.g .lt { background: var(--good); } .quick li.w .lt { background: var(--warn); }
+.groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.grp { border-radius: 16px; padding: 14px; display: grid; gap: 10px; align-content: start; }
+.grp.g { background: var(--good-soft); } .grp.w { background: var(--warn-soft); } .grp.b { background: var(--accent-soft); } .grp.r { background: var(--bad-soft); }
+.grp-h { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; }
+.grp-ic { width: 34px; height: 34px; border-radius: 10px; background: var(--surface); display: grid; place-items: center; font: 800 24px/1 var(--f-num); }
+.grp.g .grp-ic { color: var(--good); } .grp.w .grp-ic { color: var(--warn); } .grp.b .grp-ic { color: var(--accent); } .grp.r .grp-ic { color: var(--bad); }
+.grp-h b { display: block; font-size: 0.98em; } .grp-h span { font-size: 0.84em; color: var(--ink-2); }
+.gchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.gchip { background: var(--surface); border-radius: 999px; padding: 4px 11px; font-size: 0.85em; font-weight: 500; }
+.gchip.me { background: var(--ink); color: #fff; font-weight: 700; }
+.howto { background: var(--surface-2); border-radius: 14px; padding: 12px 16px; display: grid; gap: 6px; font-size: 0.88em; }
+.howto ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.hm-key { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.key { display: inline-flex; align-items: center; gap: 6px; font-size: 0.95em; }
+.key i { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+.mode-note { font-size: 0.82em; color: var(--ink-2); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 8px 12px; }
+@media (max-width: 600px) { .groups { grid-template-columns: 1fr; } }
+
+.vsbars { display: grid; gap: 10px; background: var(--surface-2); border-radius: 16px; padding: 14px 16px; }
+.vb { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr) 70px; gap: 12px; align-items: center; font-size: 0.95em; }
+.vb .bar { height: 16px; border-radius: 8px; background: var(--surface); overflow: hidden; }
+.vb .bar i { display: block; height: 100%; border-radius: 8px; background: var(--chart-4); transition: width 0.4s; }
+.vb.me .bar i { background: var(--accent); } .vb.me span:first-child { font-weight: 700; }
+.vb b { font: 600 1em var(--f-num); text-align: right; } .vb b.up, .rs-pro .up { color: var(--good); } .vb b.dn { color: var(--bad); }
+.rs-pro { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.rs-pro div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; font-size: 0.8em; color: var(--ink-2); display: grid; gap: 2px; }
+.rs-pro b { font: 600 1.3em var(--f-num); color: var(--ink); }
+.treemap { position: relative; width: 100%; border-radius: 14px; overflow: hidden; }
+.tm { position: absolute; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+.tm.me { outline: 3px solid var(--ink); outline-offset: -3px; }
+.tm-n { font-weight: 600; font-size: 0.86em; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+#rrg-chart { overflow-x: auto; }
+@media (max-width: 600px) { #rrg-chart svg { min-width: 560px; } }
+.tm-n.sm { font-size: 0.68em; }
+.tm-n em { font-style: normal; font: 700 0.7em var(--f-num); background: var(--ink); color: #fff; border-radius: 4px; padding: 1px 5px; margin-left: 4px; }
+.tm b { font: 600 1.15em var(--f-num); }
+.tm b.sm { font-size: 0.8em; }
+.tm { padding: 6px 8px; }
+.hm-legend { display: flex; align-items: center; gap: 10px; font-size: 0.8em; color: var(--ink-2); flex-wrap: wrap; }
+.hm-scale { width: 140px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, rgb(210,67,58), rgb(239,237,249), rgb(18,135,90)); }
+.rank-list { display: grid; gap: 6px; }
+.rkr { display: grid; grid-template-columns: 26px minmax(0, 180px) minmax(0, 1fr) 64px; gap: 10px; align-items: center; padding: 6px 10px; border-radius: 10px; font-size: 0.92em; }
+.rkr.me { background: var(--accent-soft); font-weight: 700; }
+.rkr .pos { font: 600 0.85em var(--f-num); color: var(--ink-2); text-align: center; }
+.rkr .rbar { position: relative; height: 14px; background: var(--surface-2); border-radius: 7px; }
+.rkr .rbar::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--ink-2); opacity: 0.4; }
+.rkr .rbar i { position: absolute; top: 0; bottom: 0; border-radius: 7px; }
+.rkr .rbar i.up { background: var(--good); } .rkr .rbar i.dn { background: var(--bad); }
+.rkr b { font: 600 0.95em var(--f-num); text-align: right; } .rkr b.up { color: var(--good); } .rkr b.dn { color: var(--bad); }
+.subind { display: grid; gap: 6px; }
+.drv { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px; }
+.dv { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); }
+.dv-ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 700 15px var(--f-num); background: var(--surface); }
+.dv.g .dv-ic { color: var(--good); } .dv.r .dv-ic { color: var(--bad); } .dv.n .dv-ic { color: var(--ink-2); }
+.dv b { display: block; font-size: 0.92em; } .dv div span { font-size: 0.82em; color: var(--ink-2); }
+.dv-tag { font: 700 0.72em var(--f-body); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.dv-tag.g { background: var(--good-soft); color: var(--good); } .dv-tag.r { background: var(--bad-soft); color: var(--bad); } .dv-tag.n { background: var(--surface); color: var(--ink-2); }
+.snews { display: grid; gap: 8px; }
+.sn { display: grid; gap: 4px; padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--chart-4); font-size: 0.92em; }
+.sn.g { border-left-color: var(--good); } .sn.r { border-left-color: var(--bad); }
+.sn .n-meta { font-size: 0.8em; color: var(--ink-2); }
+.tone { font-weight: 700; font-size: 0.82em; } .tone.g { color: var(--good); } .tone.r { color: var(--bad); }
+.sig-hint { font-size: 0.76em; color: var(--ink-2); }
+.sh h2 .info { margin-left: 8px; vertical-align: 2px; }
+@media (max-width: 600px) {
+  .vb { grid-template-columns: minmax(0, 1fr) 64px; gap: 4px 10px; }
+  .vb .bar { grid-column: 1 / -1; grid-row: 2; }
+  .rkr { grid-template-columns: 22px minmax(0, 1fr) 56px; }
+  .rkr .rbar { grid-column: 2 / -1; grid-row: 2; }
+  .drv { grid-template-columns: 1fr; }
+  .dv { grid-template-columns: 30px minmax(0, 1fr); } .dv-tag { grid-column: 2; justify-self: start; }
+}
+</style>
+
+<div class="proto"><b>PROTOTYPE</b><span>ACME Industries, the companies and every number here are samples. Industry names are generic, so the layout can be judged with realistic content.</span></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="brand"><i aria-hidden="true"></i>Stock AI</span>
+    <div class="search" aria-hidden="true">Search any NSE stock <kbd>⌘K</kbd></div>
+    <div class="mode">
+      <span class="mode-lbl" id="mode-hint">Plain-English explanations</span>
+      <div class="seg" role="group" aria-label="Detail level for every tab">
+        <button id="mode-simple" data-mode="simple" aria-pressed="true">Simple</button>
+        <button id="mode-pro" data-mode="pro" aria-pressed="false">Pro</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="stock">
+    <h1>ACME Industries Ltd</h1>
+    <span class="meta">NSE: ACME · Capital Goods · Electrical equipment</span>
+    <span class="px">₹1,248.60</span>
+    <span class="chg">▲ 22.10 (1.80%)</span>
+    <div class="actions">
+      <button class="btn primary" id="dl-btn" aria-haspopup="true" aria-expanded="false">Download ▾</button>
+      <div class="menu" id="dl-menu" role="menu" hidden>
+        <button role="menuitem" id="dl-pdf" data-dl="pdf"><b>Sector report (PDF)</b><small>Signals, ACME vs sector, rotation, drivers and rankings</small></button>
+        <button role="menuitem" id="dl-csv" data-dl="csv"><b>Sector returns (CSV)</b><small>Every industry with returns, valuation and rotation</small></button>
+        <p class="unavail" id="dl-unavail" hidden>Downloads work when this page is opened on claude.ai.</p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabs" aria-label="Stock sections">
+    <span>Overview</span><span>Fundamentals</span><span>Technicals</span><span>AI Verdict</span><span class="on">Sector</span><span>News</span>
+  </nav>
+  <p class="mode-note"><span class="s-only">You're in <b>Simple</b> mode: quick answers in plain words. Switch to <b>Pro</b> for every chart, full tables and market terms.</span><span class="p-only">You're in <b>Pro</b> mode: every chart, full tables and market terms. Switch to <b>Simple</b> for quick answers in plain words.</span></p>
+  <p class="asof">Prices as of 16 Oct 2026 close · Sector returns are size-weighted</p>
+
+  <div class="layout">
+    <nav class="index" aria-label="Sector sections" id="index"></nav>
+
+    <main class="main">
+
+      <!-- SUMMARY (Simple) -->
+      <section class="card s-only" id="quick" data-title-s="In 30 seconds" data-title-p="Summary" data-v="g">
+        <div class="sh"><h2>ACME's industry in 30 seconds</h2></div>
+        <ul class="quick">
+          <li class="g"><span class="lt">✓</span><span><b>The industry is doing well.</b> Capital goods companies (makers of machines and power equipment) went up 3.8% this month. The whole market went up 2.0%.</span></li>
+          <li class="g"><span class="lt">✓</span><span><b>There's a strong reason behind it.</b> The government is spending heavily on power grids, roads and railways, and companies are building new factories. That means more orders.</span></li>
+          <li class="w"><span class="lt">!</span><span><b>But it has become expensive.</b> Shares in this industry cost more than usual compared with their profits. If growth slows, prices could fall.</span></li>
+        </ul>
+      </section>
+
+      <!-- SIGNALS -->
+      <section class="card signal" id="signal" data-title-s="Good industry?" data-title-p="Sector signals" data-v="g">
+        <div class="sig-head">
+          <span class="sig-lbl"><span class="s-only">Is this a good industry to invest in?</span><span class="p-only">Sector signals</span> <button class="info" data-term="signal" aria-label="How are the sector signals worked out?">i</button></span>
+          <span class="sig-hint">Tap a time frame for the reason</span>
+        </div>
+        <div class="sig-row" role="group" aria-label="Sector signals by time frame">
+          <button class="hzc" id="hz-short" data-hz="short" aria-expanded="false" aria-controls="hzd-short"><span class="t"><b>Short<span class="wt"> term</span></b><small>2 to 6 weeks</small></span><span class="sp buy">BUY</span></button>
+          <button class="hzc" id="hz-med" data-hz="med" aria-expanded="false" aria-controls="hzd-med"><span class="t"><b>Medium<span class="wt"> term</span></b><small>1 to 6 months</small></span><span class="sp buy">BUY</span></button>
+          <button class="hzc" id="hz-long" data-hz="long" aria-expanded="false" aria-controls="hzd-long"><span class="t"><b>Long<span class="wt"> term</span></b><small>1 to 3 years</small></span><span class="sp neutral"><span class="s-only">WAIT</span><span class="p-only">NEUTRAL</span></span></button>
+        </div>
+        <p class="sig-line"><span class="s-only">A strong industry with the wind behind it. But the whole industry has become expensive, so gains over the next few years may be slower.</span><span class="p-only">Capital goods is Leading on rotation with record order books. Short and medium term Buy. Long term Neutral: sector P/E 33.5 vs 5-year median 26.</span></p>
+        <div class="hz-detail" id="hzd-short" hidden>
+          <strong><span class="s-only">Next few weeks: Buy</span><span class="p-only">Short term: Buy</span></strong>
+          <p class="s-only">Money is flowing into this industry right now. It went up more than the overall market this month, and most of its companies are rising together.</p>
+          <ul class="drivers p-only"><li><span>Sector vs NIFTY 50, 1 month</span><b>+3.8% vs +2.0%</b></li><li><span>Stocks above 50-day average</span><b>68%</b></li><li><span>FII net flow, 1 month</span><b>+₹4,850 Cr</b></li><li><span>Rotation quadrant</span><b>Leading</b></li><li class="rule">Leading quadrant with breadth above 60% = Buy.</li></ul>
+        </div>
+        <div class="hz-detail" id="hzd-med" hidden>
+          <strong><span class="s-only">Next few months: Buy</span><span class="p-only">Medium term: Buy</span></strong>
+          <p class="s-only">Companies in this industry have about 3 years of orders waiting, and the government keeps spending on roads, power and railways. Profits should keep growing.</p>
+          <ul class="drivers p-only"><li><span>Sector order book / sales</span><b>3.0×</b></li><li><span>Expected profit growth, FY27</span><b>+22%</b></li><li><span>Forecast changes, 90 days</span><b>+2.8%</b></li><li><span>Government capex, YoY</span><b>+11%</b></li><li class="rule">Earnings momentum 76 / 100 = Buy.</li></ul>
+        </div>
+        <div class="hz-detail" id="hzd-long" hidden>
+          <strong><span class="s-only">Next few years: Wait</span><span class="p-only">Long term: Neutral</span></strong>
+          <p class="s-only">The industry's future looks good, but its shares already cost a lot compared with the past. When an industry is this expensive, future gains are often smaller.</p>
+          <ul class="drivers p-only"><li><span>Sector P/E now vs 5-yr median</span><b>33.5 vs 26</b></li><li><span>Position in 5-yr range</span><b>83rd percentile</b></li><li><span>Expected profit growth, 3 yrs</span><b>+19% a year</b></li><li><span>PEG</span><b>1.8</b></li><li class="rule">Strong growth but valuation above the 75th percentile = Neutral.</li></ul>
+        </div>
+        <p class="note">Sector signals describe the industry, not ACME alone. ACME's own signals are on the Fundamentals and Technicals tabs. Not investment advice.</p>
+      </section>
+
+      <!-- VS -->
+      <section class="card" id="vs" data-title-s="ACME vs others" data-title-p="Relative performance" data-v="g">
+        <div class="sh"><h2><span class="s-only">How has ACME done compared with its industry and the market?</span><span class="p-only">Relative performance</span></h2>
+          <div class="seg" role="group" aria-label="Period"><button data-vp="1M" aria-pressed="true">1 month</button><button data-vp="3M" aria-pressed="false">3 months</button><button data-vp="1Y" aria-pressed="false">1 year</button></div>
+        </div>
+        <div class="vsbars" id="vs-bars"></div>
+        <p class="means"><span><span class="s-only">ACME has been rising faster than both its industry and the whole market. It's one of the leaders in a strong industry.</span><span class="p-only">ACME outperforms the sector and the sector outperforms NIFTY 50 on every period: a leader within a leading sector. Relative strength rank 6 of 41 sector stocks (1 month).</span></span></p>
+        <div class="rs-pro p-only">
+          <div>RS vs sector, 1 month<b class="up">+3.1 pts</b></div>
+          <div>RS vs NIFTY 50, 1 month<b class="up">+4.9 pts</b></div>
+          <div>Beta to sector (1 yr)<b>1.12</b></div>
+          <div>Correlation to sector<b>0.81</b></div>
+        </div>
+      </section>
+
+      <!-- HEATMAP -->
+      <section class="card" id="heatmap" data-title-s="All industries" data-title-p="Sector heatmap" data-v="n">
+        <div class="sh"><h2><span class="s-only">How did each industry do?</span><span class="p-only">Sector heatmap</span></h2>
+          <div class="seg" role="group" aria-label="Period" id="hm-period"></div>
+        </div>
+        <div class="treemap" id="treemap" role="img" aria-label="Sector heatmap"></div>
+        <div class="hm-legend"><div class="hm-key" id="hm-key"></div><span class="note" style="margin-left:auto"><span class="s-only">Bigger box = bigger industry</span><span class="p-only">Box size = market cap · NIFTY 50: <b id="hm-bench"></b></span></span></div>
+      </section>
+
+      <!-- ROTATION -->
+      <section class="card" id="rotation" data-title-s="Stronger or weaker?" data-title-p="Sector rotation" data-v="g">
+        <div class="sh"><h2><span class="s-only">Which industries are getting stronger or weaker?</span><span class="p-only">Relative rotation graph (weekly, vs NIFTY 50)</span><button class="info" data-term="rrg" aria-label="How to read the rotation chart">i</button></h2></div>
+        <div class="groups s-only" id="rot-groups"></div>
+        <div class="howto p-only">
+          <b>How to read this chart</b>
+          <ul>
+            <li><b>Left to right:</b> how each industry is doing compared with NIFTY 50. Right of the middle line (RS-Ratio above 100) means beating the market.</li>
+            <li><b>Bottom to top:</b> whether that lead is growing or shrinking. Above the middle line (RS-Momentum above 100) means gaining speed.</li>
+            <li><b>The four boxes:</b> Leading (beating the market and speeding up), Weakening (beating it but slowing), Lagging (behind and slowing), Improving (behind but catching up).</li>
+            <li><b>The tail</b> is the last 5 weeks. Industries usually move clockwise: Improving, Leading, Weakening, Lagging, and round again.</li>
+          </ul>
+        </div>
+        <div class="chart p-only" id="rrg-chart"></div>
+        <p class="means"><span><span class="s-only">ACME's industry, capital goods, is in the best group: it is beating the market and still speeding up.</span><span class="p-only">Capital goods sits deep in Leading with a north-east tail over 5 weeks. Pharma and Consumer durables are also Leading. Autos and Telecom are rolling into Weakening. IT and Banks are Improving.</span></span></p>
+      </section>
+
+      <!-- RANKING -->
+      <section class="card" id="ranking" data-title-s="Best and worst" data-title-p="Sector leaders and laggards" data-v="g">
+        <div class="sh"><h2><span class="s-only">Which companies in the industry are doing best?</span><span class="p-only">Capital goods: leaders and laggards (1 month)</span></h2><span class="verdict g">ACME 2nd of 8</span></div>
+        <div class="rank-list s-only" id="rank-list"></div>
+        <div class="tw p-only"><table id="rank-table"></table></div>
+        <div class="subind p-only">
+          <span class="note">Sub-industries, 1 month</span>
+          <div class="tw"><table id="sub-table"></table></div>
+        </div>
+      </section>
+
+      <!-- VALUATION -->
+      <section class="card" id="valuation" data-title-s="Is it expensive?" data-title-p="Sector valuation" data-v="w">
+        <div class="sh"><h2><span class="s-only">Is the whole industry expensive right now?</span><span class="p-only">Sector valuation</span></h2><span class="verdict w">Expensive</span></div>
+        <div class="band">
+          <span class="note"><span class="s-only">Price for ₹1 of yearly profit, across the whole industry, over 5 years</span><span class="p-only">Sector P/E band, 5 years (size-weighted index)</span></span>
+          <div class="band-track"><span class="band-mid" style="left:38.9%"></span><span class="band-mark" style="left:80.6%" title="Now: 33.5"></span></div>
+          <div class="band-scale"><span>Low 19</span><span>Median 26</span><span>Now 33.5</span><span>High 37</span></div>
+        </div>
+        <div class="sig-stats">
+          <div><span class="s-only">Price for ₹1 of profit</span><span class="p-only">Sector P/E</span><b>33.5</b><span>5-yr median 26</span></div>
+          <div><span class="s-only">Whole market</span><span class="p-only">NIFTY 50 P/E</span><b>19.8</b><span><span class="s-only">Industry costs much more</span><span class="p-only">Premium 69%</span></span></div>
+          <div><span class="s-only">Expected profit growth</span><span class="p-only">EPS growth FY27E</span><b>+22%</b><span>Market: +12%</span></div>
+          <div><span class="s-only">ACME's price for ₹1 of profit</span><span class="p-only">ACME P/E</span><b>34.0</b><span><span class="s-only">About the same as its industry</span><span class="p-only">In line with sector index, above peer median 27</span></span></div>
+        </div>
+        <p class="means"><span><span class="s-only">Investors are paying a lot for this industry because profits are growing fast. That's fine while growth continues, but any slowdown could hurt prices.</span><span class="p-only">The premium is justified by growth (PEG 1.8 vs market 1.7), but at the 83rd percentile of its range the sector leaves little room for an earnings miss.</span></span></p>
+      </section>
+
+      <!-- DRIVERS -->
+      <section class="card" id="drivers" data-title-s="What's helping?" data-title-p="Sector drivers" data-v="g">
+        <div class="sh"><h2><span class="s-only">What's helping and hurting the industry?</span><span class="p-only">Macro and sector drivers</span></h2></div>
+        <div class="drv" id="drv-list"></div>
+        <p class="note">Updated weekly from government data, central bank decisions, commodity prices and company filings.</p>
+      </section>
+
+      <!-- NEWS -->
+      <section class="card" id="snews" data-title-s="Industry news" data-title-p="Sector news" data-v="g">
+        <div class="sh"><h2><span class="s-only">Latest industry news</span><span class="p-only">Sector news</span></h2><span class="sub">More on the News tab</span></div>
+        <div class="snews">
+          <div class="sn g"><span class="n-meta"><b>15 Oct</b> · Market Ledger</span><b>Capital goods stocks rally as government raises power grid spending</b><span class="tone g">● <span class="s-only">Good for the industry</span><span class="p-only">Positive</span></span></div>
+          <div class="sn r"><span class="n-meta"><b>11 Oct</b> · Daily Bourse</span><b>Copper prices hit a 6-month high, may squeeze equipment makers' margins</b><span class="tone r">● <span class="s-only">Bad for the industry</span><span class="p-only">Negative</span></span></div>
+          <div class="sn g"><span class="n-meta"><b>6 Oct</b> · Power Sector Review</span><b>Factory capacity use reaches 76%, highest in 9 years</b><span class="tone g">● <span class="s-only">Good for the industry</span><span class="p-only">Positive</span></span></div>
+        </div>
+      </section>
+
+      <p class="foot">ACME Industries, every company and number on this page are made up to show the layout. Nothing here is investment advice.</p>
+    </main>
+  </div>
+</div>
+
+<div class="pop" id="pop" role="dialog" aria-modal="false" aria-labelledby="pop-title" hidden>
+  <button class="x" id="pop-x" aria-label="Close">×</button>
+  <h3 id="pop-title"></h3>
+  <span class="pro-name" id="pop-pro"></span>
+  <dl>
+    <div><dt>What it means</dt><dd id="pop-d"></dd></div>
+    <div><dt>Why it's useful</dt><dd id="pop-g"></dd></div>
+  </dl>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+
+  // ---------- sample data (generic industries, fictional companies) ----------
+  var PERIODS = ["1D", "1W", "1M", "3M", "1Y"];
+  // name, market cap (₹ lakh Cr), returns [1D,1W,1M,3M,1Y], rotation [RS-ratio, RS-momentum], weekly drift for the tail [dx, dy]
+  var SECTORS = [
+    ["Banks", 58, [0.1, -0.4, 1.2, 4.1, 12.5], [99.2, 100.6], [0.25, 0.3]],
+    ["IT services", 34, [1.1, 2.6, 5.8, 3.0, 6.2], [98.1, 101.8], [0.35, 0.45]],
+    ["Oil & gas", 30, [-0.6, -1.2, -2.4, -5.1, -3.8], [97.5, 98.6], [-0.2, -0.15]],
+    ["FMCG", 22, [-0.3, -0.8, -1.5, 0.6, 4.1], [98.8, 99.1], [-0.25, -0.1]],
+    ["Autos", 21, [0.5, 1.1, 3.2, 8.9, 22.4], [101.6, 99.4], [0.15, -0.4]],
+    ["Pharma", 17, [0.2, 0.6, 2.1, 6.3, 18.7], [100.8, 100.2], [0.3, 0.05]],
+    ["Capital goods", 15, [1.4, 3.1, 3.8, 11.2, 34.6], [103.2, 101.5], [0.45, 0.3]],
+    ["Metals", 11, [-1.1, -2.3, -4.6, -2.2, 8.4], [98.6, 98.0], [-0.3, -0.25]],
+    ["Telecom", 10, [0.3, 0.9, 1.8, 5.5, 28.0], [101.1, 99.2], [0.05, -0.35]],
+    ["Consumer durables", 7, [0.6, 1.4, 2.6, 7.1, 19.3], [100.9, 100.9], [0.25, 0.2]],
+    ["Real estate", 6, [-0.8, -1.9, -3.3, -7.8, 2.1], [97.0, 100.4], [0.1, 0.35]],
+    ["Chemicals", 5, [0.4, 0.2, 0.9, -1.4, -6.5], [97.8, 100.3], [0.15, 0.3]]
+  ];
+  var BENCH = [0.65, 1.1, 2.0, 4.3, 11.0];
+  var VS = { "1M": [6.9, 3.8, 2.0], "3M": [14.5, 11.2, 4.3], "1Y": [41.0, 34.6, 11.0] };
+  var STOCKS = [["Orbit Engineering", 9.8, 41.2, 21.5], ["ACME Industries", 6.9, 34.0, 18.7, 1], ["Falcon Defence", 6.4, 52.3, 19.8], ["Nova Machines", 4.2, 27.0, 16.4],
+    ["Zenith Cables", 3.5, 29.5, 17.9], ["Kestrel Power", 1.1, 19.8, 13.1], ["Vertex Systems", -0.8, 23.5, 12.2], ["Atlas Pumps", -2.6, 21.0, 11.4]];
+  var SUBS = [["Defence", 6.4, 48.0], ["Electrical equipment (ACME)", 5.2, 35.1, 1], ["Heavy electrical", 4.0, 31.2], ["Industrial machinery", 3.1, 30.6], ["Engineering & construction", 1.8, 24.9]];
+  var DRIVERS = [
+    ["g", "▲", "Government spending on infrastructure", "Rising", "Budget capex up 11%, power grid spending raised", "Central capex +11% YoY; transmission outlay raised in October"],
+    ["g", "▲", "Companies building new factories", "Rising", "Factories are 76% busy, so companies are adding capacity", "Capacity utilisation 76%, 9-year high; private capex announcements +18%"],
+    ["g", "▲", "Orders waiting to be delivered", "Record high", "The industry has about 3 years of work lined up", "Sector order book about 3.0× trailing sales"],
+    ["n", "→", "Interest rates", "Steady", "Loans cost the same; cuts are possible next year", "Repo rate unchanged at the October policy; market prices one cut in H1 2027"],
+    ["n", "→", "Demand from other countries", "Steady", "Orders from the Middle East and Africa are holding up", "Export orders flat QoQ; Middle East grid tenders steady"],
+    ["r", "▲", "Copper and steel prices", "Rising", "Key materials cost more, which can squeeze profits", "Copper +6% in a month (6-month high), steel +2%; about half of contracts have price-variation clauses"]
+  ];
+  var TERMS = {
+    signal: { s: "Sector signals", p: "Sector outlook by horizon", d: "Whether the whole industry looks like a good place to invest over the next few weeks, months and years. Short term follows where money is flowing, medium term follows profit growth and orders, long term weighs growth against how expensive the industry already is.", g: "A good company in a struggling industry often goes nowhere. A strong industry lifts most of its companies." },
+    rrg: { s: "Hot or cold industries", p: "Relative Rotation Graph (RRG)", d: "Each dot is an industry. Further right means it has done better than the whole market. Higher up means it is gaining speed. Industries usually move clockwise: warming up, hot, cooling, cold, and round again. The tail shows the last 5 weeks.", g: "Shows which industries money is moving into and out of, before it is obvious in prices." }
+  };
+
+  // ---------- helpers ----------
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function css(n) { return getComputedStyle(root).getPropertyValue(n).trim(); }
+  function pct(v, dp) { return (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(dp == null ? 1 : dp) + "%"; }
+  function simple() { return root.dataset.mode === "simple"; }
+
+  // ---------- signal tiles ----------
+  document.querySelectorAll(".hzc").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var open = b.getAttribute("aria-expanded") !== "true";
+      document.querySelectorAll(".hzc").forEach(function (x) { x.setAttribute("aria-expanded", "false"); document.getElementById("hzd-" + x.dataset.hz).hidden = true; });
+      if (open) { b.setAttribute("aria-expanded", "true"); document.getElementById("hzd-" + b.dataset.hz).hidden = false; }
+    });
+  });
+
+  // ---------- ACME vs sector vs market ----------
+  var vp = "1M";
+  function drawVs() {
+    var v = VS[vp], max = Math.max.apply(null, v.map(Math.abs)), s = simple();
+    var labels = s ? ["ACME", "Its industry (capital goods)", "Whole market (NIFTY 50)"] : ["ACME", "Capital goods sector", "NIFTY 50"];
+    document.getElementById("vs-bars").innerHTML = v.map(function (x, i) {
+      return '<div class="vb' + (i === 0 ? " me" : "") + '"><span>' + labels[i] + '</span><span class="bar"><i style="width:' + (Math.abs(x) / max * 100).toFixed(1) + '%"></i></span><b class="' + (x >= 0 ? "up" : "dn") + '">' + pct(x) + '</b></div>';
+    }).join("");
+  }
+  document.querySelectorAll("[data-vp]").forEach(function (b) { b.addEventListener("click", function () { vp = b.dataset.vp; document.querySelectorAll("[data-vp]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); drawVs(); }); });
+
+  // ---------- heatmap (squarified treemap) ----------
+  var hp = 2;
+  document.getElementById("hm-period").innerHTML = PERIODS.map(function (p, i) { return '<button data-hp="' + i + '" aria-pressed="' + (i === hp) + '">' + p + '</button>'; }).join("");
+  document.querySelectorAll("[data-hp]").forEach(function (b) { b.addEventListener("click", function () { hp = +b.dataset.hp; document.querySelectorAll("[data-hp]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); drawTreemap(); }); });
+  function squarify(items, x, y, w, h) {
+    var out = [], total = items.reduce(function (a, b) { return a + b.v; }, 0), rest = items.slice();
+    function worst(row, side, scale) {
+      var s = row.reduce(function (a, b) { return a + b.v * scale; }, 0), mx = 0, mn = Infinity;
+      row.forEach(function (r) { mx = Math.max(mx, r.v * scale); mn = Math.min(mn, r.v * scale); });
+      return Math.max(side * side * mx / (s * s), (s * s) / (side * side * mn));
+    }
+    var scale = (w * h) / total;
+    while (rest.length) {
+      var side = Math.min(w, h), row = [rest[0]], i = 1;
+      while (i < rest.length && worst(row.concat([rest[i]]), side, scale) <= worst(row, side, scale)) { row.push(rest[i]); i++; }
+      var area = row.reduce(function (a, b) { return a + b.v * scale; }, 0), thick = area / side, off = 0;
+      row.forEach(function (r) {
+        var len = r.v * scale / thick;
+        if (w >= h) out.push({ d: r, x: x, y: y + off, w: thick, h: len }); else out.push({ d: r, x: x + off, y: y, w: len, h: thick });
+        off += len;
+      });
+      if (w >= h) { x += thick; w -= thick; } else { y += thick; h -= thick; }
+      rest = rest.slice(row.length);
+    }
+    return out;
+  }
+  // Seven colour steps. Step size depends on the period, because a 1-year move is naturally bigger than a 1-day move.
+  var STEP = [0.5, 1, 2, 4, 10];
+  var SHADES = [["#A82A20", "#fff"], ["#DD6B5C", "#fff"], ["#F6CDC7", "#5B1A14"], ["#ECEAF3", "#3A3656"], ["#C3E8D3", "#0B4D31"], ["#3FAE77", "#fff"], ["#0B7A4B", "#fff"]];
+  function bucket(v) {
+    var st = STEP[hp];
+    if (v <= -2 * st) return 0; if (v <= -st) return 1; if (v < -0.25 * st) return 2;
+    if (v <= 0.25 * st) return 3; if (v < st) return 4; if (v < 2 * st) return 5; return 6;
+  }
+  function drawLegend() {
+    var st = STEP[hp], f = function (x) { return (Math.round(x * 100) / 100).toString(); };
+    var labels = ["Down " + f(2 * st) + "%+", "Down " + f(st) + " to " + f(2 * st) + "%", "Down a little", "About flat", "Up a little", "Up " + f(st) + " to " + f(2 * st) + "%", "Up " + f(2 * st) + "%+"];
+    document.getElementById("hm-key").innerHTML = SHADES.map(function (c, i) { return '<span class="key"><i style="background:' + c[0] + '"></i>' + labels[i] + '</span>'; }).join("");
+  }
+  var SHORT = { "Real estate": "Realty", "Chemicals": "Chem", "Consumer durables": "Durables", "Capital goods": "Cap goods", "IT services": "IT" };
+  function drawTreemap() {
+    var el = document.getElementById("treemap"), W = el.clientWidth || 700, H = W < 520 ? Math.round(W * 1.25) : Math.max(260, Math.min(380, W * 0.5));
+    var items = SECTORS.map(function (s) { return { name: s[0], v: s[1], r: s[2][hp] }; }).sort(function (a, b) { return b.v - a.v; });
+    var max = Math.max.apply(null, items.map(function (i) { return Math.abs(i.r); })) || 1;
+    var rects = squarify(items, 0, 0, W, H);
+    el.style.height = H + "px";
+    el.innerHTML = rects.map(function (r) {
+      var me = r.d.name === "Capital goods", sh = SHADES[bucket(r.d.r)], small = r.w < 90 || r.h < 46;
+      return '<div class="tm' + (me ? " me" : "") + '" style="left:' + r.x.toFixed(1) + 'px;top:' + r.y.toFixed(1) + 'px;width:' + (r.w - 3).toFixed(1) + 'px;height:' + (r.h - 3).toFixed(1) + 'px;background:' + sh[0] + ';color:' + sh[1] + '" title="' + esc(r.d.name) + ': ' + pct(r.d.r) + '">' +
+        '<span class="tm-n' + (small ? " sm" : "") + '">' + esc(r.w < 80 && SHORT[r.d.name] ? SHORT[r.d.name] : r.d.name) + (me ? ' <em>ACME</em>' : '') + '</span><b class="' + (small ? "sm" : "") + '">' + pct(r.d.r) + '</b></div>';
+    }).join("");
+    document.getElementById("hm-bench").textContent = pct(BENCH[hp]) + " (" + PERIODS[hp] + ")";
+    drawLegend();
+  }
+
+  // ---------- rotation chart ----------
+  var LABEL_BELOW = { "Telecom": 1, "Chemicals": 1 };
+  function drawRRG() {
+    var s = simple(), W = 680, H = 440, L = 46, R = 16, T = 16, B = 40, x0 = 96, x1 = 104.5, y0 = 97, y1 = 103;
+    var X = function (v) { return L + (W - L - R) * (v - x0) / (x1 - x0); }, Y = function (v) { return T + (H - T - B) * (1 - (v - y0) / (y1 - y0)); };
+    var cx = X(100), cy = Y(100), g = "";
+    var Q = [
+      [cx, T, W - R - cx, cy - T, "--good-soft", s ? "Hot and getting hotter" : "Leading", "end", W - R - 8, T + 18],
+      [cx, cy, W - R - cx, H - B - cy, "--warn-soft", s ? "Hot but cooling" : "Weakening", "end", W - R - 8, H - B - 10],
+      [L, cy, cx - L, H - B - cy, "--bad-soft", s ? "Cold" : "Lagging", "start", L + 8, H - B - 10],
+      [L, T, cx - L, cy - T, "--accent-soft", s ? "Warming up" : "Improving", "start", L + 8, T + 18]
+    ];
+    Q.forEach(function (q) {
+      g += '<rect x="' + q[0] + '" y="' + q[1] + '" width="' + q[2] + '" height="' + q[3] + '" fill="' + css(q[4]) + '" fill-opacity="0.7"/>';
+      g += '<text x="' + q[7] + '" y="' + q[8] + '" text-anchor="' + q[6] + '" style="font:700 12px var(--f-body);fill:' + css("--ink-2") + '">' + q[5] + '</text>';
+    });
+    g += '<line x1="' + cx + '" x2="' + cx + '" y1="' + T + '" y2="' + (H - B) + '" stroke="' + css("--line") + '" stroke-width="1.5"/><line x1="' + L + '" x2="' + (W - R) + '" y1="' + cy + '" y2="' + cy + '" stroke="' + css("--line") + '" stroke-width="1.5"/>';
+    g += '<text x="' + ((L + W - R) / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + (s ? "Doing better than the market →" : "RS-Ratio (relative strength vs NIFTY 50) →") + '</text>';
+    g += '<text transform="translate(14,' + ((T + H - B) / 2) + ') rotate(-90)" text-anchor="middle">' + (s ? "Gaining speed →" : "RS-Momentum →") + '</text>';
+    SECTORS.forEach(function (sec) {
+      var me = sec[0] === "Capital goods", p = sec[3], d = sec[4], tail = [];
+      for (var k = 5; k >= 0; k--) tail.push([p[0] - d[0] * k, p[1] - d[1] * k]);
+      var col = p[0] >= 100 ? (p[1] >= 100 ? css("--good") : css("--warn")) : (p[1] >= 100 ? css("--accent") : css("--bad"));
+      g += '<polyline points="' + tail.map(function (t) { return X(t[0]).toFixed(1) + "," + Y(t[1]).toFixed(1); }).join(" ") + '" fill="none" stroke="' + col + '" stroke-opacity="' + (me ? 0.9 : 0.45) + '" stroke-width="' + (me ? 2.5 : 1.5) + '"/>';
+      tail.slice(0, -1).forEach(function (t) { g += '<circle cx="' + X(t[0]).toFixed(1) + '" cy="' + Y(t[1]).toFixed(1) + '" r="2" fill="' + col + '" fill-opacity="0.5"/>'; });
+      var px = X(p[0]), py = Y(p[1]);
+      g += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + (me ? 8 : 5.5) + '" fill="' + col + '" stroke="' + css("--surface") + '" stroke-width="2"><title>' + esc(sec[0]) + ' (' + p[0] + ', ' + p[1] + ')</title></circle>';
+      if (me) g += '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="13" fill="none" stroke="' + css("--accent") + '" stroke-width="2"/>';
+      var right = px < W - 140, off = me ? 18 : 10, ly = LABEL_BELOW[sec[0]] ? py + 18 : py - 8;
+      g += '<text x="' + (px + (right ? off : -off)) + '" y="' + ly + '" text-anchor="' + (right ? "start" : "end") + '" style="font:' + (me ? "700 12px" : "500 11px") + ' var(--f-body);fill:' + css("--ink") + '">' + esc(sec[0]) + (me ? " (ACME)" : "") + '</text>';
+    });
+    document.getElementById("rrg-chart").innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Sector rotation chart">' + g + '</svg>';
+  }
+
+  // ---------- rotation groups (Simple) ----------
+  var GROUPS = [
+    ["Leading", "g", "↗", "Strong and getting stronger", "Beating the market and speeding up. Often the best place to be."],
+    ["Weakening", "w", "↘", "Strong but slowing down", "Still beating the market, but losing speed. Gains may slow."],
+    ["Improving", "b", "↗", "Weak but picking up", "Behind the market, but catching up. Worth watching."],
+    ["Lagging", "r", "↘", "Weak and getting weaker", "Behind the market and slowing. Usually best avoided for now."]
+  ];
+  function drawGroups() {
+    document.getElementById("rot-groups").innerHTML = GROUPS.map(function (gr) {
+      var names = SECTORS.filter(function (sec) { return quadrant(sec[3]) === gr[0]; }).map(function (sec) {
+        var me = sec[0] === "Capital goods";
+        return '<span class="gchip' + (me ? " me" : "") + '">' + esc(sec[0]) + (me ? " · ACME's industry" : "") + '</span>';
+      }).join("");
+      return '<div class="grp ' + gr[1] + '"><div class="grp-h"><span class="grp-ic">' + gr[2] + '</span><div><b>' + gr[3] + '</b><span>' + gr[4] + '</span></div></div><div class="gchips">' + names + '</div></div>';
+    }).join("");
+  }
+
+  // ---------- rankings ----------
+  function drawRanking() {
+    var s = simple(), max = Math.max.apply(null, STOCKS.map(function (x) { return Math.abs(x[1]); }));
+    document.getElementById("rank-list").innerHTML = STOCKS.map(function (x, i) {
+      var neg = x[1] < 0, w = (Math.abs(x[1]) / max * 50).toFixed(1);
+      return '<div class="rkr' + (x[4] ? " me" : "") + '"><span class="pos">' + (i + 1) + '</span><span class="nm">' + esc(x[0]) + '</span>' +
+        '<span class="rbar"><i class="' + (neg ? "dn" : "up") + '" style="width:' + w + '%;' + (neg ? "right:50%" : "left:50%") + '"></i></span><b class="' + (neg ? "dn" : "up") + '">' + pct(x[1]) + '</b></div>';
+    }).join("") + '<p class="note">' + (s ? "How much each company's share price moved in the last month." : "1-month price return. 8 largest of 41 sector stocks shown.") + '</p>';
+    document.getElementById("rank-table").innerHTML = '<thead><tr><th>Company</th><th class="now">1M return</th><th>P/E</th><th>ROE %</th></tr></thead><tbody>' +
+      STOCKS.map(function (x) { return '<tr' + (x[4] ? ' class="me"' : '') + '><th scope="row">' + esc(x[0]) + '</th><td class="now">' + pct(x[1]) + '</td><td>' + x[2].toFixed(1) + '</td><td>' + x[3].toFixed(1) + '</td></tr>'; }).join("") + '</tbody>';
+    document.getElementById("sub-table").innerHTML = '<thead><tr><th>Sub-industry</th><th class="now">1M return</th><th>P/E</th></tr></thead><tbody>' +
+      SUBS.map(function (x) { return '<tr' + (x[3] ? ' class="me"' : '') + '><th scope="row">' + esc(x[0]) + '</th><td class="now">' + pct(x[1]) + '</td><td>' + x[2].toFixed(1) + '</td></tr>'; }).join("") + '</tbody>';
+  }
+
+  // ---------- drivers ----------
+  function drawDrivers() {
+    var s = simple();
+    document.getElementById("drv-list").innerHTML = DRIVERS.map(function (d) {
+      return '<div class="dv ' + d[0] + '"><span class="dv-ic">' + d[1] + '</span><div><b>' + esc(d[2]) + '</b><span>' + esc(s ? d[4] : d[5]) + '</span></div>' +
+        '<span class="dv-tag ' + d[0] + '">' + (d[0] === "g" ? (s ? "Helps" : "Tailwind") : d[0] === "r" ? (s ? "Hurts" : "Headwind") : (s ? "No big effect" : "Neutral")) + '</span></div>';
+    }).join("");
+  }
+
+  // ---------- index ----------
+  function drawIndex() {
+    var cards = Array.prototype.filter.call(document.querySelectorAll(".card[id]"), function (c) { return getComputedStyle(c).display !== "none"; });
+    document.getElementById("index").innerHTML = cards.map(function (c) {
+      return '<a href="#' + c.id + '"><span>' + esc(simple() ? c.dataset.titleS : c.dataset.titleP) + '</span><i class="' + c.dataset.v + '"></i></a>';
+    }).join("");
+  }
+
+  // ---------- popover ----------
+  var pop = document.getElementById("pop"), lastBtn = null;
+  function openPop(btn) {
+    var m = TERMS[btn.dataset.term]; if (!m) return;
+    lastBtn = btn;
+    document.getElementById("pop-title").textContent = m.s;
+    document.getElementById("pop-pro").textContent = "Also called: " + m.p;
+    document.getElementById("pop-d").textContent = m.d;
+    document.getElementById("pop-g").textContent = m.g;
+    pop.hidden = false;
+    var b = btn.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+    pop.style.left = Math.min(Math.max(16, b.left - pw / 2), window.innerWidth - pw - 16) + "px";
+    pop.style.top = (b.bottom + 8 + ph > window.innerHeight ? Math.max(16, b.top - ph - 8) : b.bottom + 8) + "px";
+    document.getElementById("pop-x").focus();
+  }
+  function closePop() { if (!pop.hidden) { pop.hidden = true; if (lastBtn) lastBtn.focus(); } }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest(".info[data-term]");
+    if (b) { e.stopPropagation(); openPop(b); return; }
+    if (!pop.contains(e.target)) closePop();
+  });
+  document.getElementById("pop-x").addEventListener("click", closePop);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closePop(); closeMenu(); } });
+
+  // ---------- mode ----------
+  function setMode(mode) {
+    root.dataset.mode = mode;
+    document.querySelectorAll("button[data-mode]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.mode === mode)); });
+    document.getElementById("mode-hint").textContent = mode === "simple" ? "Plain-English explanations" : "Full detail";
+    try { localStorage.setItem("stockai-mode", mode); } catch (e) {}
+    drawVs(); drawRRG(); drawGroups(); drawRanking(); drawDrivers(); drawIndex(); closePop();
+  }
+  document.querySelectorAll("button[data-mode]").forEach(function (b) { b.addEventListener("click", function () { setMode(b.dataset.mode); }); });
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(drawTreemap, 150); });
+
+  // ---------- downloads ----------
+  var menu = document.getElementById("dl-menu"), dlBtn = document.getElementById("dl-btn"), downloadsP = null;
+  function closeMenu() { if (!menu.hidden) { menu.hidden = true; dlBtn.setAttribute("aria-expanded", "false"); } }
+  function getDownloads() {
+    if (!downloadsP) {
+      downloadsP = window.claude && window.claude.use ? window.claude.use("downloads").catch(function () { return null; }) : Promise.resolve(null);
+      downloadsP.then(function (d) { if (!d) { downloadsP = null; document.getElementById("dl-unavail").hidden = false; } });
+    }
+    return downloadsP;
+  }
+  dlBtn.addEventListener("click", function (e) { e.stopPropagation(); menu.hidden = !menu.hidden; dlBtn.setAttribute("aria-expanded", String(!menu.hidden)); if (!menu.hidden) getDownloads(); });
+  document.addEventListener("click", function (e) { if (!menu.contains(e.target) && e.target !== dlBtn) closeMenu(); });
+  var toastTimer;
+  function toast(msg) { var t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200); }
+  function loadScript(src) { return new Promise(function (ok, fail) { var s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = function () { fail(new Error("load")); }; document.head.appendChild(s); }); }
+  function quadrant(p) { return p[0] >= 100 ? (p[1] >= 100 ? "Leading" : "Weakening") : (p[1] >= 100 ? "Improving" : "Lagging"); }
+  function sectorRows() {
+    return [["Sector", "Market cap (Rs lakh Cr)", "1D %", "1W %", "1M %", "3M %", "1Y %", "RS-Ratio", "RS-Momentum", "Quadrant"]].concat(SECTORS.map(function (s) {
+      return [s[0], s[1]].concat(s[2]).concat([s[3][0], s[3][1], quadrant(s[3])]);
+    })).concat([["NIFTY 50 (benchmark)", ""].concat(BENCH).concat(["", "", ""])]);
+  }
+  function csvOf(rows) { return rows.map(function (r) { return r.map(function (c) { c = c == null ? "" : String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(","); }).join("\n"); }
+  function pdfText(s) { return String(s).replace(/₹/g, "Rs ").replace(/[−–]/g, "-").replace(/×/g, "x").replace(/·/g, "|").replace(/▲/g, "up").replace(/→/g, "flat"); }
+  function buildPdf() {
+    var doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" }), accent = [86, 54, 211], y = 50;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.text("Capital goods: sector report for ACME Industries", 40, y);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(94, 90, 122);
+    doc.text("Prices as of 16 Oct 2026 | SAMPLE DATA, NOT REAL COMPANIES OR REAL SECTOR FIGURES", 40, y += 16);
+    doc.setTextColor(28, 24, 56);
+    doc.autoTable({ startY: y + 14, head: [["Sector signal", "Signal", "Why"]], body: [
+      ["Short term (2-6 wks)", "Buy", "Leading on rotation, 68% of stocks above 50-day average, FII inflow Rs 4,850 Cr"],
+      ["Medium term (1-6 mo)", "Buy", "Order book 3x sales, FY27 profit growth +22%, government capex +11%"],
+      ["Long term (1-3 yrs)", "Neutral", "Sector P/E 33.5 vs 5-year median 26 (83rd percentile)"]], theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 9 } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 14, head: [["Return", "ACME", "Capital goods", "NIFTY 50"]], body: ["1M", "3M", "1Y"].map(function (k) { return [k].concat(VS[k].map(function (v) { return pdfText(pct(v)); })); }), theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 9 } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 14, head: [sectorRows()[0]], body: sectorRows().slice(1).map(function (r) { return r.map(pdfText); }), theme: "striped", headStyles: { fillColor: accent }, styles: { fontSize: 7 } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 14, head: [["Driver", "Direction", "Detail"]], body: DRIVERS.map(function (d) { return [d[2], d[0] === "g" ? "Tailwind" : d[0] === "r" ? "Headwind" : "Neutral", pdfText(d[5])]; }), theme: "grid", headStyles: { fillColor: accent }, styles: { fontSize: 8 } });
+    doc.autoTable({ startY: doc.lastAutoTable.finalY + 14, head: [["Capital goods stock", "1M return", "P/E", "ROE %"]], body: STOCKS.map(function (x) { return [x[0], pdfText(pct(x[1])), x[2], x[3]]; }), theme: "striped", headStyles: { fillColor: accent }, styles: { fontSize: 8 } });
+    var pages = doc.getNumberOfPages();
+    for (var p = 1; p <= pages; p++) { doc.setPage(p); doc.setFontSize(7); doc.setTextColor(120); doc.text("Stock AI | Sample data for layout review | Not investment advice | Page " + p + " of " + pages, 40, 820); }
+    return doc.output("arraybuffer");
+  }
+  menu.querySelectorAll("[data-dl]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var kind = b.dataset.dl, downloads = null; closeMenu(); toast("Preparing your file…");
+      getDownloads().then(function (d) { if (!d) throw { code: "unavailable" }; downloads = d; })
+        .then(function () {
+          return kind === "csv" ? { filename: "ACME_sector_returns.csv", data: csvOf(sectorRows()) }
+            : loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js").then(function () { return loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"); })
+              .then(function () { return { filename: "ACME_sector_report.pdf", data: buildPdf() }; });
+        })
+        .then(function (file) { return downloads.save(file); })
+        .then(function () { toast("Saved"); })
+        .catch(function (err) {
+          var c = err && err.code;
+          toast(c === "declined" ? "Download cancelled" : c === "rate_limited" ? "A download is already waiting for you to confirm" : c === "unavailable" || c === "not_granted" ? "Downloads aren't available in this view" : "Couldn't create the file. Try again.");
+        });
+    });
+  });
+
+  // ---------- boot ----------
+  var mode = "simple";
+  try { mode = localStorage.getItem("stockai-mode") || "simple"; } catch (e) {}
+  setMode(mode === "pro" ? "pro" : "simple");
+  drawTreemap();
+})();
+</script>

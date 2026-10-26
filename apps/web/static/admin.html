@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin · Stock AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/auth.css">
+<style>
+.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1100px; margin: 0 auto; padding: 12px 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.top-in .sp { flex: 1; }
+.page { max-width: 1100px; margin: 0 auto; padding: 22px 20px 60px; display: grid; gap: 18px; }
+.page > h1 { font-size: 1.9em; font-weight: 800; }
+.box { background: var(--surface); border-radius: 20px; padding: 20px; display: grid; gap: 14px; box-shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 8px 24px -16px rgba(40, 30, 90, 0.25); min-width: 0; }
+.box h2 { font-size: 1.15em; font-weight: 800; }
+.box .sub { color: var(--ink-2); font-size: 0.88em; }
+.inv { display: grid; grid-template-columns: minmax(0, 1fr) 250px auto; gap: 10px; align-items: end; }
+.linkbox { background: var(--good-soft); border-radius: 14px; padding: 12px 14px; display: grid; gap: 8px; }
+.linkbox code { font: 500 0.86em var(--f-num); word-break: break-all; background: #fff; border-radius: 8px; padding: 8px 10px; }
+.linkbox .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 0.86em; }
+.tw { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+th { font-size: 0.76em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); }
+td.num { font-family: var(--f-num); font-size: 0.95em; }
+.pill { display: inline-block; border-radius: 999px; padding: 2px 9px; font-weight: 700; font-size: 0.82em; }
+.pill.admin { background: var(--accent-soft); color: var(--accent); } .pill.member { background: var(--surface-2); color: var(--ink-2); }
+.pill.on { background: var(--good-soft); color: var(--good); } .pill.off { background: var(--bad-soft); color: var(--bad); }
+.pill.wait { background: var(--warn-soft); color: var(--warn); }
+.mini { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 10px; font: 700 0.82em var(--f-body); cursor: pointer; color: var(--ink); }
+.mini:hover { border-color: var(--accent); }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 0.9em; z-index: 60; }
+@media (max-width: 700px) { .inv { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in"><a class="brand" href="/"><i aria-hidden="true"></i>Stock AI</a><span class="pill admin">Admin</span><span class="sp"></span><a href="/">Back to the app</a></div></header>
+<main class="page">
+  <h1>People and invites</h1>
+
+  <section class="box" aria-labelledby="inv-h">
+    <h2 id="inv-h">Invite someone</h2>
+    <p class="sub">They get a link to set their own password. Links work once and expire after 7 days. Only you can see this page.</p>
+    <form class="inv" id="inv-form" novalidate>
+      <label class="fld">Their email<input id="inv-email" type="email" required placeholder="friend@example.com"></label>
+      <label class="fld">Role<select id="inv-role"><option value="member">Member (reads, can't post)</option><option value="admin">Admin (full control)</option></select></label>
+      <button class="btn primary">Create invite link</button>
+    </form>
+    <p class="msg err" id="inv-err" hidden></p>
+    <div class="linkbox" id="linkbox" hidden>
+      <b id="link-h">Invite link for</b>
+      <code id="link"></code>
+      <div class="row"><button class="mini" id="copy">Copy link</button><span>Send it to them yourself (WhatsApp, email). It's shown only once.</span></div>
+    </div>
+  </section>
+
+  <section class="box" aria-labelledby="ppl-h">
+    <h2 id="ppl-h">People</h2>
+    <div class="tw"><table id="people"></table></div>
+  </section>
+
+  <section class="box" aria-labelledby="links-h">
+    <h2 id="links-h">Invite and reset links</h2>
+    <p class="sub">Waiting links can be cancelled. Used links are kept as a record.</p>
+    <div class="tw"><table id="links"></table></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>
+(function () {
+  var csrf = "", meId = null;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function when(iso) { if (!iso) return "–"; var d = new Date(iso); return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) + ", " + d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }); }
+  var tt; function toast(m) { var t = $("toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(function () { t.hidden = true; }, 3000); }
+  function api(method, url, body) {
+    return fetch(url, { method: method, credentials: "same-origin", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
+      body: body ? JSON.stringify(body) : undefined }).then(function (r) {
+      if (r.status === 401) { location.href = "/login?next=/admin"; }
+      return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "That didn't work."); return j; });
+    });
+  }
+  function showLink(title, link) { $("link-h").textContent = title; $("link").textContent = link; $("linkbox").hidden = false; }
+
+  function drawPeople() {
+    api("GET", "/api/admin/users").then(function (rows) {
+      $("people").innerHTML = "<thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Last sign-in</th><th></th></tr></thead><tbody>" +
+        rows.map(function (u) {
+          var me = u.id === meId;
+          return "<tr><td><b>" + esc(u.name) + (me ? " (you)" : "") + "</b></td><td>" + esc(u.email) + '</td><td><span class="pill ' + u.role + '">' + (u.role === "admin" ? "Admin" : "Member") + '</span></td><td><span class="pill ' + (u.active ? "on" : "off") + '">' + (u.active ? "Active" : "Switched off") + '</span></td><td class="num">' + when(u.created_at) + '</td><td class="num">' + when(u.last_login_at) + '</td><td><span class="acts">' +
+            (me ? "" : '<button class="mini" data-act="active" data-id="' + u.id + '" data-v="' + (!u.active) + '">' + (u.active ? "Switch off" : "Switch on") + "</button>" +
+              '<button class="mini" data-act="role" data-id="' + u.id + '" data-v="' + (u.role === "admin" ? "member" : "admin") + '">' + (u.role === "admin" ? "Make member" : "Make admin") + "</button>") +
+            '<button class="mini" data-act="reset" data-id="' + u.id + '" data-email="' + esc(u.email) + '">Password reset link</button></span></td></tr>';
+        }).join("") + "</tbody>";
+    }, function (e) { toast(e.message); });
+  }
+  function drawLinks() {
+    api("GET", "/api/admin/invites").then(function (rows) {
+      $("links").innerHTML = rows.length ? "<thead><tr><th>Type</th><th>Email</th><th>Role</th><th>Made</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody>" +
+        rows.map(function (i) {
+          return "<tr><td>" + (i.kind === "reset" ? "Password reset" : "Invite") + "</td><td>" + esc(i.email) + "</td><td>" + (i.kind === "reset" ? "–" : esc(i.role)) + '</td><td class="num">' + when(i.created_at) + '</td><td class="num">' + when(i.expires_at) + "</td><td>" +
+            (i.used_at ? '<span class="pill on">Used ' + when(i.used_at) + "</span>" : '<span class="pill wait">Waiting</span>') + "</td><td>" +
+            (i.used_at ? "" : '<button class="mini" data-act="revoke" data-id="' + esc(i.id) + '">Cancel</button>') + "</td></tr>";
+        }).join("") + "</tbody>" : '<tbody><tr><td style="color:var(--ink-2)">No links yet.</td></tr></tbody>';
+    }, function (e) { toast(e.message); });
+  }
+
+  fetch("/api/me", { credentials: "same-origin" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (m) {
+    if (!m) { location.href = "/login?next=/admin"; return; }
+    csrf = m.csrf; meId = m.user.id; drawPeople(); drawLinks();
+  });
+
+  $("inv-form").addEventListener("submit", function (e) {
+    e.preventDefault(); $("inv-err").hidden = true;
+    api("POST", "/api/admin/invites", { email: $("inv-email").value, role: $("inv-role").value }).then(function (j) {
+      showLink("Invite link for " + j.email + (j.role === "admin" ? " (admin)" : ""), j.link); $("inv-email").value = ""; drawLinks();
+    }, function (err) { $("inv-err").textContent = err.message; $("inv-err").hidden = false; });
+  });
+  $("copy").addEventListener("click", function () {
+    navigator.clipboard.writeText($("link").textContent).then(function () { toast("Link copied"); }, function () { toast("Select the link and copy it"); });
+  });
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-act]"); if (!b) return;
+    var id = b.dataset.id, act = b.dataset.act;
+    if (act === "reset") api("POST", "/api/admin/users/" + id + "/reset-link").then(function (j) { showLink("Password reset link for " + j.email + " (works for 24 hours)", j.link); drawLinks(); window.scrollTo(0, 0); }, function (err) { toast(err.message); });
+    if (act === "active") api("POST", "/api/admin/users/" + id + "/active", { active: b.dataset.v === "true" }).then(function () { toast("Saved"); drawPeople(); }, function (err) { toast(err.message); });
+    if (act === "role") { if (!confirm(b.dataset.v === "admin" ? "Make this person an admin? Admins can post blogs and manage people." : "Make this person a member?")) return; api("POST", "/api/admin/users/" + id + "/role", { role: b.dataset.v }).then(function () { toast("Saved"); drawPeople(); }, function (err) { toast(err.message); }); }
+    if (act === "revoke") api("DELETE", "/api/admin/invites/" + encodeURIComponent(id)).then(function () { toast("Link cancelled"); drawLinks(); }, function (err) { toast(err.message); });
+  });
+})();
+</script>
+</body>
+</html>
